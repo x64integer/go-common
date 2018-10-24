@@ -10,3 +10,8 @@
 * Env
 * JWT
 * Strings
+
+### Storage (*in progress*)
+* ElasticSearch
+* Postgres
+* Redis
