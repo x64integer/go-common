@@ -35,14 +35,16 @@ if err != nil {
 
 * **Publish payload to mqtt topic**
 ```
-if err := _mqtt.Publish("my/topic", []byte("message")); err != nil {
-    log.Print("mqtt error in publish: ", err)
+if token := _mqtt.Publish("my/topic", []byte("message")); token.Wait() && token.Error() != nil {
+    log.Print("mqtt publish error: ", token.Error())
 }
 ```
 
 * **Subscribe to mqtt topic**
 ```
-if err := _mqtt.Subscribe("my/topic", func(c mqtt.Client, m mqtt.Message) {
+if token := _mqtt.Subscribe("my/topic", func(c mqtt.Client, m mqtt.Message) {
     log.Print(m)
-})
+}); token.Wait() && token.Error() != nil {
+    log.Print("mqtt subscribe error: ", token.Error())
+}
 ```

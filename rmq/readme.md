@@ -41,7 +41,7 @@ done := make(chan bool)
 
 go func() {
     if err := consumer.Consume(); err != nil {
-        log.Print("consuming error: ", err)
+        log.Print("rmqq consume error: ", err)
     }
 }()
 
@@ -64,7 +64,7 @@ if err := publisher.Setup(); err != nil {
 }
 ```
 
-* **Optionally set rmq headers**
+* **Optionally, set rmq headers**
 ```
 publisher.WithHeaders(map[string]interface{}{
     "header-1": "value-1",
@@ -75,7 +75,7 @@ publisher.WithHeaders(map[string]interface{}{
 * **Publish message like so**
 ```
 if err := publisher.Publish([]byte("message")); err != nil {
-    log.Print("publish error: ", err)
+    log.Print("rmq publish error: ", err)
 }
 ```
 

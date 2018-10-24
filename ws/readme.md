@@ -22,7 +22,7 @@ c := &ws.Connection{
 * **Setup ws connection and listen for messages**
 ```
 if err := c.Setup(); err != nil {
-    log.Print("error on ws connection setup: ", err)
+    log.Print("ws connection setup error: ", err)
 }
 ```
 
