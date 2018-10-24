@@ -77,7 +77,7 @@ func (c *Consumer) Setup() error {
 func (c *Consumer) Consume() error {
 	msgs, err := c.Channel.Consume(
 		c.Config.Queue,
-		c.Config.ConsumerTag,
+		c.Config.ConsumerOpts.ConsumerTag,
 		c.Config.ConsumerOpts.ChannelConsumeOpts.AutoAck,
 		c.Config.ConsumerOpts.ChannelConsumeOpts.Exclusive,
 		c.Config.ConsumerOpts.ChannelConsumeOpts.NoLocal,

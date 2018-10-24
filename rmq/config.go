@@ -15,13 +15,13 @@ type Config struct {
 	ExchangeKind string
 	Queue        string
 	RoutingKey   string
-	ConsumerTag  string
 	*ConsumerOpts
 	*PublisherOpts
 }
 
 // ConsumerOpts struct
 type ConsumerOpts struct {
+	ConsumerTag string
 	*QueueOpts
 	*ExchangeOpts
 	*QueueBindOpts
@@ -87,27 +87,27 @@ func NewConfig() *Config {
 		ExchangeKind: util.Env("RMQ_EXCHANGE_KIND", "direct"),
 		Queue:        util.Env("RMQ_QUEUE", ""),
 		RoutingKey:   util.Env("RMQ_ROUTING_KEY", ""),
-		ConsumerTag:  util.Env("RMQ_CONSUMER_TAG", ""),
 		ConsumerOpts: &ConsumerOpts{
-			&QueueOpts{
+			ConsumerTag: util.Env("RMQ_CONSUMER_TAG", ""),
+			QueueOpts: &QueueOpts{
 				Durable:          true,
 				DeleteWhenUnused: false,
 				Exclusive:        false,
 				NoWait:           false,
 				Args:             nil,
 			},
-			&ExchangeOpts{
+			ExchangeOpts: &ExchangeOpts{
 				Durable:    true,
 				AutoDelete: false,
 				Internal:   false,
 				NoWait:     false,
 				Args:       nil,
 			},
-			&QueueBindOpts{
+			QueueBindOpts: &QueueBindOpts{
 				NoWait: false,
 				Args:   nil,
 			},
-			&ChannelConsumeOpts{
+			ChannelConsumeOpts: &ChannelConsumeOpts{
 				AutoAck:   true,
 				Exclusive: false,
 				NoLocal:   false,
