@@ -1,7 +1,6 @@
-# go-common
-Common packages to use across services
+## Common packages to use across services
 
-### Protocols
+### Protocol wrappers
 * MQTT
 * RMQ/RabbitMQ
 * Websockets
