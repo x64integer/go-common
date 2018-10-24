@@ -1,18 +1,26 @@
 package ws
 
-import "github.com/gorilla/websocket"
+import (
+	"errors"
+
+	"github.com/gorilla/websocket"
+)
 
 // Connection for ws
 type Connection struct {
 	Config    *Config
+	KeepAlive bool
+	Channel   *Channel
 	OnMessage func(in []byte)
 	OnError   func(err error)
-	Channel   *Channel
-	KeepAlive bool
 }
 
 // Setup will create ws connection and start listening for messages
 func (conn *Connection) Setup() error {
+	if conn.Config == nil {
+		return errors.New("nil Config struct for ws connection -> make sure valid Config is accessible to ws connection")
+	}
+
 	c, _, err := websocket.DefaultDialer.Dial(conn.Config.WSURL, nil)
 	if err != nil {
 		return err

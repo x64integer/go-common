@@ -9,9 +9,9 @@ import (
 
 // Publisher for RMQ
 type Publisher struct {
-	Channel *amqp.Channel
-	Conn    *amqp.Connection
 	Config  *Config
+	Conn    *amqp.Connection
+	Channel *amqp.Channel
 	Headers amqp.Table
 }
 

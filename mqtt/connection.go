@@ -8,8 +8,8 @@ import (
 
 // Connection struct for MQTT
 type Connection struct {
-	Client mqtt.Client
 	Config *Config
+	Client mqtt.Client
 }
 
 // NewConnection will initialize MQTT connection

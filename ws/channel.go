@@ -11,9 +11,9 @@ type Channel struct {
 	ReadLock  sync.Mutex
 	SendLock  sync.Mutex
 	Conn      *websocket.Conn
-	Error     chan error
 	OnMessage func(in []byte)
 	OnError   func(err error)
+	Error     chan error
 }
 
 // NewChannel will init new Channel struct

@@ -11,10 +11,10 @@ import (
 
 // Consumer for RMQ
 type Consumer struct {
-	Channel    *amqp.Channel
-	Conn       *amqp.Connection
-	HandleMsgs func(msgs <-chan amqp.Delivery)
 	Config     *Config
+	Conn       *amqp.Connection
+	Channel    *amqp.Channel
+	HandleMsgs func(msgs <-chan amqp.Delivery)
 }
 
 // Setup RMQ Consumer
@@ -96,7 +96,7 @@ func (c *Consumer) Consume() error {
 	go func() {
 		err := <-killer
 
-		log.Print("Error while consuming: ", err)
+		log.Print("consume connection error: ", err)
 
 		os.Exit(101)
 	}()
