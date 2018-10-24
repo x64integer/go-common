@@ -15,7 +15,7 @@
 mqttConfig := mqtt.NewConfig()
 ```
 
-* **Customize config values (*if needed, these are defaults*)**
+* **Optionally, customize config values (*these are defaults*)**
 ```
 mqttConfig.KeepAlive = time.Second * 15
 mqttConfig.CleanSession = true
