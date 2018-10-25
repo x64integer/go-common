@@ -41,7 +41,7 @@ func NewConnection(config *Config) (*Connection, error) {
 
 // Publish payload p to topic t
 func (conn *Connection) Publish(t string, p []byte) mqtt.Token {
-	token := conn.Client.Publish(t, byte(conn.Config.PubQoS), false, p)
+	token := conn.Client.Publish(t, byte(conn.Config.PubQoS), conn.Config.Retained, p)
 
 	return token
 }

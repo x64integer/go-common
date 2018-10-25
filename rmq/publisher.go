@@ -76,8 +76,8 @@ func (p *Publisher) Publish(payload []byte) error {
 	if err := p.Channel.Publish(
 		p.Config.Exchange,
 		p.Config.RoutingKey,
-		p.Config.PublisherOpts.ChannelPublishOpts.Mandatory,
-		p.Config.PublisherOpts.ChannelPublishOpts.Immediate,
+		p.Config.PublisherOpts.PublishOpts.Mandatory,
+		p.Config.PublisherOpts.PublishOpts.Immediate,
 		amqp.Publishing{
 			DeliveryMode: amqp.Persistent,
 			ContentType:  "text/plain",

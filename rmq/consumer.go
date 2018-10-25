@@ -78,11 +78,11 @@ func (c *Consumer) Consume() error {
 	msgs, err := c.Channel.Consume(
 		c.Config.Queue,
 		c.Config.ConsumerOpts.ConsumerTag,
-		c.Config.ConsumerOpts.ChannelConsumeOpts.AutoAck,
-		c.Config.ConsumerOpts.ChannelConsumeOpts.Exclusive,
-		c.Config.ConsumerOpts.ChannelConsumeOpts.NoLocal,
-		c.Config.ConsumerOpts.ChannelConsumeOpts.NoWait,
-		c.Config.ConsumerOpts.ChannelConsumeOpts.Args,
+		c.Config.ConsumerOpts.ConsumeOpts.AutoAck,
+		c.Config.ConsumerOpts.ConsumeOpts.Exclusive,
+		c.Config.ConsumerOpts.ConsumeOpts.NoLocal,
+		c.Config.ConsumerOpts.ConsumeOpts.NoWait,
+		c.Config.ConsumerOpts.ConsumeOpts.Args,
 	)
 	if err != nil {
 		return err

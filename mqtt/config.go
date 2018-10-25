@@ -13,12 +13,13 @@ type Config struct {
 	Username      string
 	Password      string
 	ClientID      string
-	KeepAlive     time.Duration
-	CleanSession  bool
-	AutoReconnect bool
-	MsgChanDept   uint
 	PubQoS        int
 	SubQoS        int
+	CleanSession  bool
+	AutoReconnect bool
+	Retained      bool
+	KeepAlive     time.Duration
+	MsgChanDept   uint
 }
 
 // NewConfig will initialize MQTT config struct
@@ -29,11 +30,12 @@ func NewConfig() *Config {
 		Username:      util.Env("MQTT_USERNAME", "guest"),
 		Password:      util.Env("MQTT_PASSWORD", "guest"),
 		ClientID:      util.Env("MQTT_CLIENT_ID", util.UUID()),
-		KeepAlive:     15 * time.Second,
-		CleanSession:  true,
-		AutoReconnect: true,
-		MsgChanDept:   100,
 		PubQoS:        0,
 		SubQoS:        0,
+		CleanSession:  true,
+		AutoReconnect: true,
+		Retained:      false,
+		KeepAlive:     15 * time.Second,
+		MsgChanDept:   100,
 	}
 }

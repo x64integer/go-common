@@ -25,7 +25,7 @@ type ConsumerOpts struct {
 	*QueueOpts
 	*ExchangeOpts
 	*QueueBindOpts
-	*ChannelConsumeOpts
+	*ConsumeOpts
 }
 
 // PublisherOpts struct
@@ -33,7 +33,7 @@ type PublisherOpts struct {
 	*QueueOpts
 	*ExchangeOpts
 	*QueueBindOpts
-	*ChannelPublishOpts
+	*PublishOpts
 }
 
 // QueueOpts struct
@@ -61,8 +61,8 @@ type QueueBindOpts struct {
 	Args   amqp.Table
 }
 
-// ChannelConsumeOpts struct
-type ChannelConsumeOpts struct {
+// ConsumeOpts struct
+type ConsumeOpts struct {
 	AutoAck   bool
 	Exclusive bool
 	NoLocal   bool
@@ -70,8 +70,8 @@ type ChannelConsumeOpts struct {
 	Args      amqp.Table
 }
 
-// ChannelPublishOpts struct
-type ChannelPublishOpts struct {
+// PublishOpts struct
+type PublishOpts struct {
 	Mandatory bool
 	Immediate bool
 }
@@ -107,7 +107,7 @@ func NewConfig() *Config {
 				NoWait: false,
 				Args:   nil,
 			},
-			ChannelConsumeOpts: &ChannelConsumeOpts{
+			ConsumeOpts: &ConsumeOpts{
 				AutoAck:   true,
 				Exclusive: false,
 				NoLocal:   false,
@@ -134,7 +134,7 @@ func NewConfig() *Config {
 				NoWait: false,
 				Args:   nil,
 			},
-			&ChannelPublishOpts{
+			&PublishOpts{
 				Mandatory: false,
 				Immediate: false,
 			},
