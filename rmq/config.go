@@ -15,25 +15,17 @@ type Config struct {
 	ExchangeKind string
 	Queue        string
 	RoutingKey   string
-	*ConsumerOpts
-	*PublisherOpts
+	ConsumerTag  string
+	*Options
 }
 
-// ConsumerOpts struct
-type ConsumerOpts struct {
-	ConsumerTag string
-	*QueueOpts
-	*ExchangeOpts
-	*QueueBindOpts
-	*ConsumeOpts
-}
-
-// PublisherOpts struct
-type PublisherOpts struct {
-	*QueueOpts
-	*ExchangeOpts
-	*QueueBindOpts
-	*PublishOpts
+// Options struct
+type Options struct {
+	Queue     *QueueOpts
+	Exchange  *ExchangeOpts
+	QueueBind *QueueBindOpts
+	Consume   *ConsumeOpts
+	Publish   *PublishOpts
 }
 
 // QueueOpts struct
@@ -76,7 +68,7 @@ type PublishOpts struct {
 	Immediate bool
 }
 
-// NewConfig will initialize RMQ config for error publisher
+// NewConfig will initialize RMQ default config values
 func NewConfig() *Config {
 	return &Config{
 		Host:         util.Env("RMQ_HOST", "localhost"),
@@ -87,54 +79,34 @@ func NewConfig() *Config {
 		ExchangeKind: util.Env("RMQ_EXCHANGE_KIND", "direct"),
 		Queue:        util.Env("RMQ_QUEUE", ""),
 		RoutingKey:   util.Env("RMQ_ROUTING_KEY", ""),
-		ConsumerOpts: &ConsumerOpts{
-			ConsumerTag: util.Env("RMQ_CONSUMER_TAG", ""),
-			QueueOpts: &QueueOpts{
+		ConsumerTag:  util.Env("RMQ_CONSUMER_TAG", ""),
+		Options: &Options{
+			Queue: &QueueOpts{
 				Durable:          true,
 				DeleteWhenUnused: false,
 				Exclusive:        false,
 				NoWait:           false,
 				Args:             nil,
 			},
-			ExchangeOpts: &ExchangeOpts{
+			Exchange: &ExchangeOpts{
 				Durable:    true,
 				AutoDelete: false,
 				Internal:   false,
 				NoWait:     false,
 				Args:       nil,
 			},
-			QueueBindOpts: &QueueBindOpts{
+			QueueBind: &QueueBindOpts{
 				NoWait: false,
 				Args:   nil,
 			},
-			ConsumeOpts: &ConsumeOpts{
+			Consume: &ConsumeOpts{
 				AutoAck:   true,
 				Exclusive: false,
 				NoLocal:   false,
 				NoWait:    false,
 				Args:      nil,
 			},
-		},
-		PublisherOpts: &PublisherOpts{
-			&QueueOpts{
-				Durable:          true,
-				DeleteWhenUnused: false,
-				Exclusive:        false,
-				NoWait:           false,
-				Args:             nil,
-			},
-			&ExchangeOpts{
-				Durable:    true,
-				AutoDelete: false,
-				Internal:   false,
-				NoWait:     false,
-				Args:       nil,
-			},
-			&QueueBindOpts{
-				NoWait: false,
-				Args:   nil,
-			},
-			&PublishOpts{
+			Publish: &PublishOpts{
 				Mandatory: false,
 				Immediate: false,
 			},

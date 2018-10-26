@@ -16,15 +16,16 @@
 
 ### Consumer
 
-* **Create new rmq.Consumer struct like so**
+* **Create new rmq.Connection struct and assign valid callback for HandleMsgs**
 ```
-consumer := &rmq.Consumer{
+consumer := &rmq.Connection{
     Config:     rmq.NewConfig(), // can be customized
     HandleMsgs: func(msgs <-chan amqp.Delivery) {
         for m := range msgs {
             log.Print(m)
         }
     },
+	ResetSignal: make(chan int),
 }
 ```
 
@@ -41,18 +42,37 @@ done := make(chan bool)
 
 go func() {
     if err := consumer.Consume(); err != nil {
-        log.Print("rmqq consume error: ", err)
+        log.Print("rmq consume error: ", err)
     }
 }()
 
 <-done
 ```
 
+* **Listen for reset signal from rmq connection and restart consumer.Consume()**
+```
+go func() {
+	for {
+		select {
+		case s := <-consumer.ResetSignal:
+			log.Print("consumer received rmq connection reset signal: ", s)
+
+			go func() {
+				if err := consumer.Consume(); err != nil {
+					log.Print("rmq failed to consume: ", err)
+					return
+				}
+			}()
+		}
+	}
+}()
+```
+
 ### Publisher
 
-* **Create new rmq.Publisher struct like so**
+* **Create new rmq.Connection struct**
 ```
-publisher := &rmq.Publisher{
+publisher := &rmq.Connection{
     Config:     rmq.NewConfig(), // can be customized
 }
 ```
@@ -81,6 +101,7 @@ if err := publisher.Publish([]byte("message")); err != nil {
 
 ### Config customization, for both Consumer and Publisher (*pay close attention to options/structs nestings*)
 ```
+// NewConfig will initialize RMQ default config values
 func NewConfig() *Config {
 	return &Config{
 		Host:         util.Env("RMQ_HOST", "localhost"),
@@ -92,58 +113,37 @@ func NewConfig() *Config {
 		Queue:        util.Env("RMQ_QUEUE", ""),
 		RoutingKey:   util.Env("RMQ_ROUTING_KEY", ""),
 		ConsumerTag:  util.Env("RMQ_CONSUMER_TAG", ""),
-		ConsumerOpts: &ConsumerOpts{
-			&QueueOpts{
+		Options: &Options{
+			Queue: &QueueOpts{
 				Durable:          true,
 				DeleteWhenUnused: false,
 				Exclusive:        false,
 				NoWait:           false,
 				Args:             nil,
 			},
-			&ExchangeOpts{
+			Exchange: &ExchangeOpts{
 				Durable:    true,
 				AutoDelete: false,
 				Internal:   false,
 				NoWait:     false,
 				Args:       nil,
 			},
-			&QueueBindOpts{
+			QueueBind: &QueueBindOpts{
 				NoWait: false,
 				Args:   nil,
 			},
-			&ChannelConsumeOpts{
+			Consume: &ConsumeOpts{
 				AutoAck:   true,
 				Exclusive: false,
 				NoLocal:   false,
 				NoWait:    false,
 				Args:      nil,
 			},
-		},
-		PublisherOpts: &PublisherOpts{
-			&QueueOpts{
-				Durable:          true,
-				DeleteWhenUnused: false,
-				Exclusive:        false,
-				NoWait:           false,
-				Args:             nil,
-			},
-			&ExchangeOpts{
-				Durable:    true,
-				AutoDelete: false,
-				Internal:   false,
-				NoWait:     false,
-				Args:       nil,
-			},
-			&QueueBindOpts{
-				NoWait: false,
-				Args:   nil,
-			},
-			&ChannelPublishOpts{
+			Publish: &PublishOpts{
 				Mandatory: false,
 				Immediate: false,
 			},
 		},
 	}
 }
-
 ```
