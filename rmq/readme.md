@@ -51,6 +51,8 @@ go func() {
 
 * **Listen for reset signal from rmq connection and restart consumer.Consume()**
 ```
+// done := make(chan bool)
+
 go func() {
 	for {
 		select {
@@ -66,6 +68,8 @@ go func() {
 		}
 	}
 }()
+
+// <-done
 ```
 
 ### Publisher
