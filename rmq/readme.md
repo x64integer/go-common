@@ -25,7 +25,7 @@ consumer := &rmq.Connection{
             log.Print(m)
         }
     },
-	ResetSignal: make(chan int),
+    ResetSignal: make(chan int),
 }
 ```
 
