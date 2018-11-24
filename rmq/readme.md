@@ -46,6 +46,8 @@ go func() {
     }
 }()
 
+// NOTE: close done channel to close RMQ connection
+// close(done)
 <-done
 ```
 
@@ -69,11 +71,6 @@ go func() {
 		}
 	}
 }()
-```
-
-* **Close *done* channel to close RMQ connection**
-```
-close(done)
 ```
 
 ### Publisher
