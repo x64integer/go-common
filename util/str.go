@@ -1,6 +1,7 @@
 package util
 
 import (
+	"encoding/base64"
 	"math/rand"
 	"time"
 
@@ -42,4 +43,16 @@ func RandomStr(n int) string {
 	}
 
 	return string(b)
+}
+
+// Base64URLEncode will base64 URL encode given input
+func Base64URLEncode(input string) string {
+	return base64.URLEncoding.EncodeToString([]byte(input))
+}
+
+// Base64URLDecode will decode base64 URL encoded given input
+func Base64URLDecode(input string) (string, error) {
+	res, err := base64.URLEncoding.DecodeString(input)
+
+	return string(res), err
 }
