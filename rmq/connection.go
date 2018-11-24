@@ -10,17 +10,18 @@ import (
 	"github.com/streadway/amqp"
 )
 
-// reconnectTime is time to wait for rmq reconnect on Conn.NotifyClose() event - situation when rmq sends signal about shutdown
+// reconnectTime is default time to wait for rmq reconnect on Conn.NotifyClose() event - situation when rmq sends signal about shutdown
 var reconnectTime = 15 * time.Second
 
 // Connection for RMQ
 type Connection struct {
-	Config      *Config
-	Conn        *amqp.Connection
-	Channel     *amqp.Channel
-	HandleMsgs  func(msgs <-chan amqp.Delivery)
-	Headers     amqp.Table
-	ResetSignal chan int
+	Config        *Config
+	Conn          *amqp.Connection
+	Channel       *amqp.Channel
+	HandleMsgs    func(msgs <-chan amqp.Delivery)
+	Headers       amqp.Table
+	ResetSignal   chan int
+	ReconnectTime time.Duration
 }
 
 // Setup RMQ Connection
@@ -76,12 +77,15 @@ func (c *Connection) Setup() error {
 		return err
 	}
 
+	if c.ReconnectTime == 0 {
+		c.ReconnectTime = reconnectTime
+	}
+
 	return nil
 }
 
 // Consume data from RMQ
-func (c *Connection) Consume() error {
-
+func (c *Connection) Consume(done chan bool) error {
 	msgs, err := c.Channel.Consume(
 		c.Config.Queue,
 		c.Config.ConsumerTag,
@@ -95,20 +99,17 @@ func (c *Connection) Consume() error {
 		return err
 	}
 
-	defer c.Conn.Close()
-	defer c.Channel.Close()
-	defer log.Print("returning from Consume, closing rmq connection")
-
 	connClose := make(chan *amqp.Error)
+	c.Conn.NotifyClose(connClose)
 
 	go func() {
 		err := <-connClose
 
 		log.Print("rmq connection lost: ", err)
-		log.Printf("reconnecting to rmq in %v...", reconnectTime.String())
+		log.Printf("reconnecting to rmq in %v...", c.ReconnectTime.String())
 
 		select {
-		case <-time.After(reconnectTime):
+		case <-time.After(c.ReconnectTime):
 			if err := c.Setup(); err != nil {
 				log.Print("failed to recreate rmq connection: ", err)
 
@@ -121,17 +122,19 @@ func (c *Connection) Consume() error {
 		log.Print("rmq reconnection successul, signal 1 sent")
 	}()
 
-	c.Conn.NotifyClose(connClose)
-
-	done := make(chan bool)
-
 	go c.HandleMsgs(msgs)
 
 	log.Print("Waiting for messages...")
 
-	<-done
+	for {
+		select {
+		case <-done:
+			c.Channel.Close()
+			c.Conn.Close()
 
-	return nil
+			return nil
+		}
+	}
 }
 
 // Publish payload to RMQ
@@ -149,9 +152,6 @@ func (c *Connection) Publish(payload []byte) error {
 		}); err != nil {
 		return err
 	}
-
-	defer c.Conn.Close()
-	defer c.Channel.Close()
 
 	return nil
 }

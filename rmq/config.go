@@ -2,7 +2,7 @@ package rmq
 
 import (
 	"github.com/streadway/amqp"
-	"github.com/x64puzzle/go-common/util"
+	"github.com/x64integer/go-common/util"
 )
 
 // Config for RMQ
