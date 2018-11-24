@@ -1,6 +1,6 @@
 package redis
 
-import "github.com/x64puzzle/go-common/util"
+import "github.com/x64integer/go-common/util"
 
 // Config for redis
 type Config struct {

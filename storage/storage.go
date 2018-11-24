@@ -2,22 +2,19 @@ package storage
 
 import (
 	"database/sql"
+	"errors"
 
 	"github.com/go-redis/redis"
 	"github.com/olivere/elastic"
-	_elastic "github.com/x64puzzle/go-common/storage/elastic"
-	_pg "github.com/x64puzzle/go-common/storage/pg"
-	_redis "github.com/x64puzzle/go-common/storage/redis"
+	"github.com/x64integer/go-common/storage/cache"
+	_elastic "github.com/x64integer/go-common/storage/elastic"
+	_pg "github.com/x64integer/go-common/storage/pg"
+	_redis "github.com/x64integer/go-common/storage/redis"
+	"github.com/x64integer/go-common/util"
 )
 
 // Caller must close storage connections (as per need)!
 // defer storage.PG.Close(), defer storage.Redis.Close(), etc...
-
-// In order to add new storage engine, do the following:
-// 1.) Add config bit mask constant: 1, 2, 4, 8, 16, 32, 64, 128...
-// 2.) Expose its client var
-// 3.) Implement storage.service.InitConnection() for new storage engine (take Redis as an example)
-// 4.) Initialize its Client in Init(engine int) func
 
 const (
 	// RedisBitMask config bit mask
@@ -26,6 +23,8 @@ const (
 	ElasticBitMask = 2
 	// PGBitMask config bit mask
 	PGBitMask = 4
+	// CacheBitMask flag
+	CacheBitMask = 8
 )
 
 var (
@@ -37,6 +36,8 @@ var (
 	Elastic *elastic.Client
 	// PG client exposed
 	PG *sql.DB
+	// Cache instance exposed
+	Cache cache.Storage
 )
 
 // Init will initialize storage engine based on given config bit mask
@@ -78,6 +79,22 @@ func Init(engineBitMask int) error {
 		}
 
 		PG = _pg.Client
+	}
+
+	// Initialize cache client
+	if EngineBitMask&CacheBitMask != 0 {
+		c := util.Env("CACHE_CLIENT", "redis")
+
+		switch c {
+		default:
+			if Redis == nil {
+				return errors.New("redis client not initialized - worker should use RedisBitMask in its StorageBitMask()")
+			}
+
+			Cache = &cache.Redis{
+				Client: Redis,
+			}
+		}
 	}
 
 	return nil

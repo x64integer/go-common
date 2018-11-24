@@ -1,6 +1,6 @@
 package elastic
 
-import "github.com/x64puzzle/go-common/util"
+import "github.com/x64integer/go-common/util"
 
 // Config for elasticsearch
 type Config struct {
