@@ -74,7 +74,7 @@ go func() {
 * **Close *done* channel to close RMQ connection**
 ```
 close(done)
-``
+```
 
 ### Publisher
 
