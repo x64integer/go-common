@@ -63,7 +63,7 @@ go func() {
 			done := make(chan bool)
 
 			go func() {
-				if err := consumer.Consume(); err != nil {
+				if err := consumer.Consume(done); err != nil {
 					log.Print("rmq failed to consume: ", err)
 					return
 				}
