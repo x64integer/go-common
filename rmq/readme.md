@@ -41,7 +41,7 @@ if err := consumer.Setup(); err != nil {
 done := make(chan bool)
 
 go func() {
-    if err := consumer.Consume(); err != nil {
+    if err := consumer.Consume(done); err != nil {
         log.Print("rmq consume error: ", err)
     }
 }()
@@ -51,13 +51,14 @@ go func() {
 
 * **Listen for reset signal from rmq connection and restart consumer.Consume()**
 ```
-// done := make(chan bool)
-
 go func() {
 	for {
 		select {
 		case s := <-consumer.ResetSignal:
 			log.Print("consumer received rmq connection reset signal: ", s)
+
+			// NOTE: important step, recreate done channel!
+			done := make(chan bool)
 
 			go func() {
 				if err := consumer.Consume(); err != nil {
@@ -68,9 +69,12 @@ go func() {
 		}
 	}
 }()
-
-// <-done
 ```
+
+* **Close *done* channel to close RMQ connection**
+```
+close(done)
+``
 
 ### Publisher
 
