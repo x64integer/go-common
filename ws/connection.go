@@ -42,7 +42,9 @@ func (conn *Connection) Setup() error {
 		go ch.Read()
 	}
 
-	go ch.HandleError()
+	if conn.OnError != nil {
+		go ch.HandleError()
+	}
 
 	return nil
 }
