@@ -13,25 +13,27 @@ type Config struct {
 	Name     string // my_db_name
 	User     string // my_db_user
 	Password string // my_db_password
+	SSLMode  string // disable
 	MaxConn  int    // 20
 }
 
 // NewConfig will init db connection string
 func NewConfig() *Config {
-	cs := new(Config)
+	conf := new(Config)
 
-	cs.Host = util.Env("PG_HOST", "")
-	cs.Name = util.Env("PG_NAME", "")
-	cs.Port = util.Env("PG_PORT", "5432")
-	cs.User = util.Env("PG_USER", "")
-	cs.Password = util.Env("PG_PASSWORD", "")
+	conf.Host = util.Env("PG_HOST", "")
+	conf.Name = util.Env("PG_NAME", "")
+	conf.Port = util.Env("PG_PORT", "5432")
+	conf.User = util.Env("PG_USER", "")
+	conf.Password = util.Env("PG_PASSWORD", "")
+	conf.SSLMode = util.Env("SSLMODE", "disable")
 
 	maxConn, err := strconv.Atoi(util.Env("PG_MAX_DB_CONN", "20"))
 	if err != nil {
 		maxConn = 20
 	}
 
-	cs.MaxConn = maxConn
+	conf.MaxConn = maxConn
 
-	return cs
+	return conf
 }

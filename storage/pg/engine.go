@@ -17,9 +17,9 @@ type Engine struct{}
 
 // InitConnection implements storage.service.InitConnection()
 func (e *Engine) InitConnection() error {
-	config := NewConfig() // default values will be used from env variables
+	conf := NewConfig() // default values will be used from env variables
 
-	Client, err = e.init(config)
+	Client, err = e.init(conf)
 	if err != nil {
 		return err
 	}
@@ -28,8 +28,8 @@ func (e *Engine) InitConnection() error {
 }
 
 // init is helper function to initialize PG connection
-func (e *Engine) init(config *Config) (*sql.DB, error) {
-	str := "user=" + config.User + " password=" + config.Password + " dbname=" + config.Name + " sslmode=disable"
+func (e *Engine) init(conf *Config) (*sql.DB, error) {
+	str := "user=" + conf.User + " password=" + conf.Password + " dbname=" + conf.Name + " sslmode=" + conf.SSLMode
 
 	client, err := sql.Open("postgres", str)
 	if err != nil {
@@ -41,7 +41,7 @@ func (e *Engine) init(config *Config) (*sql.DB, error) {
 		return nil, err
 	}
 
-	client.SetMaxOpenConns(config.MaxConn)
+	client.SetMaxOpenConns(conf.MaxConn)
 
 	return client, nil
 }
