@@ -46,7 +46,7 @@ func (conn *Connection) Publish(t string, p []byte) mqtt.Token {
 	return token
 }
 
-// Subscribe to topic c
+// Subscribe to topic t
 func (conn *Connection) Subscribe(t string, callback func(c mqtt.Client, m mqtt.Message)) mqtt.Token {
 	token := conn.Client.Subscribe(t, byte(conn.Config.SubQoS), callback)
 
