@@ -56,3 +56,8 @@ func Base64URLDecode(input string) (string, error) {
 
 	return string(res), err
 }
+
+// RandomInt generates random integer
+func RandomInt(min, max int) int {
+	return min + rand.Intn(max-min)
+}
