@@ -9,7 +9,6 @@ import (
 // Connection for ws
 type Connection struct {
 	Config    *Config
-	KeepAlive bool
 	Channel   *Channel
 	OnMessage func(in []byte)
 	OnError   func(err error)
@@ -24,10 +23,6 @@ func (conn *Connection) Setup() error {
 	c, _, err := websocket.DefaultDialer.Dial(conn.Config.WSURL, nil)
 	if err != nil {
 		return err
-	}
-
-	if !conn.KeepAlive {
-		defer c.Close()
 	}
 
 	ch := &Channel{
