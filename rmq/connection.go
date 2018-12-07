@@ -99,29 +99,6 @@ func (c *Connection) Consume(done chan bool) error {
 		return err
 	}
 
-	connClose := make(chan *amqp.Error)
-	c.Conn.NotifyClose(connClose)
-
-	go func() {
-		err := <-connClose
-
-		log.Print("rmq connection lost: ", err)
-		log.Printf("reconnecting to rmq in %v...", c.ReconnectTime.String())
-
-		select {
-		case <-time.After(c.ReconnectTime):
-			if err := c.Setup(); err != nil {
-				log.Print("failed to recreate rmq connection: ", err)
-
-				os.Exit(101)
-			}
-		}
-
-		c.ResetSignal <- 1
-
-		log.Print("rmq reconnection successul, signal 1 sent")
-	}()
-
 	go c.HandleMsgs(msgs)
 
 	log.Print("Waiting for messages...")
@@ -161,4 +138,32 @@ func (c *Connection) WithHeaders(h amqp.Table) *Connection {
 	c.Headers = h
 
 	return c
+}
+
+// ListenNotifyClose will listen for rmq connection shutdown and attempt to re-create rmq connection
+func (c *Connection) ListenNotifyClose() {
+	connClose := make(chan *amqp.Error)
+	c.Conn.NotifyClose(connClose)
+
+	go func() {
+		err := <-connClose
+
+		log.Print("rmq connection lost: ", err)
+		log.Printf("reconnecting to rmq in %v...", c.ReconnectTime.String())
+
+		select {
+		case <-time.After(c.ReconnectTime):
+			log.Print("re-creating rmq connection")
+
+			if err := c.Setup(); err != nil {
+				log.Print("failed to recreate rmq connection: ", err)
+
+				os.Exit(101)
+			}
+		}
+
+		c.ResetSignal <- 1
+
+		log.Print("rmq reconnection successul, signal 1 sent")
+	}()
 }
