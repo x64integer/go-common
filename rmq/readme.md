@@ -97,7 +97,7 @@ go publisher.ListenNotifyClose()
 
 * **Listen for reset signal from rmq connection and re-create rmq connection**
 ```
-go func(done chan bool) {
+go func() {
 	for {
 		select {
 		case s := <-publisher.ResetSignal:
@@ -111,7 +111,7 @@ go func(done chan bool) {
 			go publisher.ListenNotifyClose()
 		}
 	}
-}(done)
+}()
 ```
 
 * **Optionally, set rmq headers**
