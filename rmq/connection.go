@@ -162,8 +162,10 @@ func (c *Connection) ListenNotifyClose() {
 			}
 		}
 
+		log.Print("sending signal 1 to rmq connection...")
+
 		c.ResetSignal <- 1
 
-		log.Print("rmq reconnection successul, signal 1 sent")
+		log.Print("signal 1 sent to rmq connection")
 	}()
 }
