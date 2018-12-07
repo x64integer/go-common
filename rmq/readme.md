@@ -65,6 +65,9 @@ go func(done chan bool) {
 			// NOTE: dont forget to call ListenNotifyClose() again
 			go consumer.ListenNotifyClose()
 
+			// NOTE: if reconnection fails for your setup, try to uncomment this part to re-create done chan
+			// done := make(chan bool)
+
 			go func() {
 				if err := consumer.Consume(done); err != nil {
 					log.Print("rmq failed to consume: ", err)
