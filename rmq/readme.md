@@ -85,6 +85,7 @@ go func(done chan bool) {
 ```
 publisher := &rmq.Connection{
     Config:     rmq.NewConfig(), // can be customized
+	ResetSignal: make(chan int),
 }
 ```
 
