@@ -8,10 +8,11 @@ import (
 
 // Connection for ws
 type Connection struct {
-	Config    *Config
-	Channel   *Channel
-	OnMessage func(in []byte)
-	OnError   func(err error)
+	Config      *Config
+	Channel     *Channel
+	OnMessage   func(in []byte)
+	OnError     func(err error)
+	OnConnClose func(code int, msg string)
 }
 
 // Setup will create ws connection and start listening for messages
@@ -26,19 +27,16 @@ func (conn *Connection) Setup() error {
 	}
 
 	ch := &Channel{
-		Conn:      c,
-		OnMessage: conn.OnMessage,
-		OnError:   conn.OnError,
+		Conn:        c,
+		OnMessage:   conn.OnMessage,
+		OnError:     conn.OnError,
+		OnConnClose: conn.OnConnClose,
 	}
 
 	conn.Channel = ch
 
 	if conn.OnMessage != nil {
 		go ch.Read()
-	}
-
-	if conn.OnError != nil {
-		go ch.HandleError()
 	}
 
 	return nil

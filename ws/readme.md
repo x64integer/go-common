@@ -15,6 +15,17 @@ c := &ws.Connection{
     },
     OnError: func(err error) {
         // handle error from ws channel
+        log.Println("error from ws connection: ", err)
+
+        if strings.Contains(err.Error(), "closed network connection") {
+			os.Exit(1)
+		}
+    },
+    OnConnClose: func(code int, msg string) {
+        // handle closed ws connection
+        log.Printf("closed conn: code=%v - msg=%v\n", code, msg)
+
+        os.Exit(1)
     },
 }
 ```

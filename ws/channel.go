@@ -8,12 +8,13 @@ import (
 
 // Channel for each ws connection
 type Channel struct {
-	ReadLock  sync.Mutex
-	SendLock  sync.Mutex
-	Conn      *websocket.Conn
-	OnMessage func(in []byte)
-	OnError   func(err error)
-	Error     chan error
+	ReadLock    sync.Mutex
+	SendLock    sync.Mutex
+	Conn        *websocket.Conn
+	OnMessage   func(in []byte)
+	OnError     func(err error)
+	OnConnClose func(code int, msg string)
+	Error       chan error
 }
 
 // NewChannel will init new Channel struct
@@ -48,20 +49,19 @@ func (ch *Channel) Read() {
 		_, p, err := ch.ReadMessage()
 
 		if err != nil {
-			ch.Error <- err
+			if c, k := err.(*websocket.CloseError); k {
+				if ch.OnConnClose != nil {
+					ch.OnConnClose(c.Code, c.Text)
+				}
+			}
+
+			if ch.OnError != nil {
+				ch.OnError(err)
+			}
+
 			continue
 		}
 
 		ch.OnMessage(p)
-	}
-}
-
-// HandleError from errors channel
-func (ch *Channel) HandleError() {
-	for {
-		select {
-		case err := <-ch.Error:
-			ch.OnError(err)
-		}
 	}
 }

@@ -23,6 +23,7 @@ type Config struct {
 type Options struct {
 	Queue     *QueueOpts
 	Exchange  *ExchangeOpts
+	QoS       *QoSOpts
 	QueueBind *QueueBindOpts
 	Consume   *ConsumeOpts
 	Publish   *PublishOpts
@@ -45,6 +46,13 @@ type ExchangeOpts struct {
 	Internal   bool
 	NoWait     bool
 	Args       amqp.Table
+}
+
+// QoSOpts struct
+type QoSOpts struct {
+	PrefetchCount int
+	PrefetchSize  int
+	Global        bool
 }
 
 // QueueBindOpts struct
@@ -94,6 +102,11 @@ func NewConfig() *Config {
 				Internal:   false,
 				NoWait:     false,
 				Args:       nil,
+			},
+			QoS: &QoSOpts{
+				PrefetchCount: 1,
+				PrefetchSize:  0,
+				Global:        false,
 			},
 			QueueBind: &QueueBindOpts{
 				NoWait: false,

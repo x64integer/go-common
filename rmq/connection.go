@@ -67,6 +67,14 @@ func (c *Connection) Setup() error {
 		return err
 	}
 
+	if err := c.Channel.Qos(
+		c.Config.Options.QoS.PrefetchCount,
+		c.Config.Options.QoS.PrefetchSize,
+		c.Config.Options.QoS.Global,
+	); err != nil {
+		return err
+	}
+
 	if err := c.Channel.QueueBind(
 		c.Config.Queue,
 		c.Config.RoutingKey,
