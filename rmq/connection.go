@@ -50,45 +50,19 @@ func (c *Connection) Setup() error {
 
 	c.Channel = ch
 
-	_, err = c.Channel.QueueDeclare(
-		c.Config.Queue,
-		c.Config.Options.Queue.Durable,
-		c.Config.Options.Queue.DeleteWhenUnused,
-		c.Config.Options.Queue.Exclusive,
-		c.Config.Options.Queue.NoWait,
-		c.Config.Options.Queue.Args,
-	)
-	if err != nil {
+	if _, err := c.queueDeclare(c.Config); err != nil {
 		return err
 	}
 
-	if err := c.Channel.ExchangeDeclare(
-		c.Config.Exchange,
-		c.Config.ExchangeKind,
-		c.Config.Options.Exchange.Durable,
-		c.Config.Options.Exchange.AutoDelete,
-		c.Config.Options.Exchange.Internal,
-		c.Config.Options.Exchange.NoWait,
-		c.Config.Options.Exchange.Args,
-	); err != nil {
+	if err := c.exchangeDeclare(c.Config); err != nil {
 		return err
 	}
 
-	if err := c.Channel.Qos(
-		c.Config.Options.QoS.PrefetchCount,
-		c.Config.Options.QoS.PrefetchSize,
-		c.Config.Options.QoS.Global,
-	); err != nil {
+	if err := c.qos(c.Config); err != nil {
 		return err
 	}
 
-	if err := c.Channel.QueueBind(
-		c.Config.Queue,
-		c.Config.RoutingKey,
-		c.Config.Exchange,
-		c.Config.Options.QueueBind.NoWait,
-		c.Config.Options.QueueBind.Args,
-	); err != nil {
+	if err := c.queueBind(c.Config); err != nil {
 		return err
 	}
 
@@ -98,6 +72,33 @@ func (c *Connection) Setup() error {
 
 	if !c.DisabledHealthCheck {
 		go c.healthCheck()
+	}
+
+	return nil
+}
+
+// DeclareWithConfig will initialize additional queues and exchanges on existing rmq setup/channel
+func (c *Connection) DeclareWithConfig(config []*Config) error {
+	if c.Channel == nil {
+		return errors.New("c.Channel is nil, make sure valid channel is assigned to connection")
+	}
+
+	for _, conf := range config {
+		if _, err := c.queueDeclare(conf); err != nil {
+			return err
+		}
+
+		if err := c.exchangeDeclare(conf); err != nil {
+			return err
+		}
+
+		if err := c.qos(conf); err != nil {
+			return err
+		}
+
+		if err := c.queueBind(conf); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -119,6 +120,36 @@ func (c *Connection) Consume(done chan bool) error {
 	}
 
 	go c.HandleMsgs(msgs)
+
+	log.Println("Waiting for messages...")
+
+	for {
+		select {
+		case <-done:
+			c.Channel.Close()
+			c.Conn.Close()
+
+			return nil
+		}
+	}
+}
+
+// ConsumerWithConfig will start consumer with passed config values
+func (c *Connection) ConsumerWithConfig(done chan bool, config *Config, callback func(msgs <-chan amqp.Delivery)) error {
+	msgs, err := c.Channel.Consume(
+		config.Queue,
+		config.ConsumerTag,
+		config.Options.Consume.AutoAck,
+		config.Options.Consume.Exclusive,
+		config.Options.Consume.NoLocal,
+		config.Options.Consume.NoWait,
+		config.Options.Consume.Args,
+	)
+	if err != nil {
+		return err
+	}
+
+	go callback(msgs)
 
 	log.Println("Waiting for messages...")
 
@@ -200,6 +231,59 @@ func (c *Connection) ListenNotifyClose(done chan bool) {
 	}()
 
 	<-done
+}
+
+// queueDeclare is helper function to declare queue
+func (c *Connection) queueDeclare(conf *Config) (amqp.Queue, error) {
+	queue, err := c.Channel.QueueDeclare(
+		conf.Queue,
+		conf.Options.Queue.Durable,
+		conf.Options.Queue.DeleteWhenUnused,
+		conf.Options.Queue.Exclusive,
+		conf.Options.Queue.NoWait,
+		conf.Options.Queue.Args,
+	)
+
+	return queue, err
+}
+
+// exchangeDeclare is helper function to declare exchange
+func (c *Connection) exchangeDeclare(conf *Config) error {
+	err := c.Channel.ExchangeDeclare(
+		conf.Exchange,
+		conf.ExchangeKind,
+		conf.Options.Exchange.Durable,
+		conf.Options.Exchange.AutoDelete,
+		conf.Options.Exchange.Internal,
+		conf.Options.Exchange.NoWait,
+		conf.Options.Exchange.Args,
+	)
+
+	return err
+}
+
+// qos is helper function to define QoS for channel
+func (c *Connection) qos(conf *Config) error {
+	err := c.Channel.Qos(
+		conf.Options.QoS.PrefetchCount,
+		conf.Options.QoS.PrefetchSize,
+		conf.Options.QoS.Global,
+	)
+
+	return err
+}
+
+// queueBind is helper function to bind queue to exchange
+func (c *Connection) queueBind(conf *Config) error {
+	err := c.Channel.QueueBind(
+		conf.Queue,
+		conf.RoutingKey,
+		conf.Exchange,
+		conf.Options.QueueBind.NoWait,
+		conf.Options.QueueBind.Args,
+	)
+
+	return err
 }
 
 // recreateConn for rmq
