@@ -99,7 +99,7 @@ done := make(chan bool)
 go publisher.ListenNotifyClose(done)
 ```
 
-* **Listen for reset signal from rmq connection and re-create rmq connection**
+* **Optionally, listen for reset signal from rmq connection and re-create rmq connection**
 ```
 go func() {
 	for {
