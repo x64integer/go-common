@@ -27,6 +27,8 @@ consumer := &rmq.Connection{
     },
     ResetSignal: make(chan int),
 }
+
+done := make(chan bool)
 ```
 
 * **Call setup func on created consumer (*this will setup conn, exchange, queue, etc...*)**
@@ -36,13 +38,11 @@ if err := consumer.Setup(); err != nil {
     return err
 }
 
-go consumer.ListenNotifyClose()
+go consumer.ListenNotifyClose(done)
 ```
 
 * **Call consume func on created consumer to start consuming messages**
 ```
-done := make(chan bool)
-
 go func() {
     if err := consumer.Consume(done); err != nil {
         log.Print("rmq consume error: ", err)
@@ -54,7 +54,7 @@ go func() {
 <-done
 ```
 
-* **Listen for reset signal from rmq connection and restart consumer.Consume()**
+* **Optionally, listen for reset signal from rmq connection and restart consumer.Consume()**
 ```
 go func(done chan bool) {
 	for {
@@ -62,10 +62,8 @@ go func(done chan bool) {
 		case s := <-consumer.ResetSignal:
 			log.Print("consumer received rmq connection reset signal: ", s)
 
-			// NOTE: dont forget to call ListenNotifyClose() again
-			go consumer.ListenNotifyClose()
-
-			// NOTE: if reconnection fails for your setup, try to uncomment this part to re-create done chan
+			// NOTE: if consumer fails to recreate, attempt to recreate done channel
+			// usually required if we manually close done channel -> close(done)
 			// done := make(chan bool)
 
 			go func() {
@@ -96,7 +94,9 @@ if err := publisher.Setup(); err != nil {
     return err
 }
 
-go publisher.ListenNotifyClose()
+done := make(chan bool)
+
+go publisher.ListenNotifyClose(done)
 ```
 
 * **Listen for reset signal from rmq connection and re-create rmq connection**
@@ -110,9 +110,6 @@ go func() {
 			if err := publisher.Setup(); err != nil {
 				return err
 			}
-
-			// NOTE: dont forget to call ListenNotifyClose() again
-			go publisher.ListenNotifyClose()
 		}
 	}
 }()

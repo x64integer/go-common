@@ -4,24 +4,31 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"time"
 
 	"github.com/streadway/amqp"
 )
 
-// reconnectTime is default time to wait for rmq reconnect on Conn.NotifyClose() event - situation when rmq sends signal about shutdown
-var reconnectTime = 15 * time.Second
+var (
+	// reconnectTime is default time to wait for rmq reconnect on Conn.NotifyClose() event - situation when rmq sends signal about shutdown
+	reconnectTime = 20 * time.Second
+	// healthCheckTime is time interval for healthCheck
+	healthCheckTime = 5 * time.Second
+)
 
 // Connection for RMQ
 type Connection struct {
-	Config        *Config
-	Conn          *amqp.Connection
-	Channel       *amqp.Channel
-	HandleMsgs    func(msgs <-chan amqp.Delivery)
-	Headers       amqp.Table
-	ResetSignal   chan int
-	ReconnectTime time.Duration
+	Config              *Config
+	Conn                *amqp.Connection
+	Channel             *amqp.Channel
+	HandleMsgs          func(msgs <-chan amqp.Delivery)
+	Headers             amqp.Table
+	ResetSignal         chan int
+	ReconnectTime       time.Duration
+	Retrying            bool
+	DisabledHealthCheck bool
 }
 
 // Setup RMQ Connection
@@ -89,6 +96,10 @@ func (c *Connection) Setup() error {
 		c.ReconnectTime = reconnectTime
 	}
 
+	if !c.DisabledHealthCheck {
+		go c.healthCheck()
+	}
+
 	return nil
 }
 
@@ -109,7 +120,7 @@ func (c *Connection) Consume(done chan bool) error {
 
 	go c.HandleMsgs(msgs)
 
-	log.Print("Waiting for messages...")
+	log.Println("Waiting for messages...")
 
 	for {
 		select {
@@ -149,31 +160,135 @@ func (c *Connection) WithHeaders(h amqp.Table) *Connection {
 }
 
 // ListenNotifyClose will listen for rmq connection shutdown and attempt to re-create rmq connection
-func (c *Connection) ListenNotifyClose() {
+func (c *Connection) ListenNotifyClose(done chan bool) {
 	connClose := make(chan *amqp.Error)
 	c.Conn.NotifyClose(connClose)
 
 	go func() {
-		err := <-connClose
+		for {
+			select {
+			case err := <-connClose:
+				log.Println("rmq connection lost: ", err)
+				log.Printf("reconnecting to rmq in %v...\n", c.ReconnectTime.String())
 
-		log.Print("rmq connection lost: ", err)
-		log.Printf("reconnecting to rmq in %v...", c.ReconnectTime.String())
+				c.Retrying = true
 
-		select {
-		case <-time.After(c.ReconnectTime):
-			log.Print("re-creating rmq connection")
+				time.Sleep(c.ReconnectTime)
 
-			if err := c.Setup(); err != nil {
-				log.Print("failed to recreate rmq connection: ", err)
+				if err := c.validateHost(); err != nil {
+					killService("failed to validate rmq host: ", err)
+				}
 
-				os.Exit(101)
+				if err := c.recreateConn(); err != nil {
+					killService("failed to recreate rmq connection: ", err)
+				}
+
+				log.Println("sending signal 1 to rmq connection...")
+
+				c.ResetSignal <- 1
+
+				log.Println("signal 1 sent to rmq connection")
+
+				// important step!
+				// recreate connClose channel so we can listen for NotifyClose once again
+				connClose = make(chan *amqp.Error)
+				c.Conn.NotifyClose(connClose)
+
+				c.Retrying = false
 			}
 		}
-
-		log.Print("sending signal 1 to rmq connection...")
-
-		c.ResetSignal <- 1
-
-		log.Print("signal 1 sent to rmq connection")
 	}()
+
+	<-done
+}
+
+// recreateConn for rmq
+func (c *Connection) recreateConn() error {
+	log.Println("trying to recreate rmq connection for host: ", c.Config.Host)
+
+	// important step!
+	// prevent healthCheck() to be run once again in c.Setup() because first call to c.Setup() on service Init() already started it (by default)
+	// so we do not need/want it to be run again, it would start useless goroutine
+	c.DisabledHealthCheck = true
+
+	return c.Setup()
+}
+
+// healthCheck for rmq connection
+func (c *Connection) healthCheck() {
+	for {
+		select {
+		case <-time.After(healthCheckTime):
+			if !c.Retrying {
+				// capture current rmq host
+				oldHost := c.Config.Host
+
+				if err := c.validateHost(); err != nil {
+					killService("failed to validate rmq host: ", err)
+				}
+
+				// this means new host was assigned meanwhile (in c.validateHost())
+				if oldHost != c.Config.Host {
+					if err := c.recreateConn(); err != nil {
+						killService("failed to recreate rmq connection: ", err)
+					}
+
+					log.Println("rmq connected to new host: ", c.Config.Host)
+				}
+			}
+		}
+	}
+}
+
+// validateHost will check if rmq host is still valid
+// if its invalid -> will resolve dns and assign first valid ip address to rmq host for any further reconnections, c.ConfigHost = <new host ip>
+// if its valid still -> nothing happens
+func (c *Connection) validateHost() error {
+	if check := checkIPConnection(c.Config.Host, c.Config.Port); check {
+		return nil
+	}
+
+	ips, err := resolveDNS(c.Config.Host)
+	if err != nil {
+		log.Println("failed to resolve host: ", err)
+
+		return err
+	}
+
+	for _, ip := range ips {
+		if check := checkIPConnection(ip.String(), c.Config.Port); check {
+			c.Config.Host = ip.String()
+
+			break
+		}
+	}
+
+	return nil
+}
+
+// killService with message passed to console output
+func killService(msg ...interface{}) {
+	log.Println(msg...)
+	os.Exit(101)
+}
+
+// checkIPConnection will check if IP is available
+func checkIPConnection(host string, port string) bool {
+	conn, err := net.Dial("tcp", host+":"+port)
+	if err != nil {
+		return false
+	}
+	defer conn.Close()
+
+	return true
+}
+
+// resolveDNS will return assigned ip addresses to given host/record
+func resolveDNS(record string) ([]net.IP, error) {
+	ips, err := net.LookupIP(record)
+	if err != nil {
+		return nil, err
+	}
+
+	return ips, nil
 }
