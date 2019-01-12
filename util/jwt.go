@@ -37,8 +37,8 @@ func (t *Token) Generate(c map[string]string) (string, error) {
 	return tokenStr, nil
 }
 
-// ValidAndExtract will check if given JWT token is valid and return claims
-func (t *Token) ValidAndExtract(tokenStr string) (jwt.MapClaims, bool) {
+// ValidateAndExtract will check if given JWT token is valid and return claims
+func (t *Token) ValidateAndExtract(tokenStr string) (jwt.MapClaims, bool) {
 	if token, _ := jwt.Parse(tokenStr, func(_t *jwt.Token) (interface{}, error) {
 		if _, ok := _t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("failed to parse JWT token")
