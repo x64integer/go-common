@@ -166,7 +166,7 @@ func (c *Connection) ConsumerWithConfig(done chan bool, config *Config, callback
 
 // Publish payload to RMQ
 func (c *Connection) Publish(payload []byte) error {
-	if err := c.Channel.Publish(
+	err := c.Channel.Publish(
 		c.Config.Exchange,
 		c.Config.RoutingKey,
 		c.Config.Options.Publish.Mandatory,
@@ -176,11 +176,9 @@ func (c *Connection) Publish(payload []byte) error {
 			ContentType:  "text/plain",
 			Body:         payload,
 			Headers:      c.Headers,
-		}); err != nil {
-		return err
-	}
+		})
 
-	return nil
+	return err
 }
 
 // WithHeaders will set headers to be sent

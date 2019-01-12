@@ -3,7 +3,7 @@ package mqtt
 import (
 	"errors"
 
-	"github.com/eclipse/paho.mqtt.golang"
+	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
 // Connection struct for MQTT
@@ -41,14 +41,10 @@ func NewConnection(config *Config) (*Connection, error) {
 
 // Publish payload p to topic t
 func (conn *Connection) Publish(t string, p []byte) mqtt.Token {
-	token := conn.Client.Publish(t, byte(conn.Config.PubQoS), conn.Config.Retained, p)
-
-	return token
+	return conn.Client.Publish(t, byte(conn.Config.PubQoS), conn.Config.Retained, p)
 }
 
 // Subscribe to topic t
 func (conn *Connection) Subscribe(t string, callback func(c mqtt.Client, m mqtt.Message)) mqtt.Token {
-	token := conn.Client.Subscribe(t, byte(conn.Config.SubQoS), callback)
-
-	return token
+	return conn.Client.Subscribe(t, byte(conn.Config.SubQoS), callback)
 }

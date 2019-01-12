@@ -16,8 +16,6 @@ const (
 	letterIdxMax  = 63 / letterIdxBits   // # of letter indices fitting in 63 bits
 )
 
-var src = rand.NewSource(time.Now().UnixNano())
-
 // UUID will return cryptographically-secure unique id
 func UUID() string {
 	return uuid.Must(uuid.NewV4()).String()
@@ -26,6 +24,7 @@ func UUID() string {
 // RandomStr - generate random string using masking with source
 // Credits to: https://medium.com/@kpbird/golang-generate-fixed-size-random-string-dd6dbd5e63c0
 func RandomStr(n int) string {
+	src := rand.NewSource(time.Now().UnixNano())
 	b := make([]byte, n)
 	l := len(letterBytes)
 
