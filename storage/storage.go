@@ -50,7 +50,7 @@ func Init(engineBitMask int) error {
 
 	// Initialize Redis Client
 	if EngineBitMask&RedisBitMask != 0 {
-		engine := &_redis.Engine{}
+		engine := &_redis.Storage{}
 
 		if err := engine.InitConnection(); err != nil {
 			return err
@@ -61,7 +61,7 @@ func Init(engineBitMask int) error {
 
 	// Initialize ElasticSearch Client
 	if EngineBitMask&ElasticBitMask != 0 {
-		engine := &_elastic.Engine{}
+		engine := &_elastic.Storage{}
 
 		if err := engine.InitConnection(); err != nil {
 			return err
@@ -72,7 +72,7 @@ func Init(engineBitMask int) error {
 
 	// Initialize PG SQL Client
 	if EngineBitMask&PGBitMask != 0 {
-		engine := &_pg.Engine{}
+		engine := &_pg.Storage{}
 
 		if err := engine.InitConnection(); err != nil {
 			return err

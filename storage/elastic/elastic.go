@@ -13,11 +13,11 @@ var (
 	config = NewConfig()
 )
 
-// Engine struct to work with ElasticSearch
-type Engine struct{}
+// Storage struct to work with ElasticSearch
+type Storage struct{}
 
 // InitConnection implements storage.service.InitConnection()
-func (e *Engine) InitConnection() error {
+func (s *Storage) InitConnection() error {
 	Client, err = es.NewClient(
 		es.SetURL("http://"+config.Host+":"+config.Port),
 		es.SetSniff(false),

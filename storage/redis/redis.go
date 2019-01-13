@@ -13,11 +13,11 @@ var (
 	config = NewConfig()
 )
 
-// Engine struct to work with Redis
-type Engine struct{}
+// Storage struct to work with Redis
+type Storage struct{}
 
 // InitConnection implements storage.service.InitConnection()
-func (e *Engine) InitConnection() error {
+func (s *Storage) InitConnection() error {
 	Client = redis.NewClient(&redis.Options{
 		Addr:     config.Host + ":" + config.Port,
 		Password: config.Password, // no password set

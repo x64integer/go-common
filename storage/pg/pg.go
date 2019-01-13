@@ -12,14 +12,14 @@ var (
 	err error
 )
 
-// Engine struct to work with SQL
-type Engine struct{}
+// Storage struct to work with SQL
+type Storage struct{}
 
 // InitConnection implements storage.service.InitConnection()
-func (e *Engine) InitConnection() error {
+func (s *Storage) InitConnection() error {
 	conf := NewConfig() // default values will be used from env variables
 
-	Client, err = e.init(conf)
+	Client, err = s.init(conf)
 	if err != nil {
 		return err
 	}
@@ -28,7 +28,7 @@ func (e *Engine) InitConnection() error {
 }
 
 // init is helper function to initialize PG connection
-func (e *Engine) init(conf *Config) (*sql.DB, error) {
+func (s *Storage) init(conf *Config) (*sql.DB, error) {
 	str := "user=" + conf.User + " password=" + conf.Password + " dbname=" + conf.Name + " sslmode=" + conf.SSLMode
 
 	client, err := sql.Open("postgres", str)
