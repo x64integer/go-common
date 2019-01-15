@@ -2,7 +2,7 @@
 
 ### Protocol wrappers
 * MQTT
-* RMQ/RabbitMQ
+* AMQP/RabbitMQ
 * Websockets
 
 ### Utils
@@ -15,3 +15,4 @@
 * ElasticSearch
 * Postgres
 * Redis
+* Cache (redis by default)

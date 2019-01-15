@@ -4,32 +4,14 @@ import (
 	"database/sql"
 )
 
-var (
-	// Client is connection to database
-	// Exposing public connection variable because connection will be opened one time and used all around
-	Client *sql.DB
-	// err - error occured during connection initilization
-	err error
-)
-
 // Storage struct to work with SQL
-type Storage struct{}
-
-// InitConnection implements storage.service.InitConnection()
-func (s *Storage) InitConnection() error {
-	conf := NewConfig() // default values will be used from env variables
-
-	Client, err = s.init(conf)
-	if err != nil {
-		return err
-	}
-
-	return nil
+type Storage struct{
+	*Config
 }
 
-// init is helper function to initialize PG connection
-func (s *Storage) init(conf *Config) (*sql.DB, error) {
-	str := "user=" + conf.User + " password=" + conf.Password + " dbname=" + conf.Name + " sslmode=" + conf.SSLMode
+// Init will initialize postgres client
+func (s *Storage) Init() (*sql.DB, error) {
+	str := "user=" + s.Config.User + " password=" + s.Config.Password + " dbname=" + s.Config.Name + " sslmode=" + s.Config.SSLMode
 
 	client, err := sql.Open("postgres", str)
 	if err != nil {
@@ -41,7 +23,7 @@ func (s *Storage) init(conf *Config) (*sql.DB, error) {
 		return nil, err
 	}
 
-	client.SetMaxOpenConns(conf.MaxConn)
+	client.SetMaxOpenConns(s.Config.MaxConn)
 
 	return client, nil
 }

@@ -6,28 +6,23 @@ import (
 	"github.com/go-redis/redis"
 )
 
-var (
-	// Client is connection to Redis
-	Client *redis.Client
-	// config
-	config = NewConfig()
-)
-
 // Storage struct to work with Redis
-type Storage struct{}
+type Storage struct {
+	*Config
+}
 
-// InitConnection implements storage.service.InitConnection()
-func (s *Storage) InitConnection() error {
-	Client = redis.NewClient(&redis.Options{
-		Addr:     config.Host + ":" + config.Port,
-		Password: config.Password, // no password set
-		DB:       0,               // use default DB
+// Init will create redis client
+func (s *Storage) Init() (*redis.Client, error) {
+	client := redis.NewClient(&redis.Options{
+		Addr:     s.Config.Host + ":" + s.Config.Port,
+		Password: s.Config.Password, // no password set
+		DB:       s.Config.DB,       // use default DB
 	})
 
-	_, err := Client.Ping().Result()
+	_, err := client.Ping().Result()
 	if err != nil {
-		return errors.New("[Redis-Ping-Result] - " + err.Error())
+		return nil, errors.New("[Redis-Ping-Result] - " + err.Error())
 	}
 
-	return nil
+	return client, nil
 }

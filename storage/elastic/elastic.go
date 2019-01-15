@@ -4,28 +4,21 @@ import (
 	es "github.com/olivere/elastic"
 )
 
-var (
-	// Client is connection to ES
-	Client *es.Client
-	// err - error occured during connection initilization
-	err error
-	// config
-	config = NewConfig()
-)
-
 // Storage struct to work with ElasticSearch
-type Storage struct{}
+type Storage struct {
+	*Config
+}
 
-// InitConnection implements storage.service.InitConnection()
-func (s *Storage) InitConnection() error {
-	Client, err = es.NewClient(
-		es.SetURL("http://"+config.Host+":"+config.Port),
-		es.SetSniff(false),
+// Init will initialize elasticsearch client
+func (s *Storage) Init() (*es.Client, error) {
+	client, err := es.NewClient(
+		es.SetURL("http://"+s.Config.Host+":"+s.Config.Port),
+		es.SetSniff(s.Config.Sniff),
 	)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return client, nil
 }

@@ -2,7 +2,6 @@ package storage
 
 import (
 	"database/sql"
-	"errors"
 
 	"github.com/go-redis/redis"
 	"github.com/olivere/elastic"
@@ -17,25 +16,25 @@ import (
 // defer storage.PG.Close(), defer storage.Redis.Close(), etc...
 
 const (
-	// RedisBitMask config bit mask
-	RedisBitMask = 1
-	// ElasticBitMask config bit mask
-	ElasticBitMask = 2
-	// PGBitMask config bit mask
-	PGBitMask = 4
-	// CacheBitMask flag
-	CacheBitMask = 8
+	// RedisFlag config bit mask
+	RedisFlag = 1
+	// ElasticFlag config bit mask
+	ElasticFlag = 2
+	// PgFlag config bit mask
+	PgFlag = 4
+	// CacheFlag flag
+	CacheFlag = 8
 )
 
 var (
-	// EngineBitMask config exposed
-	EngineBitMask int
+	// Flag config exposed
+	Flag int
 	// Redis client exposed
 	Redis *redis.Client
-	// Elastic client exposed
-	Elastic *elastic.Client
 	// PG client exposed
 	PG *sql.DB
+	// Elastic client exposed
+	Elastic *elastic.Client
 	// Cache instance exposed
 	Cache cache.Storage
 )
@@ -43,57 +42,96 @@ var (
 // Init will initialize storage engine based on given config bit mask
 //
 // Usage ex:
-// - Init(storage.RedisBitMask | storage.ElasticBitMask | storage.PGBitMask) -> will initialize Redis, ElasticSearch and SQL clients
-// - Init(storage.ElasticBitMask) -> will initialize ElasticSearch client only
-func Init(engineBitMask int) error {
-	EngineBitMask = engineBitMask
+// - Init(storage.RedisFlag | storage.ElasticFlag | storage.PgFlag) -> will initialize Redis, ElasticSearch and Postgres clients
+// - Init(storage.ElasticFlag) -> will initialize ElasticSearch client only
+func Init(flag int) error {
+	Flag = flag
 
-	// Initialize Redis Client
-	if EngineBitMask&RedisBitMask != 0 {
-		engine := &_redis.Storage{}
-
-		if err := engine.InitConnection(); err != nil {
+	if Flag&RedisFlag != 0 {
+		if err := initRedis(); err != nil {
 			return err
 		}
-
-		Redis = _redis.Client
 	}
 
-	// Initialize ElasticSearch Client
-	if EngineBitMask&ElasticBitMask != 0 {
-		engine := &_elastic.Storage{}
-
-		if err := engine.InitConnection(); err != nil {
+	if Flag&PgFlag != 0 {
+		if err := initPg(); err != nil {
 			return err
 		}
-
-		Elastic = _elastic.Client
 	}
 
-	// Initialize PG SQL Client
-	if EngineBitMask&PGBitMask != 0 {
-		engine := &_pg.Storage{}
-
-		if err := engine.InitConnection(); err != nil {
+	if Flag&ElasticFlag != 0 {
+		if err := initElastic(); err != nil {
 			return err
 		}
-
-		PG = _pg.Client
 	}
 
-	// Initialize cache client
-	if EngineBitMask&CacheBitMask != 0 {
-		c := util.Env("CACHE_CLIENT", "redis")
+	if Flag&CacheFlag != 0 {
+		if err := initCache(); err != nil {
+			return err
+		}
+	}
 
-		switch c {
-		default:
-			if Redis == nil {
-				return errors.New("redis client not initialized - worker should use RedisBitMask in its StorageBitMask()")
+	return nil
+}
+
+func initRedis() error {
+	redisStorage := &_redis.Storage{
+		Config: _redis.NewConfig(),
+	}
+
+	redisClient, err := redisStorage.Init()
+	if err != nil {
+		return err
+	}
+
+	Redis = redisClient
+
+	return nil
+}
+
+func initPg() error {
+	pgStorage := &_pg.Storage{
+		Config: _pg.NewConfig(),
+	}
+
+	pgClient, err := pgStorage.Init()
+	if err != nil {
+		return err
+	}
+
+	PG = pgClient
+
+	return nil
+}
+
+func initElastic() error {
+	elasticStorage := &_elastic.Storage{
+		Config: _elastic.NewConfig(),
+	}
+
+	elasticClient, err := elasticStorage.Init()
+	if err != nil {
+		return err
+	}
+
+	Elastic = elasticClient
+
+	return nil
+}
+
+func initCache() error {
+	c := util.Env("CACHE_CLIENT", "redis")
+
+	switch c {
+	default:
+		if Redis == nil {
+			if err := initRedis(); err != nil {
+				return err
 			}
+		}
 
-			Cache = &cache.Redis{
-				Client: Redis,
-			}
+		Cache = &cache.Redis{
+			Client: Redis,
 		}
 	}
 

@@ -4,8 +4,9 @@ import "github.com/x64integer/go-common/util"
 
 // Config for elasticsearch
 type Config struct {
-	Host string
-	Port string
+	Host  string
+	Port  string
+	Sniff bool
 }
 
 // NewConfig will init config struct
