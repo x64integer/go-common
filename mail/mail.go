@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/smtp"
 	"strings"
+	"sync"
 
 	"github.com/x64integer/go-common/util"
 )
@@ -24,6 +25,7 @@ type Entity struct {
 	Subject    string
 	Content    []byte
 	Attachment []byte
+	L          sync.Mutex
 }
 
 // SMTPServer for mail
@@ -50,6 +52,9 @@ func NewSMTPServer() *SMTPServer {
 
 // Send mail
 func (entity *Entity) Send() error {
+	entity.L.Lock()
+	defer entity.L.Unlock()
+
 	client, err := entity.client()
 	if err != nil {
 		return err
