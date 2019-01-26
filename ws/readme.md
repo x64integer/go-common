@@ -6,9 +6,9 @@
 
 ## Usage
 
-* **Create ws.Connection**
+* **Create ws.Client**
 ```
-c := &ws.Connection{
+c := &ws.Client{
     Config: ws.NewConfig(), // can be customized
     OnMessage: func(in []byte) {
         // handle message from ws channel
@@ -30,10 +30,10 @@ c := &ws.Connection{
 }
 ```
 
-* **Setup ws connection and listen for messages**
+* **Setup ws Client and listen for messages**
 ```
 if err := c.Setup(); err != nil {
-    log.Print("ws connection setup error: ", err)
+    log.Print("ws Client setup error: ", err)
 }
 ```
 
