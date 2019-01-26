@@ -12,10 +12,11 @@ import (
 	"github.com/x64integer/go-common/util"
 )
 
+var secret = util.Env("CRYPTO_SECRET", "")
+
 // Encrypt will encrypt given input using AES GCM encryption mode
 // will return original encrypted value, hex and base64 encoded versions
 func Encrypt(input string) (string, string, string, error) {
-	secret := util.Env("CRYPTO_SECRET", "")
 	if strings.TrimSpace(secret) == "" {
 		return "", "", "", errors.New("missing CRYPTO_SECRET env value")
 	}
@@ -42,7 +43,6 @@ func Encrypt(input string) (string, string, string, error) {
 
 // Decrypt will decrypt given AES GCM encrypted input
 func Decrypt(input string) (string, error) {
-	secret := util.Env("CRYPTO_SECRET", "")
 	if strings.TrimSpace(secret) == "" {
 		return "", errors.New("missing CRYPTO_SECRET env value")
 	}

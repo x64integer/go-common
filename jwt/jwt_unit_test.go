@@ -18,5 +18,8 @@ func TestJWT(t *testing.T) {
 
 	assert.NoError(t, err, "Err occured: ", err)
 	assert.NotEmpty(t, token, "Token should not be empty")
-	assert.True(t, jwt.Valid(token), "Token should be valid")
+
+	claims, valid := jwt.ValidateAndExtract(token)
+	assert.True(t, valid, "Token should be valid")
+	assert.NotEmpty(t, claims, "Claims empty")
 }
