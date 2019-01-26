@@ -1,7 +1,7 @@
 package ws
 
 import (
-	"errors"
+	"log"
 
 	"github.com/gorilla/websocket"
 )
@@ -16,14 +16,14 @@ type Client struct {
 }
 
 // Setup will create websocket Client and start listening for messages
-func (client *Client) Setup() error {
+func (client *Client) Setup(done chan bool) {
 	if client.Config == nil {
-		return errors.New("nil Config struct for ws Client -> make sure valid Config is accessible to ws Client")
+		log.Fatalln("nil Config struct for ws Client -> make sure valid Config is accessible to ws Client")
 	}
 
 	c, _, err := websocket.DefaultDialer.Dial(client.Config.WSURL, nil)
 	if err != nil {
-		return err
+		log.Fatalln("websocket dialer failed: ", err)
 	}
 
 	ch := &Channel{
@@ -39,7 +39,7 @@ func (client *Client) Setup() error {
 		go ch.Read()
 	}
 
-	return nil
+	<-done
 }
 
 // SendText message
