@@ -1,5 +1,3 @@
-## Common packages to use across services
-
 ### Protocol wrappers
 * MQTT
 * AMQP/RabbitMQ
