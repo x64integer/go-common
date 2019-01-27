@@ -12,12 +12,10 @@ import (
 )
 
 // RouteHandler decouples direct dependency on *mux.Route
-// We can still call Handle() on RouteHandler without *mux.Route in its return definition
-// Just a little trick to get rid of *mux.Route dependency
 // Add new functions as per need
 type RouteHandler interface {
-	Handle(path string, handler http.Handler) *mux.Route
-	HandleFunc(path string, f func(http.ResponseWriter, *http.Request)) *mux.Route
+	Handle(string, http.Handler)
+	HandleFunc(string, func(http.ResponseWriter, *http.Request))
 }
 
 // Router for api
@@ -38,7 +36,7 @@ type Config struct {
 func NewRouter(conf *Config) *Router {
 	gRouter := mux.NewRouter()
 
-	conf.MapRoutes(gRouter)
+	conf.MapRoutes(&MuxRouterAdapter{Router: gRouter})
 
 	srv := &http.Server{
 		Addr: conf.Host + ":" + conf.Port,
