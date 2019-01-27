@@ -1,7 +1,7 @@
 ### Usage
 > NOTE: Middlewares in progress
 
-* **Initialize router and start listening**
+* **Initialize router**
 ```
 r := api.NewRouter(&api.Config{
     Host:        "localhost",
@@ -14,33 +14,35 @@ r := api.NewRouter(&api.Config{
     },
     // If not defined, auth routes will not be initialized
     Auth: &api.Auth{
+        // common/defaults for both register and login (can be overriden in custom api.Registration and api.Login)
         RegisterPath: "/register",
-        LoginPath:    "/login", // this is can be removed since it's overridden in custom Login.Path
-        // Use &User{} entity for both register and login
-        Entity: &User{},
+        LoginPath:    "/login", // overridden in custom Login.Path
+        // Use &User{} as default entity for both register and login
+        Entity: &User{}, // will not be used because it's overriden in both api.Registration and api.Login
 
-        // Optionally, we can use different entities for register and login with some customization
+        // Optionally, we can use different entities for register and login with customizations
         // Not changed values will be ignored
         Registration: &api.Registration{
-            OnSuccess: func(payload []byte, w http.ResponseWriter) {
-                log.Println("registration successful")
-            },
+            Entity: &RegisterUser{}, // override default entity &User{}
         },
         Login: &api.Login{
             Path:   "/user/login", // override previous value -> /login
-            Entity: &LoginUser{},
-            OnError: func(err error, w http.ResponseWriter) {
+            Entity: &LoginUser{},  // override default entity &User{}
+            OnError: func(err error, w http.ResponseWriter) { // override default OnError()
                 log.Println("login error occured")
                 w.Write([]byte(err.Error()))
             },
-            OnSuccess: func(payload []byte, w http.ResponseWriter) {
+            OnSuccess: func(payload []byte, w http.ResponseWriter) { // override default OnSuccess()
                 log.Println("login successful")
                 w.Write(payload)
             },
         },
     },
 })
+```
 
+* **Start http server**
+```
 r.Listen()
 ```
 
