@@ -18,7 +18,8 @@ r := api.NewRouter(&api.Config{
         LoginPath:    "/login", // this is can be removed since it's overriden in custom Login.Path
         // Use &User{} entity for both register and login
         Entity: &User{},
-        // Optionally, use different entities for register and login
+
+        // Optionally, use different entities for register and login for some customization
         // Not changed values will default to Entity: &User{}
         Registration: &api.Registration{
             OnSuccess: func(payload []byte, w http.ResponseWriter) {

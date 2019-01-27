@@ -44,54 +44,8 @@ type Login struct {
 
 // applyRoutes will setup register and login routes
 func (auth *Auth) applyRoutes(routeHandler RouteHandler) {
-	registerPath, loginPath := auth.RegisterPath, auth.LoginPath
-	registerEntity, loginEntity := auth.Entity, auth.Entity
-	onRegisterError, onLoginError := func(err error, w http.ResponseWriter) {
-		log.Println("registration failed: ", err)
-	}, func(err error, w http.ResponseWriter) {
-		log.Println("login failed: ", err)
-	}
-	onRegisterSuccess, onLoginSuccess := func(payload []byte, w http.ResponseWriter) {
-		w.Write(payload)
-	}, func(payload []byte, w http.ResponseWriter) {
-		w.Write(payload)
-	}
-
-	if auth.Registration != nil {
-		if auth.Registration.Path != "" {
-			registerPath = auth.Registration.Path
-		}
-
-		if auth.Registration.Entity != nil {
-			registerEntity = auth.Registration.Entity
-		}
-
-		if auth.Registration.OnError != nil {
-			onRegisterError = auth.Registration.OnError
-		}
-
-		if auth.Registration.OnSuccess != nil {
-			onRegisterSuccess = auth.Registration.OnSuccess
-		}
-	}
-
-	if auth.Login != nil {
-		if auth.Login.Path != "" {
-			loginPath = auth.Login.Path
-		}
-
-		if auth.Login.Entity != nil {
-			loginEntity = auth.Login.Entity
-		}
-
-		if auth.Login.OnError != nil {
-			onLoginError = auth.Login.OnError
-		}
-
-		if auth.Login.OnSuccess != nil {
-			onLoginSuccess = auth.Login.OnSuccess
-		}
-	}
+	registerPath, registerEntity, onRegisterError, onRegisterSuccess := auth.mapRegistration()
+	loginPath, loginEntity, onLoginError, onLoginSuccess := auth.mapLogin()
 
 	routeHandler.HandleFunc(registerPath, func(w http.ResponseWriter, r *http.Request) {
 		b, err := ioutil.ReadAll(r.Body)
@@ -158,4 +112,68 @@ type authEntity struct {
 	Field string
 	Tag   string
 	Type  interface{}
+}
+
+// mapRegistration is helper function to map registration data structures
+func (auth *Auth) mapRegistration() (string, Registrable, func(error, http.ResponseWriter), func([]byte, http.ResponseWriter)) {
+	registerPath := auth.RegisterPath
+	registerEntity := auth.Entity
+	onRegisterError := func(err error, w http.ResponseWriter) {
+		log.Println("registration failed: ", err)
+	}
+	onRegisterSuccess := func(payload []byte, w http.ResponseWriter) {
+		w.Write(payload)
+	}
+
+	if auth.Registration != nil {
+		if auth.Registration.Path != "" {
+			registerPath = auth.Registration.Path
+		}
+
+		if auth.Registration.Entity != nil {
+			registerEntity = auth.Registration.Entity
+		}
+
+		if auth.Registration.OnError != nil {
+			onRegisterError = auth.Registration.OnError
+		}
+
+		if auth.Registration.OnSuccess != nil {
+			onRegisterSuccess = auth.Registration.OnSuccess
+		}
+	}
+
+	return registerPath, registerEntity, onRegisterError, onRegisterSuccess
+}
+
+// mapLogin is helper function to map login data structures
+func (auth *Auth) mapLogin() (string, Loginable, func(error, http.ResponseWriter), func([]byte, http.ResponseWriter)) {
+	loginPath := auth.LoginPath
+	loginEntity := auth.Entity
+	onLoginError := func(err error, w http.ResponseWriter) {
+		log.Println("login failed: ", err)
+	}
+	onLoginSuccess := func(payload []byte, w http.ResponseWriter) {
+		w.Write(payload)
+	}
+
+	if auth.Login != nil {
+		if auth.Login.Path != "" {
+			loginPath = auth.Login.Path
+		}
+
+		if auth.Login.Entity != nil {
+			loginEntity = auth.Login.Entity
+		}
+
+		if auth.Login.OnError != nil {
+			onLoginError = auth.Login.OnError
+		}
+
+		if auth.Login.OnSuccess != nil {
+			onLoginSuccess = auth.Login.OnSuccess
+		}
+	}
+
+	return loginPath, loginEntity, onLoginError, onLoginSuccess
 }
