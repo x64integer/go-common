@@ -14,21 +14,20 @@ r := api.NewRouter(&api.Config{
     },
     // If not defined, auth routes will not be initialized
     Auth: &api.Auth{
-        // defaults for both register and login (can be overriden by customizing api.Registration and api.Login)
+        // 1.) Simple registration, login, logout configuration
         RegisterPath: "/register",
         LoginPath:    "/login",
         LogoutPath:   "/logout",
-        // Use &User{} as default entity for both register and login
-        Entity: &User{},
+        Entity:       &User{}, // use &User{} as default entity for register, login, logout
 
-        // Optionally, we can use different entities for register and login with customizations
-        // Not changed values will be ignored
+        // 2.) Custom registration, login, logout configurations
+        // If both simple and custom configuratinos are used, those not-changed values in custom configurations will be ignored
         Registration: &api.Registration{
-            Entity: &RegisterUser{}, // override default entity &User{}
+            Entity: &RegisterUser{}, // override default entity &User{} for Registration
         },
         Login: &api.Login{
             Path:   "/user/login", // override previous value -> /login
-            Entity: &LoginUser{},  // override default entity &User{}
+            Entity: &LoginUser{},  // override default entity &User{} for Login
             OnError: func(err error, w http.ResponseWriter) { // override default OnError()
                 log.Println("login error occured")
                 w.Write([]byte(err.Error()))
@@ -37,6 +36,9 @@ r := api.NewRouter(&api.Config{
                 log.Println("login successful")
                 w.Write(payload)
             },
+        },
+        Logout: &api.Logout{
+            Entity: &LogoutUser{}, // override default entity &User{} for Logout
         },
     },
 })
