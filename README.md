@@ -5,11 +5,14 @@
 * AMQP/RabbitMQ
 * Websockets
 
-### Utils
-* Crypto
-* Env
+### Common wrappers
+* Crypto (GCM and CBC)
+* API http server
+* Password hashing
 * JWT
-* Strings
+* Mail client
+* Env helper
+* Strings helpers
 
 ### Storage (*in progress*)
 * ElasticSearch
