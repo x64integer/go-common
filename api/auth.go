@@ -58,10 +58,10 @@ type Logout struct {
 
 // entityField is helper struct to hold information/data from extracted auth Entity (Authenticatable, Registrable, Loginable, Logoutable)
 type entityField struct {
-	Tag       string
-	Value     interface{}
-	FieldType reflect.Type
-	Type      interface{}
+	Key         string
+	Value       interface{}
+	Type        interface{}
+	ReflectType reflect.Type
 }
 
 // applyRoutes will setup auth routes (register, login, logout)
@@ -112,15 +112,15 @@ func (auth *Auth) extractEntity(entityToExtract interface{}) []*entityField {
 
 	for i := 0; i < entityType.NumField(); i++ {
 		field := entityType.Field(i)
-		authTag := field.Tag.Get("auth")
+		authKey := field.Tag.Get("auth")
 		authValue := entityValue.Field(i)
 		authType := field.Tag.Get("auth_type")
 
 		fields = append(fields, &entityField{
-			Tag:       authTag,
-			Value:     authValue,
-			FieldType: field.Type,
-			Type:      authType,
+			Key:         authKey,
+			Value:       authValue,
+			Type:        authType,
+			ReflectType: field.Type,
 		})
 	}
 
