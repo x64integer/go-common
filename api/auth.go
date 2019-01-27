@@ -7,7 +7,7 @@ import (
 	"reflect"
 )
 
-// Authenticatable contract
+// Authenticatable contract is used for both register and login
 type Authenticatable interface{}
 
 // Registrable contract is used in case we want different entity for registration
@@ -34,7 +34,7 @@ func (auth *Auth) applyRoutes(routeHandler RouteHandler) {
 			return
 		}
 
-		var entityToExtract = auth.Entity
+		entityToExtract := auth.Entity
 		if auth.Registrable != nil {
 			entityToExtract = auth.Registrable
 		}
@@ -55,7 +55,7 @@ func (auth *Auth) applyRoutes(routeHandler RouteHandler) {
 			return
 		}
 
-		var entityToExtract = auth.Entity
+		entityToExtract := auth.Entity
 		if auth.Loginable != nil {
 			entityToExtract = auth.Loginable
 		}
@@ -74,7 +74,7 @@ func (auth *Auth) applyRoutes(routeHandler RouteHandler) {
 func (auth *Auth) extractEntity(entityToExtract interface{}) map[string]*authEntity {
 	var entityType reflect.Type
 	entityKind := reflect.ValueOf(entityToExtract).Kind()
-	var entityExtracted = make(map[string]*authEntity)
+	entityExtracted := make(map[string]*authEntity)
 
 	if entityKind == reflect.Ptr {
 		entityType = reflect.TypeOf(entityToExtract).Elem()
