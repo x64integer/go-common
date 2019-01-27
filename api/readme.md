@@ -12,7 +12,35 @@ r := api.NewRouter(&api.Config{
             w.Write([]byte("hello :)"))
         })
     },
+    // If not defined, auth routes will not be initialized
+    Auth: &api.Auth{
+        RegisterPath: "/register",
+        LoginPath:    "/login",
+        // Use &User{} entity for both register and login
+        Entity: &User{},
+        // Optionally, use different entities for register and login
+        Registrable: &User{},
+        Loginable:   &LoginUser{},
+    },
 })
 
 r.Listen()
+```
+
+* **Entities examples**
+```
+// User entity example
+type User struct {
+	ID       string    `auth:"id" auth_type:"uuid"`
+	Username string    `auth:"username" auth_type:"credential"`
+	Email    string    `auth:"email" auth_type:"credential"`
+	Password string    `auth:"password" auth_type:"secret"`
+	DoB      time.Time `auth:"date_of_birth"`
+}
+
+// LoginUser entity example
+type LoginUser struct {
+	Email    string `auth:"email" auth_type:"credential"`
+	Password string `auth:"password" auth_type:"secret"`
+}
 ```

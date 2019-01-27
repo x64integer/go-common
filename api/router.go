@@ -30,16 +30,24 @@ type Config struct {
 	Port        string
 	MapRoutes   func(RouteHandler)
 	WaitTimeout time.Duration
+	*Auth
 }
 
 // NewRouter will initialize new Router
-func NewRouter(conf *Config) *Router {
+func NewRouter(config *Config) *Router {
 	gRouter := mux.NewRouter()
 
-	conf.MapRoutes(&MuxRouterAdapter{Router: gRouter})
+	routeHandler := &MuxRouterAdapter{Router: gRouter}
+
+	if config.Auth != nil {
+		config.Auth.applyRoutes(routeHandler)
+		log.Printf("registered auth routes: register -> %v, login -> %v", config.Auth.RegisterPath, config.Auth.LoginPath)
+	}
+
+	config.MapRoutes(routeHandler)
 
 	srv := &http.Server{
-		Addr: conf.Host + ":" + conf.Port,
+		Addr: config.Host + ":" + config.Port,
 		// NOTE: these values could be passed through Config
 		WriteTimeout: time.Second * 15,
 		ReadTimeout:  time.Second * 15,
@@ -48,7 +56,7 @@ func NewRouter(conf *Config) *Router {
 	}
 
 	return &Router{
-		Config: conf,
+		Config: config,
 		Server: srv,
 	}
 }
