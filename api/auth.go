@@ -8,7 +8,10 @@ import (
 	"reflect"
 )
 
-// Authenticatable contract is used for both register and login
+// NOTE: These contracts do not have special methods for now and are used to satisfy reflection dependencies
+// Contract definitions might change in the future, if such need arises
+
+// Authenticatable contract is used for register, login, logout
 type Authenticatable interface{}
 
 // Registrable contract is used in case we want different entity for registration
