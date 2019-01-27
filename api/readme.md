@@ -14,11 +14,11 @@ r := api.NewRouter(&api.Config{
     },
     // If not defined, auth routes will not be initialized
     Auth: &api.Auth{
-        // common/defaults for both register and login (can be overriden by customizing api.Registration and api.Login)
+        // defaults for both register and login (can be overriden by customizing api.Registration and api.Login)
         RegisterPath: "/register",
-        LoginPath:    "/login", // overridden in custom Login.Path
+        LoginPath:    "/login",
         // Use &User{} as default entity for both register and login
-        Entity: &User{}, // will not be used because it's overriden in both api.Registration and api.Login
+        Entity: &User{},
 
         // Optionally, we can use different entities for register and login with customizations
         // Not changed values will be ignored
