@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -62,56 +63,68 @@ func (auth *Auth) applyRoutes(routeHandler RouteHandler) {
 	logoutPath, logoutEntity, onLogoutError, onLogoutSuccess := auth.mapLogout()
 
 	routeHandler.HandleFunc(registerPath, func(w http.ResponseWriter, r *http.Request) {
-		auth.handleFunc(w, r, registerEntity, onRegisterError, onRegisterSuccess, func(payload []byte) {
-			// register logic
+		auth.handleFunc(w, r, registerEntity, onRegisterError, onRegisterSuccess, func(fields []*entityField) ([]byte, error) {
+			svc := &Service{}
+
+			return svc.Register(fields)
 		})
 	})
 
 	routeHandler.HandleFunc(loginPath, func(w http.ResponseWriter, r *http.Request) {
-		auth.handleFunc(w, r, loginEntity, onLoginError, onLoginSuccess, func(payload []byte) {
-			// login logic
+		auth.handleFunc(w, r, loginEntity, onLoginError, onLoginSuccess, func(fields []*entityField) ([]byte, error) {
+			svc := &Service{}
+
+			return svc.Login(fields)
 		})
 	})
 
 	routeHandler.HandleFunc(logoutPath, func(w http.ResponseWriter, r *http.Request) {
-		auth.handleFunc(w, r, logoutEntity, onLogoutError, onLogoutSuccess, func(payload []byte) {
-			// logout logic
+		auth.handleFunc(w, r, logoutEntity, onLogoutError, onLogoutSuccess, func(fields []*entityField) ([]byte, error) {
+			svc := &Service{}
+
+			return svc.Logout(fields)
 		})
 	})
 }
 
-// authEntity is helper struct to hold information/data from extracted auth Entity (Authenticatable, Registrable, Loginable, Logoutable)
-type authEntity struct {
-	Field string
-	Tag   string
-	Type  interface{}
+// entityField is helper struct to hold information/data from extracted auth Entity (Authenticatable, Registrable, Loginable, Logoutable)
+type entityField struct {
+	Tag       string
+	Value     interface{}
+	FieldType reflect.Type
+	Type      interface{}
 }
 
 // extractEntity is helper function to extract auth entity fields and tags
-func (auth *Auth) extractEntity(entityToExtract interface{}) map[string]*authEntity {
+func (auth *Auth) extractEntity(entityToExtract interface{}) []*entityField {
 	var entityType reflect.Type
+	var entityValue reflect.Value
+	var fields []*entityField
 	entityKind := reflect.ValueOf(entityToExtract).Kind()
-	entityExtracted := make(map[string]*authEntity)
 
 	if entityKind == reflect.Ptr {
 		entityType = reflect.TypeOf(entityToExtract).Elem()
+		entityValue = reflect.ValueOf(entityToExtract).Elem()
 	} else {
 		entityType = reflect.TypeOf(entityToExtract)
+		entityValue = reflect.ValueOf(entityToExtract)
 	}
 
 	for i := 0; i < entityType.NumField(); i++ {
 		field := entityType.Field(i)
 		authTag := field.Tag.Get("auth")
+		authValue := entityValue.Field(i)
 		authType := field.Tag.Get("auth_type")
 
-		entityExtracted[field.Name] = &authEntity{
-			Field: field.Name,
-			Tag:   authTag,
-			Type:  authType,
-		}
+		fields = append(fields, &entityField{
+			Tag:       authTag,
+			Value:     authValue,
+			FieldType: field.Type,
+			Type:      authType,
+		})
 	}
 
-	return entityExtracted
+	return fields
 }
 
 // mapRegistration is helper function to map registration data structures
@@ -223,7 +236,7 @@ func (auth *Auth) handleFunc(
 	entityToExtract interface{},
 	onError func(error, http.ResponseWriter),
 	onSuccess func([]byte, http.ResponseWriter),
-	callback func(payload []byte),
+	callback func(entity []*entityField) ([]byte, error),
 ) {
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -231,13 +244,17 @@ func (auth *Auth) handleFunc(
 		return
 	}
 
-	entity := auth.extractEntity(entityToExtract)
-
-	for k, v := range entity {
-		log.Printf("Field: %v, Tag: %v, Type: %v", k, v.Tag, v.Type)
+	if err := json.Unmarshal(b, entityToExtract); err != nil {
+		onError(err, w)
 	}
 
-	callback(b)
+	fields := auth.extractEntity(entityToExtract)
 
-	onSuccess(b, w)
+	resp, err := callback(fields)
+	if err != nil {
+		onError(err, w)
+		return
+	}
+
+	onSuccess(resp, w)
 }
