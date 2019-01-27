@@ -55,7 +55,7 @@ type Logout struct {
 	OnSuccess func([]byte, http.ResponseWriter)
 }
 
-// applyRoutes will setup register and login routes
+// applyRoutes will setup auth routes (register, login, logout)
 func (auth *Auth) applyRoutes(routeHandler RouteHandler) {
 	registerPath, registerEntity, onRegisterError, onRegisterSuccess := auth.mapRegistration()
 	loginPath, loginEntity, onLoginError, onLoginSuccess := auth.mapLogin()
@@ -74,7 +74,7 @@ func (auth *Auth) applyRoutes(routeHandler RouteHandler) {
 	})
 }
 
-// authEntity is helper struct to hold information/data from extracted auth Entity (Authenticatable, Registrable, Loginable)
+// authEntity is helper struct to hold information/data from extracted auth Entity (Authenticatable, Registrable, Loginable, Logoutable)
 type authEntity struct {
 	Field string
 	Tag   string
