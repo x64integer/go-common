@@ -62,15 +62,21 @@ func (auth *Auth) applyRoutes(routeHandler RouteHandler) {
 	logoutPath, logoutEntity, onLogoutError, onLogoutSuccess := auth.mapLogout()
 
 	routeHandler.HandleFunc(registerPath, func(w http.ResponseWriter, r *http.Request) {
-		auth.handleFunc(w, r, registerEntity, onRegisterError, onRegisterSuccess)
+		auth.handleFunc(w, r, registerEntity, onRegisterError, onRegisterSuccess, func(payload []byte) {
+			// register logic
+		})
 	})
 
 	routeHandler.HandleFunc(loginPath, func(w http.ResponseWriter, r *http.Request) {
-		auth.handleFunc(w, r, loginEntity, onLoginError, onLoginSuccess)
+		auth.handleFunc(w, r, loginEntity, onLoginError, onLoginSuccess, func(payload []byte) {
+			// login logic
+		})
 	})
 
 	routeHandler.HandleFunc(logoutPath, func(w http.ResponseWriter, r *http.Request) {
-		auth.handleFunc(w, r, logoutEntity, onLogoutError, onLogoutSuccess)
+		auth.handleFunc(w, r, logoutEntity, onLogoutError, onLogoutSuccess, func(payload []byte) {
+			// logout logic
+		})
 	})
 }
 
@@ -217,6 +223,7 @@ func (auth *Auth) handleFunc(
 	entityToExtract interface{},
 	onError func(error, http.ResponseWriter),
 	onSuccess func([]byte, http.ResponseWriter),
+	callback func(payload []byte),
 ) {
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -229,6 +236,8 @@ func (auth *Auth) handleFunc(
 	for k, v := range entity {
 		log.Printf("Field: %v, Tag: %v, Type: %v", k, v.Tag, v.Type)
 	}
+
+	callback(b)
 
 	onSuccess(b, w)
 }
