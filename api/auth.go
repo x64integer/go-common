@@ -21,52 +21,108 @@ type Auth struct {
 	RegisterPath string
 	LoginPath    string
 	Entity       Authenticatable
-	Registrable
-	Loginable
+	// Optional properties for customization
+	*Registration
+	*Login
+}
+
+// Registration customization
+type Registration struct {
+	Path      string
+	Entity    Registrable
+	OnError   func(error, http.ResponseWriter)
+	OnSuccess func([]byte, http.ResponseWriter)
+}
+
+// Login customization
+type Login struct {
+	Path      string
+	Entity    Loginable
+	OnError   func(error, http.ResponseWriter)
+	OnSuccess func([]byte, http.ResponseWriter)
 }
 
 // applyRoutes will setup register and login routes
 func (auth *Auth) applyRoutes(routeHandler RouteHandler) {
-	routeHandler.HandleFunc(auth.RegisterPath, func(w http.ResponseWriter, r *http.Request) {
+	registerPath, loginPath := auth.RegisterPath, auth.LoginPath
+	registerEntity, loginEntity := auth.Entity, auth.Entity
+	onRegisterError, onLoginError := func(err error, w http.ResponseWriter) {
+		log.Println("registration failed: ", err)
+	}, func(err error, w http.ResponseWriter) {
+		log.Println("login failed: ", err)
+	}
+	onRegisterSuccess, onLoginSuccess := func(payload []byte, w http.ResponseWriter) {
+		w.Write(payload)
+	}, func(payload []byte, w http.ResponseWriter) {
+		w.Write(payload)
+	}
+
+	if auth.Registration != nil {
+		if auth.Registration.Path != "" {
+			registerPath = auth.Registration.Path
+		}
+
+		if auth.Registration.Entity != nil {
+			registerEntity = auth.Registration.Entity
+		}
+
+		if auth.Registration.OnError != nil {
+			onRegisterError = auth.Registration.OnError
+		}
+
+		if auth.Registration.OnSuccess != nil {
+			onRegisterSuccess = auth.Registration.OnSuccess
+		}
+	}
+
+	if auth.Login != nil {
+		if auth.Login.Path != "" {
+			loginPath = auth.Login.Path
+		}
+
+		if auth.Login.Entity != nil {
+			loginEntity = auth.Login.Entity
+		}
+
+		if auth.Login.OnError != nil {
+			onLoginError = auth.Login.OnError
+		}
+
+		if auth.Login.OnSuccess != nil {
+			onLoginSuccess = auth.Login.OnSuccess
+		}
+	}
+
+	routeHandler.HandleFunc(registerPath, func(w http.ResponseWriter, r *http.Request) {
 		b, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			log.Println("failed to read register request body: ", err)
+			onRegisterError(err, w)
 			return
 		}
 
-		entityToExtract := auth.Entity
-		if auth.Registrable != nil {
-			entityToExtract = auth.Registrable
-		}
-
-		entity := auth.extractEntity(entityToExtract)
+		entity := auth.extractEntity(registerEntity)
 
 		for k, v := range entity {
 			log.Printf("Field: %v, Tag: %v, Type: %v", k, v.Tag, v.Type)
 		}
 
-		w.Write(b)
+		onRegisterSuccess(b, w)
 	})
 
-	routeHandler.HandleFunc(auth.LoginPath, func(w http.ResponseWriter, r *http.Request) {
+	routeHandler.HandleFunc(loginPath, func(w http.ResponseWriter, r *http.Request) {
 		b, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			log.Println("failed to read login request body: ", err)
+			onLoginError(err, w)
 			return
 		}
 
-		entityToExtract := auth.Entity
-		if auth.Loginable != nil {
-			entityToExtract = auth.Loginable
-		}
-
-		entity := auth.extractEntity(entityToExtract)
+		entity := auth.extractEntity(loginEntity)
 
 		for k, v := range entity {
 			log.Printf("Field: %v, Tag: %v, Type: %v", k, v.Tag, v.Type)
 		}
 
-		w.Write(b)
+		onLoginSuccess(b, w)
 	})
 }
 
