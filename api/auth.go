@@ -56,6 +56,14 @@ type Logout struct {
 	OnSuccess func([]byte, http.ResponseWriter)
 }
 
+// entityField is helper struct to hold information/data from extracted auth Entity (Authenticatable, Registrable, Loginable, Logoutable)
+type entityField struct {
+	Tag       string
+	Value     interface{}
+	FieldType reflect.Type
+	Type      interface{}
+}
+
 // applyRoutes will setup auth routes (register, login, logout)
 func (auth *Auth) applyRoutes(routeHandler RouteHandler) {
 	registerPath, registerEntity, onRegisterError, onRegisterSuccess := auth.mapRegistration()
@@ -85,14 +93,6 @@ func (auth *Auth) applyRoutes(routeHandler RouteHandler) {
 			return svc.Logout(fields)
 		})
 	})
-}
-
-// entityField is helper struct to hold information/data from extracted auth Entity (Authenticatable, Registrable, Loginable, Logoutable)
-type entityField struct {
-	Tag       string
-	Value     interface{}
-	FieldType reflect.Type
-	Type      interface{}
 }
 
 // extractEntity is helper function to extract auth entity fields and tags
@@ -229,7 +229,7 @@ func (auth *Auth) mapLogout() (string, Logoutable, func(error, http.ResponseWrit
 	return logoutPath, logoutEntity, onLogoutError, onLogoutSuccess
 }
 
-// handleFunc is helper function to setup route
+// handleFunc is helper function to setup route, map request payload to auth entity
 func (auth *Auth) handleFunc(
 	w http.ResponseWriter,
 	r *http.Request,
