@@ -15,12 +15,12 @@ r := api.NewRouter(&api.Config{
     // If not defined, auth routes will not be initialized
     Auth: &api.Auth{
         RegisterPath: "/register",
-        LoginPath:    "/login", // this is can be removed since it's overriden in custom Login.Path
+        LoginPath:    "/login", // this is can be removed since it's overridden in custom Login.Path
         // Use &User{} entity for both register and login
         Entity: &User{},
 
-        // Optionally, use different entities for register and login for some customization
-        // Not changed values will default to Entity: &User{}
+        // Optionally, we can use different entities for register and login with some customization
+        // Not changed values will be ignored
         Registration: &api.Registration{
             OnSuccess: func(payload []byte, w http.ResponseWriter) {
                 log.Println("registration successful")
