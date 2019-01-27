@@ -62,52 +62,23 @@ func (auth *Auth) applyRoutes(routeHandler RouteHandler) {
 	logoutPath, logoutEntity, onLogoutError, onLogoutSuccess := auth.mapLogout()
 
 	routeHandler.HandleFunc(registerPath, func(w http.ResponseWriter, r *http.Request) {
-		b, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			onRegisterError(err, w)
-			return
-		}
-
-		entity := auth.extractEntity(registerEntity)
-
-		for k, v := range entity {
-			log.Printf("Field: %v, Tag: %v, Type: %v", k, v.Tag, v.Type)
-		}
-
-		onRegisterSuccess(b, w)
+		auth.handleFunc(w, r, registerEntity, onRegisterError, onRegisterSuccess)
 	})
 
 	routeHandler.HandleFunc(loginPath, func(w http.ResponseWriter, r *http.Request) {
-		b, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			onLoginError(err, w)
-			return
-		}
-
-		entity := auth.extractEntity(loginEntity)
-
-		for k, v := range entity {
-			log.Printf("Field: %v, Tag: %v, Type: %v", k, v.Tag, v.Type)
-		}
-
-		onLoginSuccess(b, w)
+		auth.handleFunc(w, r, loginEntity, onLoginError, onLoginSuccess)
 	})
 
 	routeHandler.HandleFunc(logoutPath, func(w http.ResponseWriter, r *http.Request) {
-		b, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			onLogoutError(err, w)
-			return
-		}
-
-		entity := auth.extractEntity(logoutEntity)
-
-		for k, v := range entity {
-			log.Printf("Field: %v, Tag: %v, Type: %v", k, v.Tag, v.Type)
-		}
-
-		onLogoutSuccess(b, w)
+		auth.handleFunc(w, r, logoutEntity, onLogoutError, onLogoutSuccess)
 	})
+}
+
+// authEntity is helper struct to hold information/data from extracted auth Entity (Authenticatable, Registrable, Loginable)
+type authEntity struct {
+	Field string
+	Tag   string
+	Type  interface{}
 }
 
 // extractEntity is helper function to extract auth entity fields and tags
@@ -135,13 +106,6 @@ func (auth *Auth) extractEntity(entityToExtract interface{}) map[string]*authEnt
 	}
 
 	return entityExtracted
-}
-
-// authEntity is helper struct to hold information/data from extracted auth Entity (Authenticatable, Registrable, Loginable)
-type authEntity struct {
-	Field string
-	Tag   string
-	Type  interface{}
 }
 
 // mapRegistration is helper function to map registration data structures
@@ -244,4 +208,27 @@ func (auth *Auth) mapLogout() (string, Logoutable, func(error, http.ResponseWrit
 	}
 
 	return logoutPath, logoutEntity, onLogoutError, onLogoutSuccess
+}
+
+// handleFunc is helper function to setup route
+func (auth *Auth) handleFunc(
+	w http.ResponseWriter,
+	r *http.Request,
+	entityToExtract interface{},
+	onError func(error, http.ResponseWriter),
+	onSuccess func([]byte, http.ResponseWriter),
+) {
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		onError(err, w)
+		return
+	}
+
+	entity := auth.extractEntity(entityToExtract)
+
+	for k, v := range entity {
+		log.Printf("Field: %v, Tag: %v, Type: %v", k, v.Tag, v.Type)
+	}
+
+	onSuccess(b, w)
 }
