@@ -17,6 +17,7 @@ r := api.NewRouter(&api.Config{
         // defaults for both register and login (can be overriden by customizing api.Registration and api.Login)
         RegisterPath: "/register",
         LoginPath:    "/login",
+        LogoutPath:   "/logout",
         // Use &User{} as default entity for both register and login
         Entity: &User{},
 

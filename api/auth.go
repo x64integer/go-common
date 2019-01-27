@@ -16,14 +16,19 @@ type Registrable interface{}
 // Loginable contract is used in case we want different entity for login
 type Loginable interface{}
 
+// Logoutable contract is used in case we want different entity for logout
+type Logoutable interface{}
+
 // Auth configuration
 type Auth struct {
 	RegisterPath string
 	LoginPath    string
+	LogoutPath   string
 	Entity       Authenticatable
 	// Optional properties for customization
 	*Registration
 	*Login
+	*Logout
 }
 
 // Registration customization
@@ -42,10 +47,19 @@ type Login struct {
 	OnSuccess func([]byte, http.ResponseWriter)
 }
 
+// Logout customization
+type Logout struct {
+	Path      string
+	Entity    Loginable
+	OnError   func(error, http.ResponseWriter)
+	OnSuccess func([]byte, http.ResponseWriter)
+}
+
 // applyRoutes will setup register and login routes
 func (auth *Auth) applyRoutes(routeHandler RouteHandler) {
 	registerPath, registerEntity, onRegisterError, onRegisterSuccess := auth.mapRegistration()
 	loginPath, loginEntity, onLoginError, onLoginSuccess := auth.mapLogin()
+	logoutPath, logoutEntity, onLogoutError, onLogoutSuccess := auth.mapLogout()
 
 	routeHandler.HandleFunc(registerPath, func(w http.ResponseWriter, r *http.Request) {
 		b, err := ioutil.ReadAll(r.Body)
@@ -77,6 +91,22 @@ func (auth *Auth) applyRoutes(routeHandler RouteHandler) {
 		}
 
 		onLoginSuccess(b, w)
+	})
+
+	routeHandler.HandleFunc(logoutPath, func(w http.ResponseWriter, r *http.Request) {
+		b, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			onLogoutError(err, w)
+			return
+		}
+
+		entity := auth.extractEntity(logoutEntity)
+
+		for k, v := range entity {
+			log.Printf("Field: %v, Tag: %v, Type: %v", k, v.Tag, v.Type)
+		}
+
+		onLogoutSuccess(b, w)
 	})
 }
 
@@ -180,4 +210,38 @@ func (auth *Auth) mapLogin() (string, Loginable, func(error, http.ResponseWriter
 	}
 
 	return loginPath, loginEntity, onLoginError, onLoginSuccess
+}
+
+// mapLogout is helper function to map logout data structures
+// Initiate default values
+// Override with values defined in auth.Logout struct
+func (auth *Auth) mapLogout() (string, Logoutable, func(error, http.ResponseWriter), func([]byte, http.ResponseWriter)) {
+	logoutPath := auth.LogoutPath
+	logoutEntity := auth.Entity
+	onLogoutError := func(err error, w http.ResponseWriter) {
+		log.Println("logout failed: ", err)
+	}
+	onLogoutSuccess := func(payload []byte, w http.ResponseWriter) {
+		w.Write(payload)
+	}
+
+	if auth.Logout != nil {
+		if auth.Logout.Path != "" {
+			logoutPath = auth.Logout.Path
+		}
+
+		if auth.Logout.Entity != nil {
+			logoutEntity = auth.Logout.Entity
+		}
+
+		if auth.Logout.OnError != nil {
+			onLogoutError = auth.Logout.OnError
+		}
+
+		if auth.Logout.OnSuccess != nil {
+			onLogoutSuccess = auth.Logout.OnSuccess
+		}
+	}
+
+	return logoutPath, logoutEntity, onLogoutError, onLogoutSuccess
 }
