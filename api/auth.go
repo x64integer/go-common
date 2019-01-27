@@ -115,6 +115,7 @@ type authEntity struct {
 }
 
 // mapRegistration is helper function to map registration data structures
+// Initiate default values and override values defined in auth.Registration struct
 func (auth *Auth) mapRegistration() (string, Registrable, func(error, http.ResponseWriter), func([]byte, http.ResponseWriter)) {
 	registerPath := auth.RegisterPath
 	registerEntity := auth.Entity
@@ -147,6 +148,7 @@ func (auth *Auth) mapRegistration() (string, Registrable, func(error, http.Respo
 }
 
 // mapLogin is helper function to map login data structures
+// Initiate default values and override values defined in auth.Login struct
 func (auth *Auth) mapLogin() (string, Loginable, func(error, http.ResponseWriter), func([]byte, http.ResponseWriter)) {
 	loginPath := auth.LoginPath
 	loginEntity := auth.Entity
