@@ -21,7 +21,7 @@ r := api.NewRouter(&api.Config{
         Entity:       &User{}, // use &User{} entity for register, login, logout
 
         // 2.) Custom register, login, logout configurations
-        // If both simple and custom configurations are used, custom configurations have higher priority
+        // If both simple and custom configurations are used, custom configurations get higher priority
         Registration: &api.Registration{
             Entity: &RegisterUser{}, // override auth.Entity for Registration
         },
