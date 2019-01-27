@@ -27,8 +27,6 @@ consumer := &rmq.Connection{
     },
     ResetSignal: make(chan int),
 }
-
-done := make(chan bool)
 ```
 
 * **Call setup func on created consumer (*this will setup conn, exchange, queue, etc...*)**
@@ -37,6 +35,8 @@ done := make(chan bool)
 if err := consumer.Setup(); err != nil {
     return err
 }
+
+done := make(chan bool)
 
 go consumer.ListenNotifyClose(done)
 ```
@@ -158,6 +158,11 @@ func NewConfig() *Config {
 				Internal:   false,
 				NoWait:     false,
 				Args:       nil,
+			},
+			QoS: &QoSOpts{
+				PrefetchCount: 1,
+				PrefetchSize:  0,
+				Global:        false,
 			},
 			QueueBind: &QueueBindOpts{
 				NoWait: false,

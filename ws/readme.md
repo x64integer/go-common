@@ -58,7 +58,7 @@ config := ws.NewConfig()
 // http server configurations
 config.Endpoint = "/test"
 config.Host = "localhost"
-config.Port = "8080
+config.Port = "8080"
 
 s := &ws.Server{
     Config: config,
