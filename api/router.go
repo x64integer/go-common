@@ -11,6 +11,15 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// RouteHandler decouples direct dependency on *mux.Route
+// We can still call Handle() on RouteHandler without *mux.Route in its return definition
+// Just a little trick to get rid of *mux.Route dependency
+// Add new functions as per need
+type RouteHandler interface {
+	Handle(path string, handler http.Handler) *mux.Route
+	HandleFunc(path string, f func(http.ResponseWriter, *http.Request)) *mux.Route
+}
+
 // Router for api
 type Router struct {
 	*Config
@@ -21,7 +30,7 @@ type Router struct {
 type Config struct {
 	Host        string
 	Port        string
-	MapRoutes   func(r *mux.Router)
+	MapRoutes   func(RouteHandler)
 	WaitTimeout time.Duration
 }
 

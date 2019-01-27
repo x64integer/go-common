@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/x64integer/go-common/api"
 
 	"github.com/gorilla/websocket"
@@ -36,7 +35,7 @@ func (server *Server) Run(done chan bool) {
 		Host:        server.Config.Host,
 		Port:        server.Config.Port,
 		WaitTimeout: time.Second * 15,
-		MapRoutes: func(r *mux.Router) {
+		MapRoutes: func(r api.RouteHandler) {
 			r.HandleFunc(server.Config.Endpoint, func(w http.ResponseWriter, r *http.Request) {
 				c, err := upgrader.Upgrade(w, r, nil)
 				if err != nil {
