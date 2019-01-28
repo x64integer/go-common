@@ -24,6 +24,7 @@ r := api.NewRouter(&api.Config{
         // If both simple and custom configurations are used, custom configurations get higher priority
         Registration: &api.Registration{
             Entity: &RegisterUser{}, // override auth.Entity for Registration
+            Service: &RegisterUser{}, // override default &api.Service{}.Register implementation, use custom service
         },
         Login: &api.Login{
             Path:   "/user/login", // override auth.LoginPath value
@@ -54,7 +55,7 @@ r.Listen()
 // User entity example
 type User struct {
 	ID       string    `auth:"id" auth_type:"uuid"`
-	Username string    `auth:"username" auth_type:"credential"`
+	Username string    `json:"user_name" auth:"username" auth_type:"credential"`
 	Email    string    `auth:"email" auth_type:"credential"`
 	Password string    `auth:"password" auth_type:"secret"`
 	DoB      time.Time `auth:"date_of_birth"`
@@ -64,5 +65,17 @@ type User struct {
 type LoginUser struct {
 	Email    string `auth:"email" auth_type:"credential"`
 	Password string `auth:"password" auth_type:"secret"`
+}
+
+// RegisterUser entity example
+type RegisterUser struct {
+	Username string `json:"user_name" auth:"username" auth_type:"credential"`
+	Password string `auth:"password" auth_type:"secret"`
+	Age      int    `auth:"age"`
+}
+
+// Register implements api.RegisterService.Register()
+func (regUser *RegisterUser) Register(w http.ResponseWriter, r *http.Request) {
+	log.Println("custom registration service")
 }
 ```
