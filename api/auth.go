@@ -8,10 +8,9 @@ import (
 	"reflect"
 )
 
-// NOTE: These contracts do not have special methods for now and are used to satisfy reflection dependencies
-// Contract definitions might change in the future, if such need arises
-
-// Authenticatable contract is used for register, login, logout
+// Authenticatable contract
+// No special methods for now, it's used to satisfy reflection dependencies
+// Definition might change in the future, if such need arises
 type Authenticatable interface{}
 
 // Auth configuration
@@ -24,7 +23,7 @@ type Auth struct {
 	OnSuccess    func([]byte, http.ResponseWriter)
 }
 
-// entityField is helper struct to hold information/data from extracted auth Entity (Authenticatable, Registrable, Loginable, Logoutable)
+// entityField is helper struct to hold information/data from extracted auth Entity (Authenticatable)
 type entityField struct {
 	Key         string
 	Value       interface{}
