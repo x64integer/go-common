@@ -16,9 +16,5 @@ func (s *Storage) Init() (*es.Client, error) {
 		es.SetSniff(s.Config.Sniff),
 	)
 
-	if err != nil {
-		return nil, err
-	}
-
-	return client, nil
+	return client, err
 }

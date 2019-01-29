@@ -50,19 +50,19 @@ func (c *Connection) Setup() error {
 
 	c.Channel = ch
 
-	if _, err := c.queueDeclare(c.Config); err != nil {
+	if _, err := c.queueDeclare(c.Config.Queue, c.Config.Options.Queue); err != nil {
 		return err
 	}
 
-	if err := c.exchangeDeclare(c.Config); err != nil {
+	if err := c.exchangeDeclare(c.Config.Exchange, c.Config.Exchange, c.Config.Options.Exchange); err != nil {
 		return err
 	}
 
-	if err := c.qos(c.Config); err != nil {
+	if err := c.qos(c.Config.Options.QoS); err != nil {
 		return err
 	}
 
-	if err := c.queueBind(c.Config); err != nil {
+	if err := c.queueBind(c.Config.Queue, c.Config.RoutingKey, c.Config.Exchange, c.Config.Options.QueueBind); err != nil {
 		return err
 	}
 
@@ -84,19 +84,19 @@ func (c *Connection) DeclareWithConfig(config []*Config) error {
 	}
 
 	for _, conf := range config {
-		if _, err := c.queueDeclare(conf); err != nil {
+		if _, err := c.queueDeclare(conf.Queue, conf.Options.Queue); err != nil {
 			return err
 		}
 
-		if err := c.exchangeDeclare(conf); err != nil {
+		if err := c.exchangeDeclare(conf.Exchange, conf.ExchangeKind, conf.Options.Exchange); err != nil {
 			return err
 		}
 
-		if err := c.qos(conf); err != nil {
+		if err := c.qos(conf.Options.QoS); err != nil {
 			return err
 		}
 
-		if err := c.queueBind(conf); err != nil {
+		if err := c.queueBind(conf.Queue, conf.RoutingKey, conf.Exchange, conf.Options.QueueBind); err != nil {
 			return err
 		}
 	}
@@ -232,53 +232,53 @@ func (c *Connection) ListenNotifyClose(done chan bool) {
 }
 
 // queueDeclare is helper function to declare queue
-func (c *Connection) queueDeclare(conf *Config) (amqp.Queue, error) {
+func (c *Connection) queueDeclare(name string, opts *QueueOpts) (amqp.Queue, error) {
 	queue, err := c.Channel.QueueDeclare(
-		conf.Queue,
-		conf.Options.Queue.Durable,
-		conf.Options.Queue.DeleteWhenUnused,
-		conf.Options.Queue.Exclusive,
-		conf.Options.Queue.NoWait,
-		conf.Options.Queue.Args,
+		name,
+		opts.Durable,
+		opts.DeleteWhenUnused,
+		opts.Exclusive,
+		opts.NoWait,
+		opts.Args,
 	)
 
 	return queue, err
 }
 
 // exchangeDeclare is helper function to declare exchange
-func (c *Connection) exchangeDeclare(conf *Config) error {
+func (c *Connection) exchangeDeclare(name string, kind string, opts *ExchangeOpts) error {
 	err := c.Channel.ExchangeDeclare(
-		conf.Exchange,
-		conf.ExchangeKind,
-		conf.Options.Exchange.Durable,
-		conf.Options.Exchange.AutoDelete,
-		conf.Options.Exchange.Internal,
-		conf.Options.Exchange.NoWait,
-		conf.Options.Exchange.Args,
+		name,
+		kind,
+		opts.Durable,
+		opts.AutoDelete,
+		opts.Internal,
+		opts.NoWait,
+		opts.Args,
 	)
 
 	return err
 }
 
 // qos is helper function to define QoS for channel
-func (c *Connection) qos(conf *Config) error {
+func (c *Connection) qos(opts *QoSOpts) error {
 	err := c.Channel.Qos(
-		conf.Options.QoS.PrefetchCount,
-		conf.Options.QoS.PrefetchSize,
-		conf.Options.QoS.Global,
+		opts.PrefetchCount,
+		opts.PrefetchSize,
+		opts.Global,
 	)
 
 	return err
 }
 
 // queueBind is helper function to bind queue to exchange
-func (c *Connection) queueBind(conf *Config) error {
+func (c *Connection) queueBind(queue string, routingKey string, exchange string, opts *QueueBindOpts) error {
 	err := c.Channel.QueueBind(
-		conf.Queue,
-		conf.RoutingKey,
-		conf.Exchange,
-		conf.Options.QueueBind.NoWait,
-		conf.Options.QueueBind.Args,
+		queue,
+		routingKey,
+		exchange,
+		opts.NoWait,
+		opts.Args,
 	)
 
 	return err

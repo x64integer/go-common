@@ -5,7 +5,7 @@ import (
 )
 
 // Storage struct to work with SQL
-type Storage struct{
+type Storage struct {
 	*Config
 }
 
@@ -18,8 +18,7 @@ func (s *Storage) Init() (*sql.DB, error) {
 		return nil, err
 	}
 
-	err = client.Ping()
-	if err != nil {
+	if err := client.Ping(); err != nil {
 		return nil, err
 	}
 
