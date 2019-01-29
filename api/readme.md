@@ -18,14 +18,14 @@ r := api.NewRouter(&api.Config{
         LoginPath:    "/login",
         LogoutPath:   "/logout",
         Entity:       &User{},
-    },
 
-    // Optionally, override default OnError and OnSuccess behaviour
-    OnError: func(err error, w http.ResponseWriter) {
-        // handle error
-    },
-    OnSuccess: func(payload []byte, w http.ResponseWriter) {
-        // handle successful response
+        // Optionally, override default OnError and OnSuccess behaviour
+        OnError: func(err error, w http.ResponseWriter) {
+            // handle error
+        },
+        OnSuccess: func(payload []byte, w http.ResponseWriter) {
+            // handle successful response
+        },
     },
 })
 ```
