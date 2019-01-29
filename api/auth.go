@@ -9,8 +9,8 @@ import (
 )
 
 // Authenticatable contract
-// No special methods for now, it's used to satisfy reflection dependencies
-// Definition might change in the future, if such need arises
+// Such empty definition is used to satisfy reflection dependencies only
+// It might change in the future, if such need arises
 type Authenticatable interface{}
 
 // Auth configuration
