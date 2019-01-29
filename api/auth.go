@@ -112,6 +112,7 @@ func (auth *Auth) handleFunc(
 
 	if err := json.Unmarshal(b, auth.Entity); err != nil {
 		auth.OnError(err, w)
+		return
 	}
 
 	fields := auth.extractEntity(auth.Entity)
