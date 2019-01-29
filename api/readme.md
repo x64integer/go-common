@@ -14,33 +14,18 @@ r := api.NewRouter(&api.Config{
     },
     // If not defined, auth routes will not be initialized
     Auth: &api.Auth{
-        // 1.) Simple register, login, logout configurations
         RegisterPath: "/register",
         LoginPath:    "/login",
         LogoutPath:   "/logout",
-        Entity:       &User{}, // use &User{} entity for register, login, logout
+        Entity:       &User{},
+    },
 
-        // 2.) Custom register, login, logout configurations
-        // If both simple and custom configurations are used, custom configurations get higher priority
-        Registration: &api.Registration{
-            Entity: &RegisterUser{}, // override auth.Entity for Registration
-            Service: &RegisterUser{}, // override default &api.Service{}.Register implementation, use custom service
-        },
-        Login: &api.Login{
-            Path:   "/user/login", // override auth.LoginPath value
-            Entity: &LoginUser{},  // override auth.Entity for Login
-            OnError: func(err error, w http.ResponseWriter) { // override default OnError()
-                log.Println("login error occured")
-                w.Write([]byte(err.Error()))
-            },
-            OnSuccess: func(payload []byte, w http.ResponseWriter) { // override default OnSuccess()
-                log.Println("login successful")
-                w.Write(payload)
-            },
-        },
-        Logout: &api.Logout{
-            Entity: &LogoutUser{}, // override auth.Entity for Logout
-        },
+    // Optionally, override default OnError and OnSuccess behaviour
+    OnError: func(err error, w http.ResponseWriter) {
+        // handle error
+    },
+    OnSuccess: func(payload []byte, w http.ResponseWriter) {
+        // handle successful response
     },
 })
 ```
@@ -50,7 +35,6 @@ r := api.NewRouter(&api.Config{
 r.Listen()
 ```
 
-* **Entities examples**
 ```
 // User entity example
 type User struct {
@@ -59,23 +43,5 @@ type User struct {
 	Email    string    `auth:"email" auth_type:"credential"`
 	Password string    `auth:"password" auth_type:"secret"`
 	DoB      time.Time `auth:"date_of_birth"`
-}
-
-// LoginUser entity example
-type LoginUser struct {
-	Email    string `auth:"email" auth_type:"credential"`
-	Password string `auth:"password" auth_type:"secret"`
-}
-
-// RegisterUser entity example
-type RegisterUser struct {
-	Username string `json:"user_name" auth:"username" auth_type:"credential"`
-	Password string `auth:"password" auth_type:"secret"`
-	Age      int    `auth:"age"`
-}
-
-// Register implements api.RegisterService.Register()
-func (regUser *RegisterUser) Register(w http.ResponseWriter, r *http.Request) {
-	log.Println("custom registration service")
 }
 ```
