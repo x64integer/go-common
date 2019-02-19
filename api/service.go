@@ -4,15 +4,16 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
+
+	"github.com/x64integer/go-common/storage"
 )
 
-// Service is layer between route handler and database access
+// Service is responsible to store data, for now
 type Service struct {
 }
 
 // Register user account
 func (svc *Service) Register(fields []*entityField) ([]byte, error) {
-	var query string
 	var columns []string
 	var binders []string
 	var data []interface{}
@@ -20,7 +21,7 @@ func (svc *Service) Register(fields []*entityField) ([]byte, error) {
 
 	// construct query and data: "INSERT INTO users (id, username, email, password) VALUES ($1, $2, $3, $4)"
 	for i, field := range fields {
-		if field.AuthType == "auto_id" || field.AuthType == "auto_gen" {
+		if field.AuthType == "auto_gen" {
 			continue
 		}
 
@@ -32,11 +33,7 @@ func (svc *Service) Register(fields []*entityField) ([]byte, error) {
 
 	queryBuff.WriteString("INSERT INTO " + strings.ToLower(fields[0].AuthTable) + "s (" + strings.Join(columns, ", ") + ") VALUES (" + strings.Join(binders, ", ") + ")")
 
-	query = queryBuff.String()
-
-	dao := &Dao{}
-
-	if err := dao.Save(query, data); err != nil {
+	if _, err := storage.PG.Exec(queryBuff.String(), data...); err != nil {
 		return nil, err
 	}
 
