@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"reflect"
-	"time"
 )
 
 // Authenticatable contract
@@ -93,8 +92,8 @@ func (auth *Auth) extractEntity(entityToExtract interface{}) []*entityField {
 			fieldValue = fmt.Sprint(vField.String())
 		case reflect.Int:
 			fieldValue = vField.Int()
-		case reflect.TypeOf(time.Time{}).Kind():
-			fieldValue = vField.String()
+		case reflect.Float32, reflect.Float64:
+			fieldValue = vField.Float()
 		}
 
 		fields = append(fields, &entityField{

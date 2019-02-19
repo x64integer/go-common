@@ -12,16 +12,15 @@ type Service struct {
 
 // Register user account
 func (svc *Service) Register(fields []*entityField) ([]byte, error) {
-	// query and data construct: "INSERT INTO users (id, username, email, password) VALUES ($1, $2, $3, $4)"
-
 	var query string
 	var columns []string
 	var binders []string
 	var data []interface{}
 	queryBuff := bytes.NewBufferString("")
 
+	// construct query and data: "INSERT INTO users (id, username, email, password) VALUES ($1, $2, $3, $4)"
 	for i, field := range fields {
-		if field.AuthType == "auto_id" {
+		if field.AuthType == "auto_id" || field.AuthType == "auto_gen" {
 			continue
 		}
 

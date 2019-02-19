@@ -38,10 +38,10 @@ r.Listen()
 ```
 // User entity example
 type User struct {
-	ID       string    `auth:"id" auth_type:"uuid"`
-	Username string    `json:"user_name" auth:"username" auth_type:"credential"`
-	Email    string    `auth:"email" auth_type:"credential"`
-	Password string    `auth:"password" auth_type:"secret"`
-	DoB      time.Time `auth:"date_of_birth"`
+	ID        string `auth:"id" auth_type:"auto_id"`
+	Username  string `json:"user_name" auth:"username" auth_type:"credential"`
+	Email     string `auth:"email" auth_type:"credential"`
+	Password  string `auth:"password" auth_type:"secret"`
+	CreatedAt int    `auth:"created_at" auth_type:"auto_gen"`
 }
 ```
