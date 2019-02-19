@@ -1,6 +1,7 @@
 package pg
 
 import (
+	"log"
 	"strconv"
 
 	"github.com/x64integer/go-common/util"
@@ -19,13 +20,17 @@ type Config struct {
 
 // NewConfig will init db connection string
 func NewConfig() *Config {
+	if util.Env("PG_NAME", "") == "" {
+		log.Fatalln("no database name provided")
+	}
+
 	conf := new(Config)
 
-	conf.Host = util.Env("PG_HOST", "")
+	conf.Host = util.Env("PG_HOST", "localhost")
 	conf.Name = util.Env("PG_NAME", "")
 	conf.Port = util.Env("PG_PORT", "5432")
-	conf.User = util.Env("PG_USER", "")
-	conf.Password = util.Env("PG_PASSWORD", "")
+	conf.User = util.Env("PG_USER", "postgres")
+	conf.Password = util.Env("PG_PASSWORD", "postgres")
 	conf.SSLMode = util.Env("SSLMODE", "disable")
 
 	maxConn, err := strconv.Atoi(util.Env("PG_MAX_DB_CONN", "20"))

@@ -1,13 +1,20 @@
 package api
 
+import (
+	"github.com/x64integer/go-common/storage"
+)
+
 // Dao represents data access layer
 // Database logic
 type Dao struct {
 }
 
 // Save user account
-func (dao *Dao) Save(stmt string) error {
-	// _, err := storage.PG.Exec("INSERT INTO users (id, username, email, password) VALUES ($1, $2, $3, $4)", "", "", "", "", "")
+func (dao *Dao) Save(stmt string, data []interface{}) error {
+	_, err := storage.PG.Exec(stmt, data...)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

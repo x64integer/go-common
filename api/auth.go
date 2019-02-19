@@ -2,10 +2,12 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"reflect"
+	"time"
 )
 
 // Authenticatable contract
@@ -25,10 +27,10 @@ type Auth struct {
 
 // entityField is helper struct to hold information/data from extracted auth Entity (Authenticatable)
 type entityField struct {
-	Key         string
-	Value       interface{}
-	Type        interface{}
-	ReflectType reflect.Type
+	AuthKey   string
+	AuthValue interface{}
+	AuthType  interface{}
+	AuthTable string
 }
 
 // applyRoutes will setup auth routes (register, login, logout)
@@ -68,30 +70,38 @@ func (auth *Auth) applyRoutes(routeHandler RouteHandler) {
 
 // extractEntity is helper function to extract auth entity fields and tags
 func (auth *Auth) extractEntity(entityToExtract interface{}) []*entityField {
-	var entityType reflect.Type
 	var entityValue reflect.Value
 	var fields []*entityField
 	entityKind := reflect.ValueOf(entityToExtract).Kind()
 
 	if entityKind == reflect.Ptr {
-		entityType = reflect.TypeOf(entityToExtract).Elem()
 		entityValue = reflect.ValueOf(entityToExtract).Elem()
 	} else {
-		entityType = reflect.TypeOf(entityToExtract)
 		entityValue = reflect.ValueOf(entityToExtract)
 	}
 
-	for i := 0; i < entityType.NumField(); i++ {
-		field := entityType.Field(i)
-		fieldKey := field.Tag.Get("auth")
-		fieldValue := entityValue.Field(i)
-		fieldType := field.Tag.Get("auth_type")
+	for i := 0; i < entityValue.NumField(); i++ {
+		vField := entityValue.Field(i)
+		tField := entityValue.Type().Field(i)
+
+		fieldKey := tField.Tag.Get("auth")
+		fieldType := tField.Tag.Get("auth_type")
+		var fieldValue interface{}
+
+		switch vField.Kind() {
+		case reflect.String:
+			fieldValue = fmt.Sprint(vField.String())
+		case reflect.Int:
+			fieldValue = vField.Int()
+		case reflect.TypeOf(time.Time{}).Kind():
+			fieldValue = vField.String()
+		}
 
 		fields = append(fields, &entityField{
-			Key:         fieldKey,
-			Value:       fieldValue,
-			Type:        fieldType,
-			ReflectType: field.Type,
+			AuthKey:   fieldKey,
+			AuthValue: fieldValue,
+			AuthType:  fieldType,
+			AuthTable: entityValue.Type().Name(),
 		})
 	}
 
