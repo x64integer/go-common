@@ -20,15 +20,15 @@ var (
 
 // Connection for RMQ
 type Connection struct {
-	Config              *Config
-	Conn                *amqp.Connection
-	Channel             *amqp.Channel
-	HandleMsgs          func(msgs <-chan amqp.Delivery)
-	Headers             amqp.Table
-	ResetSignal         chan int
-	ReconnectTime       time.Duration
-	Retrying            bool
-	DisabledHealthCheck bool
+	Config             *Config
+	Conn               *amqp.Connection
+	Channel            *amqp.Channel
+	HandleMsgs         func(msgs <-chan amqp.Delivery)
+	Headers            amqp.Table
+	ResetSignal        chan int
+	ReconnectTime      time.Duration
+	Retrying           bool
+	EnabledHealthCheck bool
 }
 
 // Setup RMQ Connection
@@ -70,7 +70,7 @@ func (c *Connection) Setup() error {
 		c.ReconnectTime = reconnectTime
 	}
 
-	if !c.DisabledHealthCheck {
+	if c.EnabledHealthCheck {
 		go c.healthCheck()
 	}
 
@@ -289,9 +289,9 @@ func (c *Connection) recreateConn() error {
 	log.Println("trying to recreate rmq connection for host: ", c.Config.Host)
 
 	// important step!
-	// prevent healthCheck() to be run once again in c.Setup() because first call to c.Setup() on service Init() already started it (by default)
+	// prevent healthCheck() to be run once again in c.Setup()
 	// so we do not need/want it to be run again, it would start useless goroutine
-	c.DisabledHealthCheck = true
+	c.EnabledHealthCheck = false
 
 	return c.Setup()
 }

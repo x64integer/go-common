@@ -26,6 +26,7 @@ consumer := &rmq.Connection{
         }
     },
     ResetSignal: make(chan int),
+	EnabledHealthCheck: true, // false by default
 }
 ```
 
