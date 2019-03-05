@@ -24,3 +24,7 @@ if err := m.Send(); err != nil {
     log.Println("failed to send mail: ", err)
 }
 ```
+
+### TODO
+* Abstract mail interface
+* Make it possible to use different mail services (custom smtp, sendgrid...) at any time
