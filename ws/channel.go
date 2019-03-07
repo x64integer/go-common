@@ -1,67 +1,78 @@
 package ws
 
 import (
+	"log"
 	"sync"
-
-	"github.com/gorilla/websocket"
 )
 
-// Channel for each ws connection
-type Channel struct {
-	ReadLock    sync.Mutex
-	SendLock    sync.Mutex
-	Conn        *websocket.Conn
-	OnMessage   func(in []byte)
-	OnError     func(err error)
-	OnConnClose func(code int, msg string)
-	Error       chan error
+// EventHandler for websocket connection
+type EventHandler interface {
+	// OnMessage event from websocket connection
+	OnMessage(in []byte)
+	// OnError event from websocket connection
+	OnError(err error)
 }
 
-// NewChannel will init new Channel struct
-func NewChannel(conn *websocket.Conn) *Channel {
-	return &Channel{
-		Conn:  conn,
-		Error: make(chan error),
+// Connection for websocket
+type Connection interface {
+	// ReadMessage from websocket connection
+	ReadMessage() (int, []byte, error)
+	// WriteMessage to websocket connection
+	WriteMessage(int, []byte) error
+}
+
+// Channel for websocket connection
+type Channel struct {
+	EventHandler
+	Connection
+	ReadLock sync.Mutex
+	SendLock sync.Mutex
+	Error    chan error
+}
+
+// ConnectionClosed error type
+type ConnectionClosed struct {
+	Code    int
+	Message string
+}
+
+// Error implements error interface
+func (connClosed *ConnectionClosed) Error() string {
+	return "connection closed"
+}
+
+// read data from websocket channel
+// Concurrent safe wrapper for Connection.ReadMessage()
+func (ch *Channel) read() {
+	log.Println("listening for messages")
+
+	for {
+		_, msg, err := ch.readMessage()
+
+		if err != nil {
+			ch.EventHandler.OnError(err)
+
+			continue
+		}
+
+		ch.EventHandler.OnMessage(msg)
 	}
 }
 
-// SendMessage is concurrent safe ws WriteMessage wrapper
-func (ch *Channel) SendMessage(messageType int, data []byte) error {
+// sendMessage to websocket channel
+func (ch *Channel) sendMessage(messageType int, data []byte) error {
 	ch.SendLock.Lock()
-	err := ch.Conn.WriteMessage(messageType, data)
+	err := ch.Connection.WriteMessage(messageType, data)
 	ch.SendLock.Unlock()
 
 	return err
 }
 
-// ReadMessage is concurrent safe ws ReadMessage wrapper
-func (ch *Channel) ReadMessage() (int, []byte, error) {
+// readMessage from websocket channel
+func (ch *Channel) readMessage() (int, []byte, error) {
 	ch.ReadLock.Lock()
-	t, p, err := ch.Conn.ReadMessage()
+	t, p, err := ch.Connection.ReadMessage()
 	ch.ReadLock.Unlock()
 
 	return t, p, err
-}
-
-// Read data from ws connection and pass it to OnMessage callback
-func (ch *Channel) Read() {
-	for {
-		_, p, err := ch.ReadMessage()
-
-		if err != nil {
-			if c, k := err.(*websocket.CloseError); k {
-				if ch.OnConnClose != nil {
-					ch.OnConnClose(c.Code, c.Text)
-				}
-			}
-
-			if ch.OnError != nil {
-				ch.OnError(err)
-			}
-
-			continue
-		}
-
-		ch.OnMessage(p)
-	}
 }

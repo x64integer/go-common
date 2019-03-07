@@ -17,18 +17,16 @@ var upgrader = websocket.Upgrader{
 
 // Server for websocket
 type Server struct {
-	Config      *Config
-	Channel     *Channel
-	OnMessage   func(in []byte)
-	OnError     func(err error)
-	OnConnClose func(code int, msg string)
-	Upgrader    websocket.Upgrader
+	EventHandler
+	Config   *Config
+	Channel  *Channel
+	Upgrader websocket.Upgrader
 }
 
 // Run will create websocket Server and start listening for messages
 func (server *Server) Run(done chan bool) {
 	if server.Config == nil {
-		log.Fatalln("nil Config struct for ws server -> make sure valid Config is accessible to ws server")
+		log.Fatalln("nil Config struct for websocket server -> make sure valid Config is accessible to websocket server")
 	}
 
 	r := api.NewRouter(&api.Config{
@@ -37,22 +35,20 @@ func (server *Server) Run(done chan bool) {
 		WaitTimeout: time.Second * 15,
 		MapRoutes: func(r api.RouteHandler) {
 			r.HandleFunc(server.Config.Endpoint, func(w http.ResponseWriter, r *http.Request) {
-				c, err := upgrader.Upgrade(w, r, nil)
+				conn, err := upgrader.Upgrade(w, r, nil)
 				if err != nil {
 					w.Write([]byte("failed to setup websocket upgrader"))
 					return
 				}
 
 				ch := &Channel{
-					Conn:        c,
-					OnMessage:   server.OnMessage,
-					OnError:     server.OnError,
-					OnConnClose: server.OnConnClose,
+					Connection:   conn,
+					EventHandler: server.EventHandler,
 				}
 
 				server.Channel = ch
 
-				go ch.Read()
+				go ch.read()
 			})
 		},
 	})
@@ -60,4 +56,16 @@ func (server *Server) Run(done chan bool) {
 	go r.Listen()
 
 	<-done
+
+	log.Println("reading stopped")
+}
+
+// SendText message to websocket channel
+func (server *Server) SendText(msg []byte) error {
+	return server.Channel.sendMessage(websocket.TextMessage, msg)
+}
+
+// SendBinary message to websocket channel
+func (server *Server) SendBinary(msg []byte) error {
+	return server.Channel.sendMessage(websocket.BinaryMessage, msg)
 }

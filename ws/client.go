@@ -8,46 +8,54 @@ import (
 
 // Client for websocket
 type Client struct {
-	Config      *Config
-	Channel     *Channel
-	OnMessage   func(in []byte)
-	OnError     func(err error)
-	OnConnClose func(code int, msg string)
+	EventHandler
+	Config         *Config
+	Channel        *Channel
+	DisabledReader bool
 }
 
-// Setup will create websocket Client and start listening for messages
-func (client *Client) Setup(done chan bool) {
+// Run will create websocket Client and start listening for messages
+func (client *Client) Run(done chan bool, ready chan bool) {
 	if client.Config == nil {
-		log.Fatalln("nil Config struct for ws Client -> make sure valid Config is accessible to ws Client")
-	}
-
-	c, _, err := websocket.DefaultDialer.Dial(client.Config.WSURL, nil)
-	if err != nil {
-		log.Fatalln("websocket dialer failed: ", err)
+		log.Fatalln("nil Config struct for websocket Client -> make sure valid Config is accessible to websocket Client")
 	}
 
 	ch := &Channel{
-		Conn:        c,
-		OnMessage:   client.OnMessage,
-		OnError:     client.OnError,
-		OnConnClose: client.OnConnClose,
+		Connection:   client.connection(),
+		EventHandler: client.EventHandler,
 	}
 
 	client.Channel = ch
 
-	if client.OnMessage != nil {
-		go ch.Read()
+	if !client.DisabledReader {
+		go ch.read()
 	}
 
+	ready <- true
+
+	log.Printf("\nconnected to %s\n", client.Config.WSURL)
+
 	<-done
+
+	log.Println("reading stopped")
 }
 
-// SendText message
+// SendText message to websocket channel
 func (client *Client) SendText(msg []byte) error {
-	return client.Channel.SendMessage(websocket.TextMessage, msg)
+	return client.Channel.sendMessage(websocket.TextMessage, msg)
 }
 
-// SendBinary message
+// SendBinary message to websocket channel
 func (client *Client) SendBinary(msg []byte) error {
-	return client.Channel.SendMessage(websocket.BinaryMessage, msg)
+	return client.Channel.sendMessage(websocket.BinaryMessage, msg)
+}
+
+// connection is helper function to create gorilla websocket connection
+func (client *Client) connection() *websocket.Conn {
+	conn, _, err := websocket.DefaultDialer.Dial(client.Config.WSURL, nil)
+	if err != nil {
+		log.Fatalln("websocket dialer failed: ", err)
+	}
+
+	return conn
 }

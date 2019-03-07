@@ -10,43 +10,31 @@
 
 * **Create ws.Client**
 ```
-c := &ws.Client{
-    Config: ws.NewConfig(), // can be customized
-    OnMessage: func(in []byte) {
-        // handle message from ws channel
-    },
-    OnError: func(err error) {
-        // handle error from ws channel
-        log.Println("error from ws connection: ", err)
-
-        if strings.Contains(err.Error(), "closed network connection") {
-			os.Exit(1)
-		}
-    },
-    OnConnClose: func(code int, msg string) {
-        // handle closed ws connection
-        log.Printf("closed conn: code=%v - msg=%v\n", code, msg)
-
-        os.Exit(1)
-    },
+client := &ws.Client{
+    Config:       ws.NewConfig(), // can be customized
+    EventHandler: &mHandler{},
+    // DisabledReader: true, // false by default, if set to true client will not read messages from websocket channel
 }
 ```
 
 * **Setup ws Client and listen for messages**
 ```
 done := make(chan bool)
+ready := make(chan bool)
 
-go c.Setup(done)
+go client.Run(done, ready)
 
-<-done
+<-ready
+
+// ready to send messages to websocket channel
 ```
 
 * **Send message to ws channel**
 ```
 // text type
-c.SendText([]byte("message"))
+client.SendText([]byte("message"))
 // binary type
-c.SendBinary([]byte("message"))
+client.SendBinary([]byte("message"))
 ```
 
 ### Server (in progress)
@@ -60,25 +48,10 @@ config.Endpoint = "/test"
 config.Host = "localhost"
 config.Port = "8080"
 
-s := &ws.Server{
-    Config: config,
-    OnMessage: func(in []byte) {
-        // handle message from ws channel
-    },
-    OnError: func(err error) {
-        // handle error from ws channel
-        log.Println("error from ws connection: ", err)
-
-        if strings.Contains(err.Error(), "closed network connection") {
-			os.Exit(1)
-		}
-    },
-    OnConnClose: func(code int, msg string) {
-        // handle closed ws connection
-        log.Printf("closed conn: code=%v - msg=%v\n", code, msg)
-
-        os.Exit(1)
-    },
+server := &ws.Server{
+    Config:       config,
+    EventHandler: &mHandler{},
+    // DisabledReader: true, // false by default, if set to true client will not read messages from websocket channel
 }
 ```
 
@@ -86,7 +59,31 @@ s := &ws.Server{
 ```
 done := make(chan bool)
 
-go s.Run(done)
+go server.Run(done)
 
 <-done
+```
+
+* **Handler example**
+```
+// mHandler example impl
+type mHandler struct{}
+
+func (h *mHandler) OnMessage(in []byte) {
+	// handle message from ws channel
+	log.Println("received: " + string(in))
+}
+
+func (h *mHandler) OnError(err error) {
+	// handle error from ws channel
+	log.Println("error from ws connection: ", err)
+
+	if connClosed, ok := err.(*ws.ConnectionClosed); ok {
+		log.Println(connClosed)
+	}
+
+	if strings.Contains(err.Error(), "closed network connection") {
+		os.Exit(1)
+	}
+}
 ```
