@@ -16,7 +16,7 @@ type Client struct {
 // Send email
 func (client *Client) Send(content *Content) error {
 	client.SendLock.Lock()
-	client.SendLock.Unlock()
+	defer client.SendLock.Unlock()
 
 	return client.Sender.Send(content)
 }
