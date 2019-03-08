@@ -24,7 +24,7 @@ log.Printf("\nEncrypted: %s\nDecrypted: %s\nHex: %s\nBase64: %s\n", cipher.Encry
 ```
 // Secret key and initialization vector must be compatible with AES-128 or AES-256 (or AES-512)
 cipher := &crypto.Cipher{
-    Crypter: &crypto.GCM{
+    Crypter: &crypto.CBC{
         Secret: "test-key-1234567",
         IV:     "test-iv-12345678",
     },
