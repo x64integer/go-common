@@ -2,55 +2,82 @@ package jwt
 
 import (
 	"errors"
+	"sync"
 	"time"
-
-	"github.com/x64integer/go-common/util"
 
 	jwtLib "github.com/dgrijalva/jwt-go"
 )
 
-var (
-	// LoginExp time
-	LoginExp = 24 * time.Hour
-	// claimsExp for jwt claims
-	claimsExp = time.Now().Add(LoginExp).Unix()
-	// secret for jwt
-	secret = []byte(util.Env("JWT_LOGIN", util.RandomStr(64)))
-)
+// Token ...
+type Token struct {
+	Secret  []byte
+	Content string
+	Lock    sync.Mutex
+}
+
+// Claims for token
+type Claims struct {
+	Fields     interface{}
+	Expiration time.Duration
+	jwtLib.StandardClaims
+}
 
 // Generate JWT token for given claims
-func Generate(claimOpts map[string]string) (string, error) {
-	token := jwtLib.New(jwtLib.SigningMethodHS256)
-	claims := token.Claims.(jwtLib.MapClaims)
+func (token *Token) Generate(claims *Claims) error {
+	token.Lock.Lock()
+	defer token.Lock.Unlock()
 
-	for key, value := range claimOpts {
-		claims[key] = value
-	}
+	claims.StandardClaims.ExpiresAt = time.Now().Add(claims.Expiration).Unix()
 
-	claims["exp"] = claimsExp
+	tokenLib := jwtLib.NewWithClaims(jwtLib.SigningMethodHS256, claims)
 
-	tokenStr, err := token.SignedString(secret)
-
+	tokenStr, err := tokenLib.SignedString(token.Secret)
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	return tokenStr, nil
+	token.Content = tokenStr
+
+	return nil
 }
 
 // ValidateAndExtract will check if given JWT token is valid and return claims
-func ValidateAndExtract(tokenStr string) (jwtLib.MapClaims, bool) {
-	if token, _ := jwtLib.Parse(tokenStr, func(t *jwtLib.Token) (interface{}, error) {
+func (token *Token) ValidateAndExtract(tokenStr string) (*Claims, bool) {
+	claims := &Claims{}
+
+	tokenLib, err := token.parse(tokenStr, claims)
+	if err != nil {
+		return claims, false
+	}
+
+	return claims, token.valid(tokenLib)
+}
+
+// parse is helper function to parse jwt
+func (token *Token) parse(tokenStr string, claims *Claims) (*jwtLib.Token, error) {
+	tokenLib, err := jwtLib.ParseWithClaims(tokenStr, claims, func(t *jwtLib.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwtLib.SigningMethodHMAC); !ok {
 			return nil, errors.New("failed to parse JWT token")
 		}
 
-		return secret, nil
-	}); token != nil {
-		if claims, claimsOk := token.Claims.(jwtLib.MapClaims); claimsOk && token.Valid {
-			return claims, true
+		return token.Secret, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return tokenLib, nil
+}
+
+// valid is helper function to validate jwt
+func (token *Token) valid(tokenLib *jwtLib.Token) bool {
+	if tokenLib != nil {
+		_, claimsOk := tokenLib.Claims.(jwtLib.Claims)
+
+		if claimsOk && tokenLib.Valid {
+			return true
 		}
 	}
 
-	return nil, false
+	return false
 }

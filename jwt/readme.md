@@ -8,14 +8,23 @@
 
 * **Generate jwt with claims**
 ```
-token, err := jwt.Generate(map[string]string{
-    "id":       "semir-123",
-    "username": "semir",
-    "email":    "semir@mail.com",
-})
+token := &jwt.Token{
+    Secret: []byte("testkey"),
+}
+
+if err := token.Generate(&jwt.Claims{
+    Expiration: time.Hour * 24,
+    Fields: map[string]interface{}{
+        "username": "semir",
+        "email":    "semir@mail.com",
+        "id":       "semir-123",
+    },
+}); err != nil {
+    log.Fatalln("failed to generate jwt: ", err)
+}
 ```
 
 * **Validate and get jwt claims**
 ```
-claims, valid := jwt.ValidateAndExtract(token)
+claims, valid := token.ValidateAndExtract(token.Content)
 ```
