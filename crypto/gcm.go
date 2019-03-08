@@ -1,4 +1,4 @@
-package gcm
+package crypto
 
 import (
 	"crypto/aes"
@@ -12,16 +12,18 @@ import (
 	"github.com/x64integer/go-common/util"
 )
 
-var secret = util.Env("CRYPTO_SECRET", "")
+// GCM crypter
+type GCM struct {
+	Secret string
+}
 
-// Encrypt will encrypt given input using AES GCM encryption mode
-// will return original encrypted value, hex and base64 encoded versions
-func Encrypt(input string) (string, string, string, error) {
-	if strings.TrimSpace(secret) == "" {
-		return "", "", "", errors.New("missing CRYPTO_SECRET env value")
+// Encrypt payload using AES GCM encryption mode
+func (gcmEnc *GCM) Encrypt(input []byte) (string, string, string, error) {
+	if strings.TrimSpace(gcmEnc.Secret) == "" {
+		return "", "", "", errors.New("secret key not provided")
 	}
 
-	key := []byte(secret)
+	key := []byte(gcmEnc.Secret)
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -35,19 +37,18 @@ func Encrypt(input string) (string, string, string, error) {
 		return "", "", "", err
 	}
 
-	byteIn := []byte(input)
-	encrypted := gcm.Seal(nonce, nonce, byteIn, nil)
+	encrypted := gcm.Seal(nonce, nonce, input, nil)
 
 	return string(encrypted), hex.EncodeToString(encrypted), util.Base64URLEncode(string(encrypted)), nil
 }
 
-// Decrypt will decrypt given AES GCM encrypted input
-func Decrypt(input string) (string, error) {
-	if strings.TrimSpace(secret) == "" {
-		return "", errors.New("missing CRYPTO_SECRET env value")
+// Decrypt AES GCM encrypted input
+func (gcmEnc *GCM) Decrypt(input string) (string, error) {
+	if strings.TrimSpace(gcmEnc.Secret) == "" {
+		return "", errors.New("secret key not provided")
 	}
 
-	key := []byte(secret)
+	key := []byte(gcmEnc.Secret)
 
 	block, err := aes.NewCipher(key)
 	if err != nil {

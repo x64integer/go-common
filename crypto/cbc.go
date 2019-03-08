@@ -1,4 +1,4 @@
-package cbc
+package crypto
 
 import (
 	"bytes"
@@ -11,30 +11,30 @@ import (
 	"github.com/x64integer/go-common/util"
 )
 
-var secret = util.Env("CRYPTO_SECRET", "")
+// CBC crypter
+type CBC struct {
+	Secret string
+	IV     string
+}
 
-// Encrypt will encrypt given input using AES encryption CBC mode
-// will return original encrypted value, hex and base64 encoded versions
-func Encrypt(input string) (string, string, string, error) {
-	if strings.TrimSpace(secret) == "" {
-		return "", "", "", errors.New("missing CRYPTO_SECRET env value")
+// Encrypt payload using AES encryption CBC mode
+func (cbcEnc *CBC) Encrypt(input []byte) (string, string, string, error) {
+	if strings.TrimSpace(cbcEnc.Secret) == "" {
+		return "", "", "", errors.New("secret key not provided")
 	}
 
-	iv := util.Env("CRYPTO_IV", "")
-
-	key := []byte(secret)
+	key := []byte(cbcEnc.Secret)
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return "", "", "", err
 	}
 
-	byteIn := []byte(input)
-	byteIn = pkcsPad(byteIn, aes.BlockSize)
+	byteIn := pkcsPad(input, aes.BlockSize)
 
 	encrypted := make([]byte, len(byteIn))
 
-	byteIV := []byte(iv)
+	byteIV := []byte(cbcEnc.IV)
 
 	mode := cipher.NewCBCEncrypter(block, byteIV)
 	mode.CryptBlocks(encrypted, byteIn)
@@ -42,15 +42,13 @@ func Encrypt(input string) (string, string, string, error) {
 	return string(encrypted), hex.EncodeToString(encrypted), util.Base64URLEncode(string(encrypted)), nil
 }
 
-// Decrypt will decrypt given AES CBC encrypted input
-func Decrypt(input string) (string, error) {
-	if strings.TrimSpace(secret) == "" {
-		return "", errors.New("missing CRYPTO_SECRET env value")
+// Decrypt AES CBC encrypted input
+func (cbcEnc *CBC) Decrypt(input string) (string, error) {
+	if strings.TrimSpace(cbcEnc.Secret) == "" {
+		return "", errors.New("secret key not provided")
 	}
 
-	iv := util.Env("CRYPTO_IV", "")
-
-	key := []byte(secret)
+	key := []byte(cbcEnc.Secret)
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -64,7 +62,7 @@ func Decrypt(input string) (string, error) {
 
 	decrypted := make([]byte, len(byteIn))
 
-	byteIV := []byte(iv)
+	byteIV := []byte(cbcEnc.IV)
 
 	mode := cipher.NewCBCDecrypter(block, byteIV)
 	mode.CryptBlocks(decrypted, byteIn)
