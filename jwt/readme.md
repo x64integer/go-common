@@ -20,5 +20,5 @@ if err := token.Generate(&jwt.Claims{
 
 * **Validate and get jwt claims**
 ```
-claims, valid := token.ValidateAndExtract(token.Content)
+claims, valid := token.ValidateAndExtract("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InNlbWlyQG1haWwuY29tIiwiZXhwIjoxNTUyMTMzNDI3LCJpZCI6InNlbWlyLTEyMyIsInVzZXJuYW1lIjoic2VtaXIifQ.bASFJHnwo7G_FpHVldUDXxFeYuGTPJyRZi0N4KBNC2g")
 ```

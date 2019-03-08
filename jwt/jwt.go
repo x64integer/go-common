@@ -17,8 +17,8 @@ type Token struct {
 
 // Claims for token
 type Claims struct {
-	Fields     interface{}
 	Expiration time.Duration
+	Fields     interface{}
 	jwtLib.StandardClaims
 }
 
