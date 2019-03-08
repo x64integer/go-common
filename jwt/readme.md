@@ -1,11 +1,5 @@
 ### JWT
 
-## ENV variables
-
-| ENV       | Default value      |
-|:----------|:------------------:|
-| JWT_LOGIN | util.RandomStr(64) |
-
 * **Generate jwt with claims**
 ```
 token := &jwt.Token{
