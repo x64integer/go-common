@@ -8,7 +8,7 @@ import (
 	jwtLib "github.com/dgrijalva/jwt-go"
 )
 
-// Token ...
+// Token wrapper
 type Token struct {
 	Secret  []byte
 	Content string
