@@ -1,5 +1,3 @@
-### CBC encryption/decryption
-
 * **GCM encryption mode**
 ```
 // Secret key must be compatible with AES-128 or AES-256 (or AES-512)
