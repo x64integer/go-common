@@ -7,12 +7,22 @@
 | MAIL_SERVICE_FROM            |                       |
 | MAIL_SERVICE_FROM_PASSWORD   |                       |
 
-* **Create mail entity to send**
+* **Setup mail client**
 ```
-m := &mail.Entity{
-    To:         []string{"mail_1@mail.com"},
-    Cc:         []string{"mail_2@mail.com"},
-    Bcc:        []string{"mail_3@mail.com"},
+smtpClient := mail.DefaultSMTP()
+
+client := &mail.Client{
+    Sender: smtpClient,
+}
+```
+
+* **Construct mail content to be sent**
+```
+content := &mail.Content{
+    To:         []string{"mail_1@gmail.com"},
+    Cc:         []string{"mail_2@gmail.com"},
+    Bcc:        []string{"mail_3@gmail.com"},
+    Subject:    "Test mail",
     Content:    []byte("some content"),
     Attachment: []byte("some attachments"),
 }
@@ -20,11 +30,7 @@ m := &mail.Entity{
 
 * **Send mail**
 ```
-if err := m.Send(); err != nil {
-    log.Println("failed to send mail: ", err)
+if err := client.Send(content); err != nil {
+    log.Println("failed to send email: ", err)
 }
 ```
-
-### TODO
-* Abstract mail interface
-* Make it possible to use different mail services (custom smtp, sendgrid...) at any time
