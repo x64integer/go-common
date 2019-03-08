@@ -40,7 +40,7 @@ func DefaultSMTP() *SMTP {
 	return smtpServer
 }
 
-// Send mail
+// Send mail implements Sender.Send
 func (smtpServer *SMTP) Send(content *Content) error {
 	if err := smtpServer.send(content); err != nil {
 		return nil
