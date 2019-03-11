@@ -11,15 +11,16 @@ import (
 )
 
 const (
-	SQLClient     = 1
-	RedisClient   = 2
+	// SQLClient flag
+	SQLClient = 1
+	// RedisClient flag
+	RedisClient = 2
+	// ElasticClient flag
 	ElasticClient = 4
-	CacheClient   = 8
 )
 
 // Container with storage clients/instances
 type Container struct {
-	Clients int
 	SQL     *sql.Connection
 	Redis   *redis.Connection
 	Elastic *elastic.Connection
