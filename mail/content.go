@@ -12,7 +12,7 @@ type Content struct {
 	Cc         []string
 	Bcc        []string
 	Subject    string
-	Content    []byte
+	Body       []byte
 	Attachment []byte
 }
 
@@ -31,7 +31,7 @@ func (content *Content) construct() []byte {
 	}
 
 	header += fmt.Sprintf("Subject: %s\r\n", content.Subject)
-	header += "\r\n" + string(content.Content)
+	header += "\r\n" + string(content.Body)
 
 	return []byte(header)
 }

@@ -1,4 +1,4 @@
-## ENV variables
+## ENV variables (required for SMTP only)
 
 | ENV                          | Default value         |
 |:-----------------------------|:---------------------:|
@@ -23,7 +23,7 @@ content := &mail.Content{
     Cc:         []string{"mail_2@gmail.com"},
     Bcc:        []string{"mail_3@gmail.com"},
     Subject:    "Test mail",
-    Content:    []byte("some content"),
+    Body:       []byte("some mail body"),
     Attachment: []byte("some attachments"),
 }
 ```
