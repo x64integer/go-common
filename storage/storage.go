@@ -1,139 +1,80 @@
 package storage
 
 import (
-	"database/sql"
+	"log"
 
-	"github.com/go-redis/redis"
-	"github.com/olivere/elastic"
 	"github.com/x64integer/go-common/storage/cache"
-	_elastic "github.com/x64integer/go-common/storage/elastic"
-	_pg "github.com/x64integer/go-common/storage/pg"
-	_redis "github.com/x64integer/go-common/storage/redis"
-	"github.com/x64integer/go-common/util"
-)
+	"github.com/x64integer/go-common/storage/elastic"
 
-// Caller must close storage connections (as per need)!
-// defer storage.PG.Close(), defer storage.Redis.Close(), etc...
+	"github.com/x64integer/go-common/storage/redis"
+	"github.com/x64integer/go-common/storage/sql"
+)
 
 const (
-	// RedisFlag config bit mask
-	RedisFlag = 1
-	// ElasticFlag config bit mask
-	ElasticFlag = 2
-	// PgFlag config bit mask
-	PgFlag = 4
-	// CacheFlag flag
-	CacheFlag = 8
+	SQLClient     = 1
+	RedisClient   = 2
+	ElasticClient = 4
+	CacheClient   = 8
 )
 
-var (
-	// Flag config exposed
-	Flag int
-	// Redis client exposed
-	Redis *redis.Client
-	// PG client exposed
-	PG *sql.DB
-	// Elastic client exposed
-	Elastic *elastic.Client
-	// Cache instance exposed
-	Cache cache.Storage
-)
-
-// Init will initialize storage engine based on given config bit mask
-//
-// Usage ex:
-// - Init(storage.RedisFlag | storage.ElasticFlag | storage.PgFlag) -> will initialize Redis, ElasticSearch and Postgres clients
-// - Init(storage.ElasticFlag) -> will initialize ElasticSearch client only
-func Init(flag int) error {
-	Flag = flag
-
-	if Flag&RedisFlag != 0 {
-		if err := initRedis(); err != nil {
-			return err
-		}
-	}
-
-	if Flag&PgFlag != 0 {
-		if err := initPg(); err != nil {
-			return err
-		}
-	}
-
-	if Flag&ElasticFlag != 0 {
-		if err := initElastic(); err != nil {
-			return err
-		}
-	}
-
-	if Flag&CacheFlag != 0 {
-		if err := initCache(); err != nil {
-			return err
-		}
-	}
-
-	return nil
+// Container with storage clients/instances
+type Container struct {
+	Clients int
+	SQL     *sql.Connection
+	Redis   *redis.Connection
+	Elastic *elastic.Connection
+	Cache   cache.Service
 }
 
-func initRedis() error {
-	redisStorage := &_redis.Storage{
-		Config: _redis.NewConfig(),
-	}
-
-	redisClient, err := redisStorage.Init()
-	if err != nil {
-		return err
-	}
-
-	Redis = redisClient
-
-	return nil
-}
-
-func initPg() error {
-	pgStorage := &_pg.Storage{
-		Config: _pg.NewConfig(),
-	}
-
-	pgClient, err := pgStorage.Init()
-	if err != nil {
-		return err
-	}
-
-	PG = pgClient
-
-	return nil
-}
-
-func initElastic() error {
-	elasticStorage := &_elastic.Storage{
-		Config: _elastic.NewConfig(),
-	}
-
-	elasticClient, err := elasticStorage.Init()
-	if err != nil {
-		return err
-	}
-
-	Elastic = elasticClient
-
-	return nil
-}
-
-func initCache() error {
-	c := util.Env("CACHE_CLIENT", "redis")
-
-	switch c {
-	default:
-		if Redis == nil {
-			if err := initRedis(); err != nil {
-				return err
-			}
-		}
-
-		Cache = &cache.Redis{
-			Client: Redis,
+// Connect and initialize all clients in storage container
+func (cont *Container) Connect() {
+	if cont.SQL != nil {
+		if err := cont.SQL.Connect(); err != nil {
+			log.Fatalln("sql connection failed: ", err)
 		}
 	}
 
-	return nil
+	if cont.Redis != nil {
+		if err := cont.Redis.Initialize(); err != nil {
+			log.Fatalln("redis initialization failed: ", err)
+		}
+	}
+
+	if cont.Elastic != nil {
+		if err := cont.Elastic.Initialize(); err != nil {
+			log.Fatalln("elasticsearch initialization failed: ", err)
+		}
+	}
+}
+
+// DefaultContainer will initialize default storage container
+func DefaultContainer(flag int) *Container {
+	container := &Container{}
+
+	if flag&SQLClient != 0 {
+		container.SQL = &sql.Connection{
+			Config: sql.NewConfig(),
+		}
+	}
+
+	if flag&RedisClient != 0 {
+		redisConn := &redis.Connection{
+			Config: redis.NewConfig(),
+		}
+
+		redisCacheAdapter := &redis.CacheAdapter{
+			Connection: redisConn,
+		}
+
+		container.Redis = redisConn
+		container.Cache = redisCacheAdapter
+	}
+
+	if flag&ElasticClient != 0 {
+		container.Elastic = &elastic.Connection{
+			Config: elastic.NewConfig(),
+		}
+	}
+
+	return container
 }

@@ -1,28 +1,180 @@
 package redis
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/go-redis/redis"
+	"github.com/x64integer/go-common/util"
 )
 
-// Storage struct to work with Redis
-type Storage struct {
+// pipeLength defines limit whether to use pipeline or not
+const pipeLength = 1
+
+// Connection for Redis
+type Connection struct {
+	*redis.Client
 	*Config
 }
 
-// Init will create redis client
-func (s *Storage) Init() (*redis.Client, error) {
+// Config for Redis connection
+type Config struct {
+	Host       string
+	Port       string
+	Password   string
+	DB         int
+	PipeLength int
+}
+
+// Item to store in Redis
+type Item struct {
+	Key        string
+	Value      interface{}
+	Expiration time.Duration
+}
+
+// NewConfig will initialize default config struct for Redis
+func NewConfig() *Config {
+	db, err := strconv.Atoi(util.Env("REDIS_DB", "0"))
+	if err != nil {
+		db = 0
+	}
+
+	return &Config{
+		Host:     util.Env("REDIS_HOST", ""),
+		Port:     util.Env("REDIS_PORT", "6379"),
+		Password: util.Env("REDIS_PASSWORD", ""),
+		DB:       db,
+	}
+}
+
+// Initialize Redis client
+func (conn *Connection) Initialize() error {
 	client := redis.NewClient(&redis.Options{
-		Addr:     s.Config.Host + ":" + s.Config.Port,
-		Password: s.Config.Password, // no password set
-		DB:       s.Config.DB,       // use default DB
+		Addr:     conn.Config.Host + ":" + conn.Config.Port,
+		Password: conn.Config.Password, // no password set
+		DB:       conn.Config.DB,       // use default DB
 	})
+
+	if conn.Config.PipeLength == 0 {
+		conn.Config.PipeLength = pipeLength
+	}
 
 	_, err := client.Ping().Result()
 	if err != nil {
-		return nil, errors.New("[Redis-Ping-Result] - " + err.Error())
+		return err
 	}
 
-	return client, nil
+	conn.Client = client
+
+	return nil
+}
+
+// Store implements cache.Service.Store()
+func (conn *Connection) Store(items ...*Item) error {
+	if len(items) > conn.PipeLength { // with pipeline
+		pipe := conn.Client.Pipeline()
+
+		for _, item := range items {
+			pipe.Set(item.Key, item.Value, item.Expiration)
+		}
+
+		_, err := pipe.Exec()
+		if err != nil {
+			return err
+		}
+	} else { // without pipeline
+		var errMsgs []string
+
+		for _, item := range items {
+			if err := conn.Client.Set(item.Key, item.Value, item.Expiration).Err(); err != nil {
+				errMsgs = append(errMsgs, err.Error())
+			}
+		}
+
+		if len(errMsgs) > 0 {
+			return errors.New(strings.Join(errMsgs, ","))
+		}
+	}
+
+	return nil
+}
+
+// Get implements cache.Service.Get()
+func (conn *Connection) Get(items ...*Item) ([]byte, error) {
+	var result []byte
+
+	if len(items) > conn.PipeLength { // with pipeline
+		pipe := conn.Client.Pipeline()
+
+		for _, item := range items {
+			pipe.Get(item.Key)
+		}
+
+		res, err := pipe.Exec()
+		if err != nil {
+			return nil, err
+		}
+
+		var itemsToReturn [][]byte
+		for _, item := range res {
+			itemsToReturn = append(itemsToReturn, []byte(item.(*redis.StringCmd).Val()))
+		}
+
+		itemsByte, err := json.Marshal(itemsToReturn)
+		if err != nil {
+			return nil, err
+		}
+
+		result = itemsByte
+	} else { // without pipeline
+		var errMsgs []string
+
+		for _, item := range items {
+			val, err := conn.Client.Get(item.Key).Result()
+
+			switch {
+			// key does not exist
+			case err == redis.Nil:
+				errMsgs = append(errMsgs, fmt.Sprintf("key %v does not exist", item.Key))
+			// some other error
+			case err != nil:
+				errMsgs = append(errMsgs, err.Error())
+			// no errors
+			case err == nil:
+				result = []byte(val)
+			}
+		}
+
+		if len(errMsgs) > 0 {
+			return result, errors.New(strings.Join(errMsgs, ","))
+		}
+	}
+
+	return result, nil
+}
+
+// Delete implements cache.Service.Delete()
+func (conn *Connection) Delete(items ...*Item) error {
+	var keys []string
+
+	for _, item := range items {
+		keys = append(keys, item.Key)
+	}
+
+	return conn.Client.Del(keys...).Err()
+}
+
+// Truncate implements cache.Service.Truncate()
+func (conn *Connection) Truncate() error {
+	return conn.Client.FlushAll().Err()
+}
+
+// Custom implements cache.Service.Custom()
+func (conn *Connection) Custom(fn func(...*Item) error, items ...*Item) error {
+	return fn(items...)
 }

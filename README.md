@@ -12,8 +12,8 @@
 * Env helper
 * Strings helpers
 
-### Storage (*in progress*)
-* ElasticSearch
+### Storage
 * Postgres
 * Redis
+* ElasticSearch
 * Cache (redis by default)
