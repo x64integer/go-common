@@ -18,7 +18,6 @@ const (
 
 // Connection for SQL
 type Connection struct {
-	Driver string
 	*Config
 	*sql.DB
 }
