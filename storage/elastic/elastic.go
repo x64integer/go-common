@@ -13,9 +13,10 @@ type Connection struct {
 
 // Config for Elasticsearch connection
 type Config struct {
-	Host  string
-	Port  string
-	Sniff bool
+	Host     string
+	Port     string
+	Sniff    bool
+	UseHTTPS bool
 }
 
 // NewConfig will initialize default config struct for Elasticsearch
@@ -28,8 +29,14 @@ func NewConfig() *Config {
 
 // Initialize Elasticsearch client
 func (conn *Connection) Initialize() error {
+	link := "http"
+
+	if conn.UseHTTPS {
+		link = "https"
+	}
+
 	client, err := elastic.NewClient(
-		elastic.SetURL("http://"+conn.Config.Host+":"+conn.Config.Port),
+		elastic.SetURL(link+"://"+conn.Config.Host+":"+conn.Config.Port),
 		elastic.SetSniff(conn.Config.Sniff),
 	)
 
