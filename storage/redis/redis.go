@@ -74,7 +74,7 @@ func (conn *Connection) Initialize() error {
 	return nil
 }
 
-// Store implements cache.Service.Store()
+// Store item(s) in Redis
 func (conn *Connection) Store(items ...*Item) error {
 	if len(items) > conn.PipeLength { // with pipeline
 		pipe := conn.Client.Pipeline()
@@ -104,7 +104,7 @@ func (conn *Connection) Store(items ...*Item) error {
 	return nil
 }
 
-// Get implements cache.Service.Get()
+// Get item(s) from Redis
 func (conn *Connection) Get(items ...*Item) ([]byte, error) {
 	var result []byte
 
@@ -158,7 +158,7 @@ func (conn *Connection) Get(items ...*Item) ([]byte, error) {
 	return result, nil
 }
 
-// Delete implements cache.Service.Delete()
+// Delete item(s) from Redis
 func (conn *Connection) Delete(items ...*Item) error {
 	var keys []string
 
@@ -169,12 +169,12 @@ func (conn *Connection) Delete(items ...*Item) error {
 	return conn.Client.Del(keys...).Err()
 }
 
-// Truncate implements cache.Service.Truncate()
+// Truncate all items from Redis
 func (conn *Connection) Truncate() error {
 	return conn.Client.FlushAll().Err()
 }
 
-// Custom implements cache.Service.Custom()
+// Custom function to run against item(s)
 func (conn *Connection) Custom(fn func(...*Item) error, items ...*Item) error {
 	return fn(items...)
 }
