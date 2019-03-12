@@ -19,12 +19,16 @@ const (
 	ElasticClient = 4
 )
 
+// C exposes storage container so it can be accessed globally
+var C *Container
+
 // Container with storage clients/instances
 type Container struct {
 	SQL     *sql.Connection
 	Redis   *redis.Connection
 	Elastic *elastic.Connection
 	Cache   cache.Service
+	Expose  bool
 }
 
 // Connect and initialize all clients in storage container
@@ -45,6 +49,10 @@ func (cont *Container) Connect() {
 		if err := cont.Elastic.Initialize(); err != nil {
 			log.Fatalln("elasticsearch initialization failed: ", err)
 		}
+	}
+
+	if cont.Expose {
+		C = cont
 	}
 }
 
