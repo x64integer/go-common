@@ -54,7 +54,7 @@ func (c *Connection) Setup() error {
 		return err
 	}
 
-	if err := c.exchangeDeclare(c.Config.Exchange, c.Config.Exchange, c.Config.Options.Exchange); err != nil {
+	if err := c.exchangeDeclare(c.Config.Exchange, c.Config.ExchangeKind, c.Config.Options.Exchange); err != nil {
 		return err
 	}
 
