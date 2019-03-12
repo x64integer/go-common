@@ -104,12 +104,12 @@ log.Println(string(resp))
 
 > Cassandra
 
-| ENV                | Example                       |
-|:-------------------|:-----------------------------:|
-| CASSANDRA_KEYSPACE | some_keyspace_name            |
-| CASSANDRA_HOSTS    | 127.0.0.1,127.0.0.2,127.0.0.3 |
-| CASSANDRA_USERNAME |                               | // set only if it's required from cluster setup
-| CASSANDRA_PASSWORD |                               | // set only if it's required from cluster setup
+| ENV                | Example                                      |
+|:-------------------|:--------------------------------------------:|
+| CASSANDRA_KEYSPACE | some_keyspace_name                           |
+| CASSANDRA_HOSTS    | 127.0.0.1,127.0.0.2,127.0.0.3                |
+| CASSANDRA_USERNAME | set only if it's required from cluster setup |
+| CASSANDRA_PASSWORD | set only if it's required from cluster setup |
 ```
 // INSERT
 if err := st.Cassandra.Exec(
