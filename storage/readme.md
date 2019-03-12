@@ -68,6 +68,7 @@ if err := st.Cache.Store(&cache.Item{
 | ELASTIC_HOST | 127.0.0.1     |
 | ELASTIC_PORT | 9200          |
 ```
+// BULK INSERT
 entities := []*elastic.Entity{
     &elastic.Entity{
         ID: "1",
@@ -95,6 +96,7 @@ if err := st.Elastic.BulkInsert(context.Background(), "users", "_doc", entities.
     log.Println("elasticsearch bulk insert failed: ", err)
 }
 
+// INSERT
 entity := &elastic.Entity{
     ID: "3",
     Content: &struct {
@@ -110,6 +112,7 @@ if err := st.Elastic.Insert(context.Background(), "users", "_doc", entity); err 
     log.Println("elasticsearch insert failed: ", err)
 }
 
+// SEARCH BY TERM
 search := &elastic.SearchEntity{
     Term: "semir1",
     Fields: []string{
