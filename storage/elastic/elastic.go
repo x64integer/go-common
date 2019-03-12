@@ -101,9 +101,13 @@ func (conn *Connection) SearchByTerm(ctx context.Context, index string, t string
 		return nil, err
 	}
 
+	return conn.buildResponse(searchResult.Hits.Hits)
+}
+
+func (conn *Connection) buildResponse(hits []*elastic.SearchHit) ([]byte, error) {
 	var resp []interface{}
 
-	for _, hit := range searchResult.Hits.Hits {
+	for _, hit := range hits {
 		var item interface{}
 
 		if err := json.Unmarshal(*hit.Source, &item); err != nil {
@@ -114,9 +118,6 @@ func (conn *Connection) SearchByTerm(ctx context.Context, index string, t string
 	}
 
 	b, err := json.Marshal(resp)
-	if err != nil {
-		return nil, err
-	}
 
-	return b, nil
+	return b, err
 }
