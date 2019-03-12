@@ -2,6 +2,7 @@
 > Default implementation will be good enough for most cases. However, feel free to initialize your own clients/instances
 ```
 st := storage.DefaultContainer(storage.SQLClient | storage.RedisClient | storage.ElasticClient)
+
 st.Expose = true // so it can be accessed globally, storage.C.*, but only after st.Connect() call!
 st.Cache = &custom.Cache{} // use custom cache for instance (redis by default)
 ```
