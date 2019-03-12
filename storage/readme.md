@@ -52,7 +52,7 @@ if err := st.Redis.Store(&redis.Item{
 
 > Cache (redis by default)
 ```
-if err := storage.C.Cache.Store(&cache.Item{
+if err := st.Cache.Store(&cache.Item{
     Key:        "semir_cache",
     Value:      util.RandomStr(16),
     Expiration: time.Hour,
