@@ -21,7 +21,7 @@ if err != nil {
 defer rows.Close()
 ```
 
-> Redis example
+> Redis
 ```
 if err := st.Redis.Store(&redis.Item{
     Key:        "semir_redis",
@@ -32,7 +32,7 @@ if err := st.Redis.Store(&redis.Item{
 }
 ```
 
-> Cache example (redis by default)
+> Cache (redis by default)
 ```
 if err := storage.C.Cache.Store(&cache.Item{
     Key:        "semir_cache",
@@ -43,7 +43,7 @@ if err := storage.C.Cache.Store(&cache.Item{
 }
 ```
 
-> Elastic example
+> Elasticsearch
 ```
 entities := []*elastic.Entity{
     &elastic.Entity{
@@ -100,4 +100,44 @@ if err != nil {
 }
 
 log.Println(string(resp))
+```
+
+> Cassandra
+
+| ENV                | Default value                 |
+|:-------------------|:-----------------------------:|
+| CASSANDRA_KEYSPACE | default_keyspace              |
+| CASSANDRA_HOSTS    | 127.0.0.1,127.0.0.2,127.0.0.3 |
+```
+if err := st.Cassandra.Exec(
+    "INSERT INTO users (id, name, email, posted_time) VALUES (?, ?, ?, ?)", gocql.TimeUUID(), "semir", "semir@email.com", time.Now(),
+); err != nil {
+    log.Println("cassandra insert failed: ", err)
+}
+
+if err := st.Cassandra.Exec(
+    "UPDATE users SET email = ?, posted_time = ? WHERE id = ?", "semir@email.com_updated", time.Now(), "9a0b645e-44c2-11e9-8cce-acde48001122",
+); err != nil {
+    log.Println("cassandra update failed: ", err)
+}
+
+if err := st.Cassandra.Exec(
+    "DELETE FROM users WHERE id = ?", "2482370a-44c5-11e9-b9bb-acde48001122",
+); err != nil {
+    log.Println("cassandra delete failed: ", err)
+}
+
+iterator := st.Cassandra.Select(
+    "SELECT name, email FROM users WHERE id = ?", "9a0b645e-44c2-11e9-8cce-acde48001122",
+)
+
+m := map[string]interface{}{}
+for iterator.MapScan(m) {
+    log.Println(m)
+}
+
+var name, email string
+for iterator.Scan(&name, &email) {
+    log.Println(name, email)
+}
 ```
