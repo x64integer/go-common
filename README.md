@@ -14,6 +14,8 @@
 
 ### Storage
 * Postgres
+* MySQL
 * Redis
-* ElasticSearch
+* Elasticsearch
+* Cassandra
 * Cache (redis by default)
