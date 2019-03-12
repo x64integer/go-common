@@ -21,10 +21,10 @@ type SMTP struct {
 // DefaultSMTP will initialize SMTP server with default values
 func DefaultSMTP() *SMTP {
 	smtpServer := &SMTP{
-		From:     util.Env("MAIL_SERVICE_FROM", ""),
-		Password: util.Env("MAIL_SERVICE_FROM_PASSWORD", ""),
-		Host:     util.Env("MAIL_SERVICE_SMTP_HOST", "smtp.gmail.com"),
-		Port:     util.Env("MAIL_SERVICE_SMTP_PORT", "465"),
+		From:     util.Env("MAIL_FROM", ""),
+		Password: util.Env("MAIL_FROM_PASSWORD", ""),
+		Host:     util.Env("MAIL_SMTP_HOST", "smtp.gmail.com"),
+		Port:     util.Env("MAIL_SMTP_PORT", "465"),
 	}
 
 	smtpServer.TLSConfig = &tls.Config{

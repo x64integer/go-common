@@ -1,11 +1,11 @@
 ## ENV variables (required for SMTP only)
 
-| ENV                          | Default value         |
-|:-----------------------------|:---------------------:|
-| MAIL_SERVICE_SMTP_HOST       | smtp.gmail.com        |
-| MAIL_SERVICE_SMTP_PORT       | 465                   |
-| MAIL_SERVICE_FROM            |                       |
-| MAIL_SERVICE_FROM_PASSWORD   |                       |
+| ENV                | Default value  |
+|:-------------------|:--------------:|
+| MAIL_FROM          |                |
+| MAIL_FROM_PASSWORD |                |
+| MAIL_SMTP_HOST     | smtp.gmail.com |
+| MAIL_SMTP_PORT     | 465            |
 
 * **Setup mail client**
 ```
