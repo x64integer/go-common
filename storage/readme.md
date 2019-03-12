@@ -13,6 +13,15 @@ st.Connect()
 
 * **Usage**
 > SQL client
+| ENV          | Default value |
+|:-------------|:-------------:|
+| SQL_DRIVER   | postgres      |
+| SQL_HOST     | localhost     |
+| SQL_NAME     |               |
+| SQL_PORT     | 5432          |
+| SQL_USER     | postgres      |
+| SQL_PASSWORD | postgres      |
+| SQL_SSLMODE  | disable       |
 ```
 rows, err := st.SQL.Query("select * from users where id = ?", 1)
 if err != nil {
@@ -22,6 +31,12 @@ defer rows.Close()
 ```
 
 > Redis
+| ENV            | Default value |
+|:---------------|:-------------:|
+| REDIS_HOST     |               |
+| REDIS_PORT     | 6379          |
+| REDIS_DB       | 0             |
+| REDIS_PASSWORD |               |
 ```
 if err := st.Redis.Store(&redis.Item{
     Key:        "semir_redis",
@@ -44,6 +59,10 @@ if err := storage.C.Cache.Store(&cache.Item{
 ```
 
 > Elasticsearch
+| ENV          | Default value |
+|:-------------|:-------------:|
+| ELASTIC_HOST | 127.0.0.1     |
+| ELASTIC_PORT | 9200          |
 ```
 entities := []*elastic.Entity{
     &elastic.Entity{
