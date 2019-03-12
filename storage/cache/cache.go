@@ -16,7 +16,7 @@ type Service interface {
 	Custom(func(...*Item) error, ...*Item) error
 }
 
-// Item to store in Cache, optional struct
+// Item to store in Cache
 type Item struct {
 	Key        string
 	Value      interface{}
