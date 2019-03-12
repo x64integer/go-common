@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	defaultSearchTake = 50
+	defaultSearchLimit = 50
 )
 
 // Connection for ElasticSearch
@@ -36,8 +36,8 @@ type Entity struct {
 type SearchEntity struct {
 	Term   string
 	Fields []string
-	Skip   int
-	Take   int
+	Offset int
+	Limit  int
 }
 
 // NewConfig will initialize default config struct for Elasticsearch
@@ -90,13 +90,13 @@ func (conn *Connection) BulkInsert(ctx context.Context, index string, t string, 
 
 // SearchByTerm data from elasticsearch
 func (conn *Connection) SearchByTerm(ctx context.Context, index string, t string, searchEntity *SearchEntity) ([]byte, error) {
-	if searchEntity.Take == 0 {
-		searchEntity.Take = defaultSearchTake
+	if searchEntity.Limit == 0 {
+		searchEntity.Limit = defaultSearchLimit
 	}
 
 	query := elastic.NewMultiMatchQuery(searchEntity.Term, searchEntity.Fields...)
 
-	searchResult, err := conn.Search().Index(index).Type(t).Query(query).Do(ctx)
+	searchResult, err := conn.Search().Index(index).Type(t).From(searchEntity.Offset).Size(searchEntity.Limit).Query(query).Do(ctx)
 	if err != nil {
 		return nil, err
 	}
