@@ -104,29 +104,35 @@ log.Println(string(resp))
 
 > Cassandra
 
-| ENV                | Default value                 |
+| ENV                | Example                       |
 |:-------------------|:-----------------------------:|
-| CASSANDRA_KEYSPACE | default_keyspace              |
+| CASSANDRA_KEYSPACE | some_keyspace_name            |
 | CASSANDRA_HOSTS    | 127.0.0.1,127.0.0.2,127.0.0.3 |
+| CASSANDRA_USERNAME |                               | // set only if it's required from cluster setup
+| CASSANDRA_PASSWORD |                               | // set only if it's required from cluster setup
 ```
+// INSERT
 if err := st.Cassandra.Exec(
     "INSERT INTO users (id, name, email, posted_time) VALUES (?, ?, ?, ?)", gocql.TimeUUID(), "semir", "semir@email.com", time.Now(),
 ); err != nil {
     log.Println("cassandra insert failed: ", err)
 }
 
+// UPDATE
 if err := st.Cassandra.Exec(
     "UPDATE users SET email = ?, posted_time = ? WHERE id = ?", "semir@email.com_updated", time.Now(), "9a0b645e-44c2-11e9-8cce-acde48001122",
 ); err != nil {
     log.Println("cassandra update failed: ", err)
 }
 
+// DELETE
 if err := st.Cassandra.Exec(
     "DELETE FROM users WHERE id = ?", "2482370a-44c5-11e9-b9bb-acde48001122",
 ); err != nil {
     log.Println("cassandra delete failed: ", err)
 }
 
+// SELECT
 iterator := st.Cassandra.Select(
     "SELECT name, email FROM users WHERE id = ?", "9a0b645e-44c2-11e9-8cce-acde48001122",
 )

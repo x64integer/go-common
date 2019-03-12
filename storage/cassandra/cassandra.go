@@ -2,6 +2,7 @@ package cassandra
 
 import (
 	"strings"
+	"time"
 
 	"github.com/gocql/gocql"
 	"github.com/x64integer/go-common/util"
@@ -16,8 +17,12 @@ type Connection struct {
 
 // Config for cassandra connection
 type Config struct {
-	Hosts    []string
-	Keyspace string
+	Hosts        []string
+	Keyspace     string
+	Username     string
+	Password     string
+	Timeout      time.Duration
+	ProtoVersion int
 }
 
 // Iterator for select query
@@ -36,17 +41,18 @@ func NewConfig() *Config {
 	}
 
 	return &Config{
-		Hosts:    hosts,
-		Keyspace: util.Env("CASSANDRA_KEYSPACE", "default_keyspace"),
+		Hosts:        hosts,
+		Keyspace:     util.Env("CASSANDRA_KEYSPACE", "default_keyspace"),
+		Username:     util.Env("CASSANDRA_USERNAME", ""),
+		Password:     util.Env("CASSANDRA_PASSWORD", ""),
+		Timeout:      5 * time.Second,
+		ProtoVersion: 4,
 	}
 }
 
 // Initialize cassandra connection
 func (conn *Connection) Initialize() error {
-	cluster := gocql.NewCluster(conn.Config.Hosts...)
-	cluster.Keyspace = conn.Config.Keyspace
-
-	conn.Cluster = cluster
+	conn.initCluster()
 
 	if err := conn.NewSession(); err != nil {
 		return err
@@ -57,6 +63,10 @@ func (conn *Connection) Initialize() error {
 
 // NewSession will initialize cassandra session
 func (conn *Connection) NewSession() error {
+	if conn.Cluster == nil {
+		conn.initCluster()
+	}
+
 	session, err := conn.Cluster.CreateSession()
 	if err != nil {
 		return err
@@ -84,4 +94,23 @@ func (conn *Connection) Select(stmt string, params ...interface{}) Iterator {
 	iterator := conn.Session.Query(stmt, params...).Iter()
 
 	return iterator
+}
+
+// initCluster is helper function to initialize gocql.Cluster
+func (conn *Connection) initCluster() {
+	cluster := gocql.NewCluster(conn.Config.Hosts...)
+	cluster.Keyspace = conn.Config.Keyspace
+
+	// if required from cluster setup
+	if conn.Config.Username != "" && conn.Config.Password != "" {
+		cluster.Authenticator = gocql.PasswordAuthenticator{
+			Username: conn.Config.Username,
+			Password: conn.Config.Password,
+		}
+	}
+
+	cluster.Timeout = conn.Config.Timeout
+	cluster.ProtoVersion = conn.Config.ProtoVersion
+
+	conn.Cluster = cluster
 }
