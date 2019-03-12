@@ -13,6 +13,7 @@ st.Connect()
 
 * **Usage**
 > SQL client
+
 | ENV          | Default value |
 |:-------------|:-------------:|
 | SQL_DRIVER   | postgres      |
@@ -31,6 +32,7 @@ defer rows.Close()
 ```
 
 > Redis
+
 | ENV            | Default value |
 |:---------------|:-------------:|
 | REDIS_HOST     |               |
@@ -59,6 +61,7 @@ if err := storage.C.Cache.Store(&cache.Item{
 ```
 
 > Elasticsearch
+
 | ENV          | Default value |
 |:-------------|:-------------:|
 | ELASTIC_HOST | 127.0.0.1     |
