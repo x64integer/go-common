@@ -13,6 +13,7 @@ import (
 
 // Service is responsible to store data, for now
 type Service struct {
+	*storage.Container
 }
 
 // Register user account
@@ -59,7 +60,7 @@ func (svc *Service) Register(fields []*entityField) ([]byte, error) {
 		"INSERT INTO " + strings.ToLower(fields[0].AuthTable) + "s (" + strings.Join(columns, ", ") + ") VALUES (" + strings.Join(queryParams, ", ") + ")",
 	)
 
-	if _, err := storage.PG.Exec(queryBuff.String(), data...); err != nil {
+	if _, err := svc.SQL.Exec(queryBuff.String(), data...); err != nil {
 		return nil, err
 	}
 

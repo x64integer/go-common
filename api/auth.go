@@ -22,6 +22,7 @@ type Auth struct {
 	Entity       Authenticatable
 	OnError      func(error, http.ResponseWriter)
 	OnSuccess    func([]byte, http.ResponseWriter)
+	*Service
 }
 
 // entityField is helper struct to hold information/data from extracted auth Entity (Authenticatable)
@@ -44,25 +45,19 @@ func (auth *Auth) applyRoutes(routeHandler RouteHandler) {
 
 	routeHandler.HandleFunc(auth.RegisterPath, func(w http.ResponseWriter, r *http.Request) {
 		auth.handleFunc(w, r, func(fields []*entityField) ([]byte, error) {
-			svc := &Service{}
-
-			return svc.Register(fields)
+			return auth.Service.Register(fields)
 		})
 	})
 
 	routeHandler.HandleFunc(auth.LoginPath, func(w http.ResponseWriter, r *http.Request) {
 		auth.handleFunc(w, r, func(fields []*entityField) ([]byte, error) {
-			svc := &Service{}
-
-			return svc.Login(fields)
+			return auth.Service.Login(fields)
 		})
 	})
 
 	routeHandler.HandleFunc(auth.LogoutPath, func(w http.ResponseWriter, r *http.Request) {
 		auth.handleFunc(w, r, func(fields []*entityField) ([]byte, error) {
-			svc := &Service{}
-
-			return svc.Logout(fields)
+			return auth.Service.Logout(fields)
 		})
 	})
 }
