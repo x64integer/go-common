@@ -1,5 +1,5 @@
 ### Usage
-> NOTE: Middlewares in progress
+> NOTE: Middlewares and Auth in progress
 
 * **Initialize router**
 ```
