@@ -14,8 +14,8 @@ import (
 // RouteHandler decouples direct dependency on *mux.Route
 // Add new functions as per need
 type RouteHandler interface {
-	Handle(string, http.Handler)
-	HandleFunc(string, func(http.ResponseWriter, *http.Request))
+	Handle(string, http.Handler, ...string)
+	HandleFunc(string, func(http.ResponseWriter, *http.Request), ...string)
 }
 
 // Router for api
