@@ -3,6 +3,7 @@ package elastic
 import (
 	"context"
 	"encoding/json"
+	"strings"
 
 	"github.com/olivere/elastic"
 	"github.com/x64integer/go-common/util"
@@ -98,14 +99,19 @@ func (conn *Connection) SearchByTerm(ctx context.Context, index string, t string
 
 	query := elastic.NewMultiMatchQuery(searchEntity.Term, searchEntity.Fields...)
 
-	searchResult, err := conn.Search().
+	searchService := conn.Search().
 		Index(index).
 		Type(t).
 		From(searchEntity.From).
 		Size(searchEntity.Limit).
 		Sort(searchEntity.Sort, searchEntity.SortOrder).
-		Query(query).
-		Do(ctx)
+		Query(query)
+
+	if strings.TrimSpace(searchEntity.Term) == "" {
+		searchService.Query(elastic.NewMatchAllQuery())
+	}
+
+	searchResult, err := searchService.Do(ctx)
 	if err != nil {
 		return nil, err
 	}
