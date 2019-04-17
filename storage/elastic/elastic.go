@@ -34,10 +34,12 @@ type Entity struct {
 
 // SearchEntity ...
 type SearchEntity struct {
-	Term   string
-	Fields []string
-	Offset int
-	Limit  int
+	Term      string
+	Fields    []string
+	From      int
+	Limit     int
+	Sort      string
+	SortOrder bool // true -> asc, false -> desc
 }
 
 // NewConfig will initialize default config struct for Elasticsearch
@@ -96,7 +98,14 @@ func (conn *Connection) SearchByTerm(ctx context.Context, index string, t string
 
 	query := elastic.NewMultiMatchQuery(searchEntity.Term, searchEntity.Fields...)
 
-	searchResult, err := conn.Search().Index(index).Type(t).From(searchEntity.Offset).Size(searchEntity.Limit).Query(query).Do(ctx)
+	searchResult, err := conn.Search().
+		Index(index).
+		Type(t).
+		From(searchEntity.From).
+		Size(searchEntity.Limit).
+		Sort(searchEntity.Sort, searchEntity.SortOrder).
+		Query(query).
+		Do(ctx)
 	if err != nil {
 		return nil, err
 	}
