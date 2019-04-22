@@ -12,36 +12,10 @@ r := api.NewRouter(&api.Config{
             w.Write([]byte("hello :)"))
         })
     },
-    // If not defined, auth routes will not be initialized
-    Auth: &api.Auth{
-        RegisterPath: "/register",
-        LoginPath:    "/login",
-        LogoutPath:   "/logout",
-        Entity:       &User{},
-
-        // Optionally, override default OnError and OnSuccess behaviour
-        OnError: func(err error, w http.ResponseWriter) {
-            // handle error
-        },
-        OnSuccess: func(payload []byte, w http.ResponseWriter) {
-            // handle successful response
-        },
-    },
 })
 ```
 
 * **Start http server**
 ```
 r.Listen()
-```
-
-```
-// User entity example
-type User struct {
-	ID        string `auth:"id" auth_type:"auto_id"`
-	Username  string `json:"user_name" auth:"username" auth_type:"credential"`
-	Email     string `auth:"email" auth_type:"credential"`
-	Password  string `auth:"password" auth_type:"secret"`
-	CreatedAt int    `auth:"created_at" auth_type:"auto_gen"`
-}
 ```
