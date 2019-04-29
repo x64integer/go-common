@@ -1,6 +1,6 @@
 package repository
 
-import "github.com/x64integer/go-common/api/domain"
+import "github.com/semirm-dev/go-common/api/domain"
 
 // UserAccount repository
 type UserAccount interface {

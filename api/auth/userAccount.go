@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/x64integer/go-common/api/domain"
-	"github.com/x64integer/go-common/api/infra"
-	"github.com/x64integer/go-common/api/repository"
-	"github.com/x64integer/go-common/password"
+	"github.com/semirm-dev/go-common/api/domain"
+	"github.com/semirm-dev/go-common/api/infra"
+	"github.com/semirm-dev/go-common/api/repository"
+	"github.com/semirm-dev/go-common/password"
 
-	"github.com/x64integer/go-common/jwt"
+	"github.com/semirm-dev/go-common/jwt"
 )
 
 // UserAccount usecase will handle user authentication

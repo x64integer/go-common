@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/gocql/gocql"
-	"github.com/x64integer/go-common/util"
+	"github.com/semirm-dev/go-common/util"
 )
 
 // Connection for cassandra

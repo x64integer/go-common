@@ -1,6 +1,6 @@
 package ws
 
-import "github.com/x64integer/go-common/util"
+import "github.com/semirm-dev/go-common/util"
 
 // Config struct
 type Config struct {

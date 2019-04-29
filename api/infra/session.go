@@ -3,7 +3,7 @@ package infra
 import (
 	"time"
 
-	"github.com/x64integer/go-common/storage/cache"
+	"github.com/semirm-dev/go-common/storage/cache"
 )
 
 // Session for user

@@ -5,8 +5,8 @@ package util_test
 import (
 	"testing"
 
+	"github.com/semirm-dev/go-common/util"
 	"github.com/stretchr/testify/assert"
-	"github.com/x64puzzle/go-common/util"
 )
 
 func TestEnv(t *testing.T) {

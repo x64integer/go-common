@@ -3,12 +3,12 @@ package storage
 import (
 	"log"
 
-	"github.com/x64integer/go-common/storage/cache"
-	"github.com/x64integer/go-common/storage/cassandra"
-	"github.com/x64integer/go-common/storage/elastic"
+	"github.com/semirm-dev/go-common/storage/cache"
+	"github.com/semirm-dev/go-common/storage/cassandra"
+	"github.com/semirm-dev/go-common/storage/elastic"
 
-	"github.com/x64integer/go-common/storage/redis"
-	"github.com/x64integer/go-common/storage/sql"
+	"github.com/semirm-dev/go-common/storage/redis"
+	"github.com/semirm-dev/go-common/storage/sql"
 )
 
 const (

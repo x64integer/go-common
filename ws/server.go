@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/x64integer/go-common/api"
+	"github.com/semirm-dev/go-common/api"
 
 	"github.com/gorilla/websocket"
 )

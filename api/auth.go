@@ -8,10 +8,10 @@ import (
 	"net/http"
 	"reflect"
 
-	"github.com/x64integer/go-common/storage/cache"
-	"github.com/x64integer/go-common/storage/sql"
+	"github.com/semirm-dev/go-common/storage/cache"
+	"github.com/semirm-dev/go-common/storage/sql"
 
-	"github.com/x64integer/go-common/jwt"
+	"github.com/semirm-dev/go-common/jwt"
 )
 
 // Authenticatable contract

@@ -9,7 +9,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/x64integer/go-common/util"
+	"github.com/semirm-dev/go-common/util"
 )
 
 // GCM crypter

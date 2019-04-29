@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/smtp"
 
-	"github.com/x64integer/go-common/util"
+	"github.com/semirm-dev/go-common/util"
 )
 
 // SMTP for mail

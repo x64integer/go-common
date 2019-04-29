@@ -1,8 +1,8 @@
 package infra
 
 import (
-	"github.com/x64integer/go-common/api/domain"
-	"github.com/x64integer/go-common/storage/sql"
+	"github.com/semirm-dev/go-common/api/domain"
+	"github.com/semirm-dev/go-common/storage/sql"
 )
 
 // UserAccountRepository infra layer

@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"strings"
 
-	authUsecase "github.com/x64integer/go-common/api/auth"
-	"github.com/x64integer/go-common/api/domain"
-	"github.com/x64integer/go-common/api/infra"
-	"github.com/x64integer/go-common/storage/cache"
+	authUsecase "github.com/semirm-dev/go-common/api/auth"
+	"github.com/semirm-dev/go-common/api/domain"
+	"github.com/semirm-dev/go-common/api/infra"
+	"github.com/semirm-dev/go-common/storage/cache"
 )
 
 // authMiddleware will authenticate request

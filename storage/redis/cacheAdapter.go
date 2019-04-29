@@ -1,7 +1,7 @@
 package redis
 
 import (
-	"github.com/x64integer/go-common/storage/cache"
+	"github.com/semirm-dev/go-common/storage/cache"
 )
 
 // CacheAdapter will make Connection compatible with cache.Service interface

@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/semirm-dev/go-common/jwt"
 	"github.com/stretchr/testify/assert"
-	"github.com/x64integer/go-common/jwt"
 )
 
 var (
