@@ -26,11 +26,10 @@ type Router struct {
 
 // Config for router
 type Config struct {
-	Host        string
-	Port        string
-	MapRoutes   func(RouteHandler)
-	MuxRoutes   func(*mux.Router)
-	WaitTimeout time.Duration
+	Host      string
+	Port      string
+	MapRoutes func(RouteHandler)
+	MuxRoutes func(*mux.Router)
 	*Auth
 }
 
@@ -83,7 +82,7 @@ func (r *Router) Listen() {
 
 	<-c
 
-	ctx, cancel := context.WithTimeout(context.Background(), r.Config.WaitTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
 
 	r.Shutdown(ctx)
