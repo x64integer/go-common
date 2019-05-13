@@ -1,9 +1,10 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
-	"strings"
+	"strconv"
 
 	authUsecase "github.com/semirm-dev/go-common/api/auth"
 	"github.com/semirm-dev/go-common/api/domain"
@@ -14,20 +15,11 @@ import (
 // authMiddleware will authenticate request
 func (auth *Auth) authMiddleware(next http.HandlerFunc) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		token := r.Header.Get("auth")
-
-		if strings.TrimSpace(token) == "" {
-			w.Write([]byte("invalid token"))
+		_, email, token, err := auth.auth(r)
+		if err != nil {
+			w.Write([]byte(err.Error()))
 			return
 		}
-
-		claims, valid := auth.Token.ValidateAndExtract(token)
-		if claims == nil || !valid {
-			w.Write([]byte(fmt.Sprint("failed to validate and extract token: ", token)))
-			return
-		}
-
-		email := fmt.Sprint(claims.Fields["email"])
 
 		currentSession, _ := auth.Cache.Get(&cache.Item{Key: email})
 		if string(currentSession) != token {
@@ -91,15 +83,11 @@ func (auth *Auth) login(w http.ResponseWriter, r *http.Request) {
 
 // logout API endpoint will logout user from system
 func (auth *Auth) logout(w http.ResponseWriter, r *http.Request) {
-	token := r.Header.Get("auth")
-
-	claims, valid := auth.Token.ValidateAndExtract(token)
-	if claims == nil || !valid {
-		w.Write([]byte(fmt.Sprint("failed to validate and extract token: ", token)))
+	_, email, _, err := auth.auth(r)
+	if err != nil {
+		w.Write([]byte(err.Error()))
 		return
 	}
-
-	email := fmt.Sprint(claims.Fields["email"])
 
 	// TODO: replace with DI framework
 	usecase := &authUsecase.UserAccount{
@@ -112,4 +100,25 @@ func (auth *Auth) logout(w http.ResponseWriter, r *http.Request) {
 	response := usecase.Logout(email)
 
 	auth.OnSuccess(response.ToBytes(), w)
+}
+
+// auth is helper function to extract user id and email from request
+func (auth *Auth) auth(r *http.Request) (int, string, string, error) {
+	token := r.Header.Get("auth")
+
+	claims, valid := auth.Token.ValidateAndExtract(token)
+	if claims == nil || !valid {
+		return 0, "", "", errors.New(fmt.Sprint("failed to validate and extract token: ", token))
+	}
+
+	idClaim := fmt.Sprint(claims.Fields["id"])
+
+	id, err := strconv.Atoi(idClaim)
+	if err != nil {
+		return 0, "", "", errors.New(fmt.Sprint("failed to extract user id: ", idClaim))
+	}
+
+	email := fmt.Sprint(claims.Fields["email"])
+
+	return id, email, token, nil
 }
