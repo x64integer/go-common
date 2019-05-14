@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -23,6 +22,7 @@ type UserAccount struct {
 // Response for authentication usecase
 type Response struct {
 	ErrorMessage string `json:"error_message"`
+	ID           int    `json:"id"`
 	Email        string `json:"email"`
 	Token        string `json:"token"`
 }
@@ -50,6 +50,7 @@ func (userAccount *UserAccount) Register(user *domain.User) *Response {
 		return response
 	}
 
+	response.ID = user.ID
 	response.Email = user.Email
 	response.Token = token
 
@@ -98,12 +99,7 @@ func (userAccount *UserAccount) Logout(email string) *Response {
 
 // ToBytes will marshal Response to []byte
 func (response *Response) ToBytes() []byte {
-	b, err := json.Marshal(response)
-	if err != nil {
-		return []byte(fmt.Sprintf("failed to marshal Response: %v, err: %s", response, err.Error()))
-	}
-
-	return b
+	return toBytes(response)
 }
 
 // loginUser is helper function to create user token and session
@@ -111,6 +107,7 @@ func (userAccount *UserAccount) loginUser(user *domain.User) (string, error) {
 	if err := userAccount.Token.Generate(&jwt.Claims{
 		Expiration: time.Hour * 24,
 		Fields: map[string]interface{}{
+			"id":    user.ID,
 			"email": user.Email,
 		},
 	}); err != nil {

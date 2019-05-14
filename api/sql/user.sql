@@ -10,12 +10,21 @@ CREATE TABLE users (
     UNIQUE(email)
 );
 
+-- table password_reset
+DROP TABLE IF EXISTS password_reset;
+CREATE TABLE password_reset (
+    email varchar(255) NOT NULL,
+    token varchar(255) DEFAULT NULL,
+    create_at integer DEFAULT EXTRACT(EPOCH FROM NOW()),
+    UNIQUE(email)
+);
+
 -- function create_user
 CREATE OR REPLACE FUNCTION create_user(_username varchar(50), _email varchar(255), _password varchar(255))
-RETURNS VOID
+RETURNS INTEGER
 LANGUAGE SQL
 AS $$
-    INSERT INTO users VALUES (DEFAULT, _username, _email, _password);
+    INSERT INTO users VALUES (DEFAULT, _username, _email, _password) RETURNING id;
 $$;
 
 -- function get_by_email
@@ -24,4 +33,44 @@ RETURNS TABLE (username varchar(50), email varchar(255), password varchar(255))
 LANGUAGE SQL
 AS $$
     SELECT username, email, password FROM users WHERE email = _email LIMIT 1;
+$$;
+
+-- function update_password
+CREATE OR REPLACE FUNCTION update_password(_email varchar(255), _password varchar(255))
+RETURNS VOID
+LANGUAGE SQL
+AS $$
+    UPDATE users SET password = _password WHERE email = _email;
+$$;
+
+-- function create_reset_token
+CREATE OR REPLACE FUNCTION create_reset_token(_email varchar(255), _token varchar(255))
+RETURNS VOID
+LANGUAGE SQL
+AS $$
+    INSERT INTO password_reset VALUES (_email, _token);
+$$;
+
+-- function get_reset_token
+CREATE OR REPLACE FUNCTION get_reset_token(_email varchar(255))
+RETURNS varchar(255)
+LANGUAGE SQL
+AS $$
+    SELECT token FROM password_reset WHERE email = _email LIMIT 1;
+$$;
+
+-- function update_reset_token
+CREATE OR REPLACE FUNCTION update_reset_token(_email varchar(255), _token varchar(255))
+RETURNS VOID
+LANGUAGE SQL
+AS $$
+    UPDATE password_reset SET token = _token WHERE email = _email;
+$$;
+
+-- function delete_reset_token
+CREATE OR REPLACE FUNCTION delete_reset_token(_email varchar(255))
+RETURNS VOID
+LANGUAGE SQL
+AS $$
+    DELETE FROM password_reset WHERE email = _email;
 $$;

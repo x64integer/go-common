@@ -22,14 +22,13 @@ type RouteHandler interface {
 type Router struct {
 	*Config
 	*http.Server
+	RouteHandler
 }
 
 // Config for router
 type Config struct {
-	Host      string
-	Port      string
-	MapRoutes func(RouteHandler)
-	MuxRoutes func(*mux.Router)
+	Host string
+	Port string
 	*Auth
 }
 
@@ -44,26 +43,19 @@ func NewRouter(config *Config) *Router {
 		log.Printf("registered auth routes: register -> %v, login -> %v", config.Auth.RegisterPath, config.Auth.LoginPath)
 	}
 
-	if config.MapRoutes != nil {
-		config.MapRoutes(routeHandler)
-	}
-
-	if config.MuxRoutes != nil {
-		config.MuxRoutes(muxRouter)
-	}
-
 	srv := &http.Server{
 		Addr: config.Host + ":" + config.Port,
 		// NOTE: these values could be passed through Config
 		WriteTimeout: time.Second * 15,
 		ReadTimeout:  time.Second * 15,
 		IdleTimeout:  time.Second * 60,
-		Handler:      muxRouter,
+		Handler:      routeHandler,
 	}
 
 	return &Router{
-		Config: config,
-		Server: srv,
+		Config:       config,
+		Server:       srv,
+		RouteHandler: routeHandler,
 	}
 }
 
