@@ -125,7 +125,7 @@ func (conn *Connection) buildResponse(hits []*elastic.SearchHit) ([]byte, error)
 	for _, hit := range hits {
 		var item interface{}
 
-		if err := json.Unmarshal(*hit.Source, &item); err != nil {
+		if err := json.Unmarshal(*&hit.Source, &item); err != nil {
 			continue
 		}
 
