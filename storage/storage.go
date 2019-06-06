@@ -16,10 +16,12 @@ const (
 	SQLClient = 1
 	// RedisClient flag
 	RedisClient = 2
+	// CacheService flag
+	CacheService = 4
 	// ElasticClient flag
-	ElasticClient = 4
+	ElasticClient = 8
 	// CassandraClient flag
-	CassandraClient = 8
+	CassandraClient = 16
 )
 
 // C exposes storage container so it can be accessed globally
@@ -29,9 +31,9 @@ var C *Container
 type Container struct {
 	SQL       *sql.Connection
 	Redis     *redis.Connection
+	Cache     cache.Service
 	Elastic   *elastic.Connection
 	Cassandra *cassandra.Connection
-	Cache     cache.Service
 	Expose    bool
 }
 
@@ -76,7 +78,7 @@ func DefaultContainer(flag int) *Container {
 		}
 	}
 
-	if flag&RedisClient != 0 {
+	if flag&RedisClient != 0 || flag&CacheService != 0 {
 		redisConn := &redis.Connection{
 			Config: redis.NewConfig(),
 		}

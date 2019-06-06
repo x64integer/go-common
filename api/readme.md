@@ -3,7 +3,7 @@
 
 * **Initialize router**
 ```
-st := storage.DefaultContainer(storage.SQLClient | storage.RedisClient)
+st := storage.DefaultContainer(storage.SQLClient | storage.CacheService)
 
 st.Connect()
 
