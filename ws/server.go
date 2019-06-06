@@ -3,7 +3,6 @@ package ws
 import (
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/semirm-dev/go-common/api"
 
@@ -30,27 +29,25 @@ func (server *Server) Run(done chan bool) {
 	}
 
 	r := api.NewRouter(&api.Config{
-		Host:        server.Config.Host,
-		Port:        server.Config.Port,
-		WaitTimeout: time.Second * 15,
-		MapRoutes: func(r api.RouteHandler) {
-			r.HandleFunc(server.Config.Endpoint, func(w http.ResponseWriter, r *http.Request) {
-				conn, err := upgrader.Upgrade(w, r, nil)
-				if err != nil {
-					w.Write([]byte("failed to setup websocket upgrader"))
-					return
-				}
+		Host: server.Config.Host,
+		Port: server.Config.Port,
+	})
 
-				ch := &Channel{
-					Connection:   conn,
-					EventHandler: server.EventHandler,
-				}
+	r.HandleFunc(server.Config.Endpoint, func(w http.ResponseWriter, r *http.Request) {
+		conn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			w.Write([]byte("failed to setup websocket upgrader"))
+			return
+		}
 
-				server.Channel = ch
+		ch := &Channel{
+			Connection:   conn,
+			EventHandler: server.EventHandler,
+		}
 
-				go ch.read()
-			})
-		},
+		server.Channel = ch
+
+		go ch.read()
 	})
 
 	go r.Listen()
