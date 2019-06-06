@@ -19,3 +19,12 @@
 * Elasticsearch
 * Cassandra
 * Cache (redis by default)
+
+
+> go get
+```
+github.com/gorilla/mux
+github.com/dgrijalva/jwt-go
+github.com/eclipse/paho.mqtt.golang
+golang.org/x/crypto/bcrypt
+```
