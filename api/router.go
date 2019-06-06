@@ -8,12 +8,14 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/gorilla/mux"
 )
 
-// RouteHandler decouples direct dependency on *mux.Route
+// Handler decouples direct dependency on *mux.Route
 // Add new functions as per need
-type RouteHandler interface {
+type Handler interface {
 	Handle(string, http.Handler, ...string)
 	HandleFunc(string, func(http.ResponseWriter, *http.Request), ...string)
 }
@@ -22,7 +24,7 @@ type RouteHandler interface {
 type Router struct {
 	*Config
 	*http.Server
-	RouteHandler
+	Handler
 }
 
 // Config for router
@@ -36,11 +38,11 @@ type Config struct {
 func NewRouter(config *Config) *Router {
 	muxRouter := mux.NewRouter()
 
-	routeHandler := &MuxRouterAdapter{Router: muxRouter}
+	handler := &MuxRouterAdapter{Router: muxRouter}
 
 	if config.Auth != nil {
-		config.Auth.applyRoutes(routeHandler)
-		log.Printf("registered auth routes: register -> %v, login -> %v", config.Auth.RegisterPath, config.Auth.LoginPath)
+		config.Auth.applyRoutes(handler)
+		logrus.Infof("registered auth routes: register -> %v, login -> %v", config.Auth.RegisterPath, config.Auth.LoginPath)
 	}
 
 	srv := &http.Server{
@@ -49,21 +51,21 @@ func NewRouter(config *Config) *Router {
 		WriteTimeout: time.Second * 15,
 		ReadTimeout:  time.Second * 15,
 		IdleTimeout:  time.Second * 60,
-		Handler:      routeHandler,
+		Handler:      handler,
 	}
 
 	return &Router{
-		Config:       config,
-		Server:       srv,
-		RouteHandler: routeHandler,
+		Config:  config,
+		Server:  srv,
+		Handler: handler,
 	}
 }
 
 // Listen http server on our router
 func (r *Router) Listen() {
 	go func() {
-		log.Printf("listening on %v:%v\n", r.Config.Host, r.Config.Port)
-		if err := r.ListenAndServe(); err != nil {
+		logrus.Infof("listening on %v:%v\n", r.Config.Host, r.Config.Port)
+		if err := r.Server.ListenAndServe(); err != nil {
 			log.Println(err)
 		}
 	}()
@@ -79,6 +81,6 @@ func (r *Router) Listen() {
 
 	r.Shutdown(ctx)
 
-	log.Println("shutting down http server")
+	logrus.Warn("shutting down http server")
 	os.Exit(0)
 }

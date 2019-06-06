@@ -55,18 +55,18 @@ type entityField struct {
 }
 
 // applyRoutes will setup auth routes (register, login, logout)
-func (auth *Auth) applyRoutes(routeHandler RouteHandler) {
+func (auth *Auth) applyRoutes(handler Handler) {
 	auth.applyDefaults()
 
-	routeHandler.HandleFunc(auth.RegisterPath, func(w http.ResponseWriter, r *http.Request) {
+	handler.HandleFunc(auth.RegisterPath, func(w http.ResponseWriter, r *http.Request) {
 		auth.register(w, r)
 	}, "POST")
 
-	routeHandler.HandleFunc(auth.LoginPath, func(w http.ResponseWriter, r *http.Request) {
+	handler.HandleFunc(auth.LoginPath, func(w http.ResponseWriter, r *http.Request) {
 		auth.login(w, r)
 	}, "POST")
 
-	routeHandler.Handle(auth.LogoutPath, auth.MiddlewareFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler.Handle(auth.LogoutPath, auth.MiddlewareFunc(func(w http.ResponseWriter, r *http.Request) {
 		auth.logout(w, r)
 	}), "GET")
 }
