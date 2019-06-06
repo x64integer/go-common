@@ -26,5 +26,11 @@
 github.com/gorilla/mux
 github.com/dgrijalva/jwt-go
 github.com/eclipse/paho.mqtt.golang
+github.com/streadway/amqp
+github.com/gocql/gocql
+github.com/olivere/elastic
+github.com/go-redis/redis
+github.com/satori/go.uuid
+github.com/gorilla/websocket
 golang.org/x/crypto/bcrypt
 ```
