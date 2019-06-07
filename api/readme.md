@@ -21,7 +21,7 @@ r := api.NewRouter(&api.Config{
                 Secret: []byte(util.Env("JWT_SECRET_KEY", "some-random-string-123")),
             },
             UserAccountRepo: &my.UserAccountRepositoryImpl{
-			    SQL: st.SQL,
+		SQL: st.SQL,
             },
             PasswordResetRepo: &my.PasswordResetRepositoryImpl{
                 SQL: st.SQL,
@@ -47,7 +47,7 @@ r.Listen()
 type Gateway struct {
 	Storage *storage.Container
 	*jwt.Token
-    UserAccountRepo   *my.UserAccountRepositoryImpl
+    	UserAccountRepo   *my.UserAccountRepositoryImpl
 	PasswordResetRepo *my.PasswordResetRepositoryImpl
 }
 
