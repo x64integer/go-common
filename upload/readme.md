@@ -19,7 +19,7 @@ service := &upload.Service{
         Destination: "./uploads/topics",
         FilePrefix:  "topic_", // optional
         FormFile:    "topicUpload",
-        FileSize:    10 << 20, // 10MB
+        FileSize:    32 << 20, // 32MB
     },
 
     // required only if UseMiddleware
