@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/semirm-dev/go-common/api/user"
 	"github.com/semirm-dev/go-common/storage/cache"
 
@@ -23,22 +25,30 @@ import (
 type Authenticatable interface {
 }
 
+// Authenticator contract
+type Authenticator interface {
+	UserAccountRepository() user.Repository
+	PasswordResetRepository() user.PasswordResetRepository
+	JWT() *jwt.Token
+	CacheClient() cache.Service
+}
+
 // Auth configuration
 type Auth struct {
+	// required
+	Authenticator
+
+	// optional
 	RegisterPath string
 	LoginPath    string
 	LogoutPath   string
 
+	// optional
 	MiddlewareFunc func(http.HandlerFunc) http.Handler
 	OnError        func(error, http.ResponseWriter)
 	OnSuccess      func([]byte, http.ResponseWriter)
 
-	UserAccountRepository   user.Repository
-	PasswordResetRepository user.PasswordResetRepository
-	*jwt.Token
-	Cache cache.Service
-
-	// TODO: Implement customizable Auth
+	// TODO: Implement customizable Auth entity
 	Entity Authenticatable
 }
 
@@ -52,6 +62,10 @@ type entityField struct {
 
 // applyRoutes will setup auth routes (register, login, logout)
 func (auth *Auth) applyRoutes(handler Handler) {
+	if auth.Authenticator == nil {
+		logrus.Fatal("Authenticator implementation not provided")
+	}
+
 	auth.applyDefaults()
 
 	handler.HandleFunc(auth.RegisterPath, func(w http.ResponseWriter, r *http.Request) {
@@ -76,7 +90,7 @@ func (auth *Auth) Middleware(next http.HandlerFunc) http.Handler {
 			return
 		}
 
-		currentSession, _ := auth.Cache.Get(&cache.Item{Key: email})
+		currentSession, _ := auth.CacheClient().Get(&cache.Item{Key: email})
 		if string(currentSession) != token {
 			w.Write([]byte(fmt.Sprint("no session found for token: ", token)))
 			return
@@ -90,7 +104,7 @@ func (auth *Auth) Middleware(next http.HandlerFunc) http.Handler {
 func (auth *Auth) Extract(r *http.Request) (int, string, string, error) {
 	token := r.Header.Get("auth")
 
-	claims, valid := auth.Token.ValidateAndExtract(token)
+	claims, valid := auth.JWT().ValidateAndExtract(token)
 	if claims == nil || !valid {
 		return 0, "", "", errors.New(fmt.Sprint("failed to validate and extract token: ", token))
 	}
@@ -117,10 +131,10 @@ func (auth *Auth) register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	authUsecase := &user.AuthUsecase{
-		Repository: auth.UserAccountRepository,
-		Token:      auth.Token,
+		Repository: auth.UserAccountRepository(),
+		Token:      auth.JWT(),
 		Session: &user.Session{
-			Cache: auth.Cache,
+			Cache: auth.CacheClient(),
 		},
 	}
 
@@ -139,10 +153,10 @@ func (auth *Auth) login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	authUsecase := &user.AuthUsecase{
-		Repository: auth.UserAccountRepository,
-		Token:      auth.Token,
+		Repository: auth.UserAccountRepository(),
+		Token:      auth.JWT(),
 		Session: &user.Session{
-			Cache: auth.Cache,
+			Cache: auth.CacheClient(),
 		},
 	}
 
@@ -160,9 +174,9 @@ func (auth *Auth) logout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	authUsecase := &user.AuthUsecase{
-		Token: auth.Token,
+		Token: auth.JWT(),
 		Session: &user.Session{
-			Cache: auth.Cache,
+			Cache: auth.CacheClient(),
 		},
 	}
 
@@ -181,7 +195,7 @@ func (auth *Auth) createResetToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	passwordResetUsecase := &user.PasswordResetUsecase{
-		Repository: auth.PasswordResetRepository,
+		Repository: auth.PasswordResetRepository(),
 	}
 
 	response := passwordResetUsecase.CreateResetToken(passwordReset.Email)
