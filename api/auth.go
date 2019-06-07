@@ -24,8 +24,8 @@ import (
 // It might change in the future, if such need arises
 type Authenticatable interface{}
 
-// Authenticator contract provides required repositores and services for authentication
-type Authenticator interface {
+// AuthenticationProvider provides requirements for authentication service
+type AuthenticationProvider interface {
 	UserAccountRepository() user.Repository
 	PasswordResetRepository() user.PasswordResetRepository
 	JWT() *jwt.Token
@@ -35,7 +35,7 @@ type Authenticator interface {
 // Auth configuration
 type Auth struct {
 	// required
-	Authenticator
+	AuthenticationProvider
 
 	// optional
 	RegisterPath string
@@ -61,8 +61,8 @@ type entityField struct {
 
 // applyRoutes will setup auth routes (register, login, logout)
 func (auth *Auth) applyRoutes(handler Handler) {
-	if auth.Authenticator == nil {
-		logrus.Fatal("Authenticator implementation not provided")
+	if auth.AuthenticationProvider == nil {
+		logrus.Fatal("AuthenticationProvider implementation not provided")
 	}
 
 	auth.applyDefaults()
