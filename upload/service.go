@@ -88,6 +88,8 @@ func (service *Service) upload(w http.ResponseWriter, r *http.Request) {
 		}
 
 		uploaded, err := service.Uploader.Upload(file, handler.Filename)
+		file.Close()
+
 		if err != nil {
 			response.Failed = append(response.Failed, handler.Filename)
 			service.OnError(err, w)
@@ -96,8 +98,6 @@ func (service *Service) upload(w http.ResponseWriter, r *http.Request) {
 		}
 
 		response.Uploaded = append(response.Uploaded, uploaded)
-
-		file.Close()
 	}
 
 	b, err := json.Marshal(response)
