@@ -20,7 +20,7 @@ type Service struct {
 	Cache cache.Service
 	*Uploader
 	OnError   func(error, http.ResponseWriter)
-	OnSuccess func([]byte, http.ResponseWriter)
+	OnSuccess func(*Response, http.ResponseWriter)
 }
 
 // Config for router
@@ -100,13 +100,7 @@ func (service *Service) upload(w http.ResponseWriter, r *http.Request) {
 		response.Uploaded = append(response.Uploaded, uploaded)
 	}
 
-	b, err := json.Marshal(response)
-	if err != nil {
-		service.OnError(err, w)
-		return
-	}
-
-	service.OnSuccess(b, w)
+	service.OnSuccess(response, w)
 }
 
 // onError default callback
@@ -116,6 +110,12 @@ func onError(err error, w http.ResponseWriter) {
 }
 
 // onSuccess default callback
-func onSuccess(payload []byte, w http.ResponseWriter) {
-	w.Write(payload)
+func onSuccess(response *Response, w http.ResponseWriter) {
+	b, err := json.Marshal(response)
+	if err != nil {
+		logrus.Error("upload failed: ", err)
+		return
+	}
+
+	w.Write(b)
 }
