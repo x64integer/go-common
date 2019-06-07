@@ -17,10 +17,10 @@ r := api.NewRouter(&api.Config{
             Secret: []byte(util.Env("JWT_SECRET_KEY", "some-random-string-123")),
         },
         Cache: st,
-        UserAccount: &infra.UserAccountRepository{
+        UserAccountRepository: &my.UserAccountRepositoryImpl{
             SQL: st.SQL,
         },
-        PasswordReset: &infra.PasswordResetRepository{
+        PasswordResetRepository: &my.PasswordResetRepositoryImpl{
             SQL: st.SQL,
         },
     },
