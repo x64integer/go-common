@@ -57,7 +57,7 @@ type Gateway struct {
 
 // UserAccountRepository implements api.auth.RepositoryProvider.UserAccountRepository
 func (gateway *Gateway) UserAccountRepository() user.Repository {
-	returngateway.UserAccountRepo
+	return gateway.UserAccountRepo
 }
 
 // PasswordResetRepository implements api.auth.RepositoryProvider.PasswordResetRepository
