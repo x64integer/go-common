@@ -16,8 +16,8 @@ const (
 	SQLClient = 1
 	// RedisClient flag
 	RedisClient = 2
-	// CacheService flag
-	CacheService = 4
+	// CacheClient flag
+	CacheClient = 4
 	// ElasticClient flag
 	ElasticClient = 8
 	// CassandraClient flag
@@ -78,7 +78,7 @@ func DefaultContainer(flag int) *Container {
 		}
 	}
 
-	if flag&RedisClient != 0 || flag&CacheService != 0 {
+	if flag&RedisClient != 0 || flag&CacheClient != 0 {
 		redisConn := &redis.Connection{
 			Config: redis.NewConfig(),
 		}
