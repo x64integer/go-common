@@ -11,6 +11,7 @@
 * Mail client
 * Env helper
 * Strings helpers
+* File uploads
 
 ### Storage
 * Postgres
