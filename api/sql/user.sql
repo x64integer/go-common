@@ -29,10 +29,10 @@ $$;
 
 -- function get_by_email
 CREATE OR REPLACE FUNCTION get_by_email(_email varchar(255))
-RETURNS TABLE (username varchar(50), email varchar(255), password varchar(255))
+RETURNS TABLE (id integer, username varchar(50), email varchar(255), password varchar(255))
 LANGUAGE SQL
 AS $$
-    SELECT username, email, password FROM users WHERE email = _email LIMIT 1;
+    SELECT id, username, email, password FROM users WHERE email = _email LIMIT 1;
 $$;
 
 -- function update_password

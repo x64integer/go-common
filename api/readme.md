@@ -8,6 +8,19 @@ st := storage.DefaultContainer(storage.SQLClient | storage.CacheClient)
 
 st.Connect()
 
+gateway := &Gateway{
+    Token: &jwt.Token{
+        Secret: []byte(util.Env("JWT_SECRET_KEY", "some-random-string-123")),
+    },
+    Storage: st,
+    UserAccountRepo: &my.UserAccountRepositoryImpl{
+        SQL: st.SQL,
+    },
+    PasswordResetRepo: &my.PasswordResetRepositoryImpl{
+        SQL: st.SQL,
+    },
+}
+
 // create router
 r := api.NewRouter(&api.Config{
     Host:        "localhost",
@@ -15,18 +28,9 @@ r := api.NewRouter(&api.Config{
     
     // optionally, setup authentication
     Auth: &api.Auth{
-        AuthenticationProvider: &Gateway{
-            Storage: st,
-            Token: &jwt.Token{
-                Secret: []byte(util.Env("JWT_SECRET_KEY", "some-random-string-123")),
-            },
-            UserAccountRepo: &my.UserAccountRepositoryImpl{
-		SQL: st.SQL,
-            },
-            PasswordResetRepo: &my.PasswordResetRepositoryImpl{
-                SQL: st.SQL,
-            },
-        },
+        Token:              gateway.Token,
+        CacheClient:        gateway.Storage.Cache,
+        RepositoryProvider: gateway,
     },
 })
 
@@ -41,34 +45,24 @@ r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 r.Listen()
 ```
 
-* **Authenticator impl**
+* **RepositoryProvider impl**
 ```
-// Gateway is usually wrapper for api.Router and implements api.auth.Authenticator
+// Gateway is usually wrapper for api.Router and implements api.auth.RepositoryProvider
 type Gateway struct {
-	Storage *storage.Container
-	*jwt.Token
-    	UserAccountRepo   *my.UserAccountRepositoryImpl
-	PasswordResetRepo *my.PasswordResetRepositoryImpl
+    *jwt.Token
+    Storage *storage.Container
+    UserAccountRepo   *my.UserAccountRepositoryImpl
+    PasswordResetRepo *my.PasswordResetRepositoryImpl
 }
 
-// UserAccountRepository implements api.auth.Authenticator.UserAccountRepository
+// UserAccountRepository implements api.auth.RepositoryProvider.UserAccountRepository
 func (gateway *Gateway) UserAccountRepository() user.Repository {
 	returngateway.UserAccountRepo
 }
 
-// PasswordResetRepository implements api.auth.Authenticator.PasswordResetRepository
+// PasswordResetRepository implements api.auth.RepositoryProvider.PasswordResetRepository
 func (gateway *Gateway) PasswordResetRepository() user.PasswordResetRepository {
 	return gateway.PasswordResetRepo
-}
-
-// JWT implements api.auth.Authenticator.JWT
-func (gateway *Gateway) JWT() *jwt.Token {
-	return gateway.Token
-}
-
-// CacheClient implements api.auth.Authenticator.CacheClient
-func (gateway *Gateway) CacheClient() cache.Service {
-	return gateway.Storage.Cache
 }
 ```
 

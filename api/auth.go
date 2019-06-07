@@ -24,18 +24,21 @@ import (
 // It might change in the future, if such need arises
 type Authenticatable interface{}
 
-// AuthenticationProvider provides requirements for authentication service
-type AuthenticationProvider interface {
+// RepositoryProvider provides required repositories for authentication service
+// If provided, auth routes will be applied to route handler
+type RepositoryProvider interface {
 	UserAccountRepository() user.Repository
 	PasswordResetRepository() user.PasswordResetRepository
-	JWT() *jwt.Token
-	CacheClient() cache.Service
 }
 
 // Auth configuration
 type Auth struct {
 	// required
-	AuthenticationProvider
+	*jwt.Token
+	CacheClient cache.Service
+
+	// optional
+	RepositoryProvider
 
 	// optional
 	RegisterPath string
@@ -61,8 +64,12 @@ type entityField struct {
 
 // applyRoutes will setup auth routes (register, login, logout)
 func (auth *Auth) applyRoutes(handler Handler) {
-	if auth.AuthenticationProvider == nil {
-		logrus.Fatal("AuthenticationProvider implementation not provided")
+	if auth.Token == nil || auth.CacheClient == nil {
+		logrus.Fatal("either auth.Token or auth.CacheClient (or both) is not provided")
+	}
+
+	if auth.RepositoryProvider == nil {
+		return
 	}
 
 	auth.applyDefaults()
@@ -89,7 +96,7 @@ func (auth *Auth) Middleware(next http.HandlerFunc) http.Handler {
 			return
 		}
 
-		currentSession, _ := auth.CacheClient().Get(&cache.Item{Key: email})
+		currentSession, _ := auth.CacheClient.Get(&cache.Item{Key: email})
 		if string(currentSession) != token {
 			w.Write([]byte(fmt.Sprint("no session found for token: ", token)))
 			return
@@ -103,7 +110,11 @@ func (auth *Auth) Middleware(next http.HandlerFunc) http.Handler {
 func (auth *Auth) Extract(r *http.Request) (int, string, string, error) {
 	token := r.Header.Get("auth")
 
-	claims, valid := auth.JWT().ValidateAndExtract(token)
+	if strings.TrimSpace(token) == "" {
+		return 0, "", "", errors.New(fmt.Sprint("missing token field"))
+	}
+
+	claims, valid := auth.Token.ValidateAndExtract(token)
 	if claims == nil || !valid {
 		return 0, "", "", errors.New(fmt.Sprint("failed to validate and extract token: ", token))
 	}
@@ -131,9 +142,9 @@ func (auth *Auth) register(w http.ResponseWriter, r *http.Request) {
 
 	authUsecase := &user.AuthUsecase{
 		Repository: auth.UserAccountRepository(),
-		Token:      auth.JWT(),
+		Token:      auth.Token,
 		Session: &user.Session{
-			Cache: auth.CacheClient(),
+			Cache: auth.CacheClient,
 		},
 	}
 
@@ -153,9 +164,9 @@ func (auth *Auth) login(w http.ResponseWriter, r *http.Request) {
 
 	authUsecase := &user.AuthUsecase{
 		Repository: auth.UserAccountRepository(),
-		Token:      auth.JWT(),
+		Token:      auth.Token,
 		Session: &user.Session{
-			Cache: auth.CacheClient(),
+			Cache: auth.CacheClient,
 		},
 	}
 
@@ -173,9 +184,9 @@ func (auth *Auth) logout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	authUsecase := &user.AuthUsecase{
-		Token: auth.JWT(),
+		Token: auth.Token,
 		Session: &user.Session{
-			Cache: auth.CacheClient(),
+			Cache: auth.CacheClient,
 		},
 	}
 
