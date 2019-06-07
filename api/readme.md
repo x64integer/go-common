@@ -3,10 +3,12 @@
 
 * **Initialize router**
 ```
+// setup storage clients
 st := storage.DefaultContainer(storage.SQLClient | storage.CacheClient)
 
 st.Connect()
 
+// create router
 r := api.NewRouter(&api.Config{
     Host:        "localhost",
     Port:        "8080",
@@ -18,10 +20,17 @@ r := api.NewRouter(&api.Config{
             Token: &jwt.Token{
                 Secret: []byte(util.Env("JWT_SECRET_KEY", "some-random-string-123")),
             },
+            UserAccountRepo: &my.UserAccountRepositoryImpl{
+			SQL: st.SQL,
+            },
+            PasswordResetRepo: &my.PasswordResetRepositoryImpl{
+                SQL: st.SQL,
+            },
         },
     },
 })
 
+// define routes
 r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
     w.Write([]byte("Spotted Gateway :)"))
 }, "GET")
@@ -38,20 +47,18 @@ r.Listen()
 type Gateway struct {
 	Storage *storage.Container
 	*jwt.Token
+    UserAccountRepo   *my.UserAccountRepositoryImpl
+	PasswordResetRepo *my.PasswordResetRepositoryImpl
 }
 
 // UserAccountRepository implements api.auth.Authenticator.UserAccountRepository
 func (gateway *Gateway) UserAccountRepository() user.Repository {
-	return &my.UserAccountRepositoryImpl{
-		SQL: gateway.Storage.SQL,
-	}
+	returngateway.UserAccountRepo
 }
 
 // PasswordResetRepository implements api.auth.Authenticator.PasswordResetRepository
 func (gateway *Gateway) PasswordResetRepository() user.PasswordResetRepository {
-	return &my.PasswordResetRepositoryImpl{
-		SQL: gateway.Storage.SQL,
-	}
+	return gateway.PasswordResetRepo
 }
 
 // JWT implements api.auth.Authenticator.JWT

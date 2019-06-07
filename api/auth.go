@@ -22,10 +22,9 @@ import (
 // Authenticatable contract
 // Such empty definition is used to satisfy reflection dependencies only
 // It might change in the future, if such need arises
-type Authenticatable interface {
-}
+type Authenticatable interface{}
 
-// Authenticator contract
+// Authenticator contract provides required repositores and services for authentication
 type Authenticator interface {
 	UserAccountRepository() user.Repository
 	PasswordResetRepository() user.PasswordResetRepository
@@ -54,10 +53,10 @@ type Auth struct {
 
 // entityField is helper struct to hold information/data from extracted auth Entity (Authenticatable)
 type entityField struct {
-	AuthKey   string
-	AuthValue interface{}
-	AuthType  interface{}
-	AuthTable string
+	authKey   string
+	authValue interface{}
+	authType  interface{}
+	authTable string
 }
 
 // applyRoutes will setup auth routes (register, login, logout)
@@ -100,7 +99,7 @@ func (auth *Auth) Middleware(next http.HandlerFunc) http.Handler {
 	})
 }
 
-// Extract user id and email from request
+// Extract authentication claims from request
 func (auth *Auth) Extract(r *http.Request) (int, string, string, error) {
 	token := r.Header.Get("auth")
 
@@ -270,10 +269,10 @@ func (auth *Auth) extractEntity(entityToExtract interface{}) []*entityField {
 		}
 
 		fields = append(fields, &entityField{
-			AuthKey:   fieldKey,
-			AuthValue: fieldValue,
-			AuthType:  fieldType,
-			AuthTable: entityValue.Type().Name(),
+			authKey:   fieldKey,
+			authValue: fieldValue,
+			authType:  fieldType,
+			authTable: entityValue.Type().Name(),
 		})
 	}
 
