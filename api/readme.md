@@ -15,7 +15,7 @@ r := api.NewRouter(&api.Config{
     
     // optionally, setup authentication
     Auth: &api.Auth{
-        Authenticator: &Gateway{
+        AuthenticationProvider: &Gateway{
             Storage: st,
             Token: &jwt.Token{
                 Secret: []byte(util.Env("JWT_SECRET_KEY", "some-random-string-123")),
