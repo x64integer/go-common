@@ -31,6 +31,12 @@ type Config struct {
 	UseMiddleware bool
 }
 
+// Response for file uploads
+type Response struct {
+	Uploaded []*Uploaded `json:"uploaded"`
+	Failed   []string    `json:"failed"`
+}
+
 // Initialize Service
 func (service *Service) Initialize() {
 	if service.OnSuccess == nil {
@@ -69,20 +75,32 @@ func (service *Service) Listen() {
 func (service *Service) upload(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(service.Uploader.FileSize)
 
-	file, handler, err := r.FormFile(service.Uploader.FormFile)
-	if err != nil {
-		service.OnError(err, w)
-		return
-	}
-	defer file.Close()
-
-	uploaded, err := service.Uploader.Upload(file, handler.Filename)
-	if err != nil {
-		service.OnError(err, w)
-		return
+	response := &Response{
+		Uploaded: make([]*Uploaded, 0),
+		Failed:   make([]string, 0),
 	}
 
-	b, err := json.Marshal(uploaded)
+	for _, handler := range r.MultipartForm.File[service.Uploader.FormFile] {
+		file, err := handler.Open()
+		if err != nil {
+			logrus.Error("unexpected error while opening file: ", err)
+			continue
+		}
+
+		uploaded, err := service.Uploader.Upload(file, handler.Filename)
+		if err != nil {
+			response.Failed = append(response.Failed, handler.Filename)
+			service.OnError(err, w)
+
+			continue
+		}
+
+		response.Uploaded = append(response.Uploaded, uploaded)
+
+		file.Close()
+	}
+
+	b, err := json.Marshal(response)
 	if err != nil {
 		service.OnError(err, w)
 		return
