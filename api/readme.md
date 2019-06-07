@@ -13,15 +13,11 @@ r := api.NewRouter(&api.Config{
     
     // optionally, setup authentication
     Auth: &api.Auth{
-        Token: &jwt.Token{
-            Secret: []byte(util.Env("JWT_SECRET_KEY", "some-random-string-123")),
-        },
-        Cache: st,
-        UserAccountRepository: &my.UserAccountRepositoryImpl{
-            SQL: st.SQL,
-        },
-        PasswordResetRepository: &my.PasswordResetRepositoryImpl{
-            SQL: st.SQL,
+        Authenticator: &Gateway{
+            Storage: st,
+            Token: &jwt.Token{
+                Secret: []byte(util.Env("JWT_SECRET_KEY", "some-random-string-123")),
+            },
         },
     },
 })
@@ -35,3 +31,38 @@ r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 ```
 r.Listen()
 ```
+
+* **Authenticator impl**
+```
+// Gateway is usually wrapper for api.Router and implements api.auth.Authenticator
+type Gateway struct {
+	Storage *storage.Container
+	*jwt.Token
+}
+
+// UserAccountRepository implements api.auth.Authenticator.UserAccountRepository
+func (gateway *Gateway) UserAccountRepository() user.Repository {
+	return &my.UserAccountRepositoryImpl{
+		SQL: gateway.Storage.SQL,
+	}
+}
+
+// PasswordResetRepository implements api.auth.Authenticator.PasswordResetRepository
+func (gateway *Gateway) PasswordResetRepository() user.PasswordResetRepository {
+	return &my.PasswordResetRepositoryImpl{
+		SQL: gateway.Storage.SQL,
+	}
+}
+
+// JWT implements api.auth.Authenticator.JWT
+func (gateway *Gateway) JWT() *jwt.Token {
+	return gateway.Token
+}
+
+// CacheClient implements api.auth.Authenticator.CacheClient
+func (gateway *Gateway) CacheClient() cache.Service {
+	return gateway.Storage.Cache
+}
+```
+
+Example: https://github.com/semirm-dev/spotted-gateway/blob/master/api/gateway.go
