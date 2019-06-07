@@ -41,8 +41,7 @@ func NewRouter(config *Config) *Router {
 	handler := &MuxRouterAdapter{Router: muxRouter}
 
 	if config.Auth != nil {
-		config.Auth.applyRoutes(handler)
-		logrus.Infof("registered auth routes: register -> %v, login -> %v, logout -> %v", config.Auth.RegisterPath, config.Auth.LoginPath, config.Auth.LogoutPath)
+		config.Auth.apply(handler)
 	}
 
 	srv := &http.Server{

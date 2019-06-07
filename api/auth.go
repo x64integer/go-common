@@ -62,8 +62,8 @@ type entityField struct {
 	authTable string
 }
 
-// applyRoutes will setup auth routes (register, login, logout)
-func (auth *Auth) applyRoutes(handler Handler) {
+// apply will setup auth (register, login, logout routes, validate requirements for Auth)
+func (auth *Auth) apply(handler Handler) {
 	if auth.Token == nil || auth.CacheClient == nil {
 		logrus.Fatal("either auth.Token or auth.CacheClient (or both) is not provided")
 	}
@@ -85,6 +85,8 @@ func (auth *Auth) applyRoutes(handler Handler) {
 	handler.Handle(auth.LogoutPath, auth.MiddlewareFunc(func(w http.ResponseWriter, r *http.Request) {
 		auth.logout(w, r)
 	}), "GET")
+
+	logrus.Infof("registered auth routes: register -> %v, login -> %v, logout -> %v", auth.RegisterPath, auth.LoginPath, auth.LogoutPath)
 }
 
 // Middleware will authenticate request
