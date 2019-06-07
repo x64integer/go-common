@@ -1,27 +1,25 @@
-package auth
+package user
 
 import (
 	"fmt"
-
-	"github.com/semirm-dev/go-common/api/repository"
 )
 
-// PasswordReset usecase
-type PasswordReset struct {
-	Repository repository.PasswordReset
+// PasswordResetUsecase for password reset
+type PasswordResetUsecase struct {
+	Repository PasswordResetRepository
 }
 
-// PasswordResetResponse model
+// PasswordResetResponse for password reset
 type PasswordResetResponse struct {
 	ErrorMessage string `json:"error_message"`
 	Token        string `json:"token"`
 }
 
 // CreateResetToken for password reset usecase
-func (passwordReset *PasswordReset) CreateResetToken(email string) *PasswordResetResponse {
+func (usecase *PasswordResetUsecase) CreateResetToken(email string) *PasswordResetResponse {
 	response := &PasswordResetResponse{}
 
-	token, err := passwordReset.Repository.CreateOrUpdate(email)
+	token, err := usecase.Repository.CreateOrUpdate(email)
 	if err != nil {
 		response.ErrorMessage = fmt.Sprintf("failed to create password reset token [%s]: %s", email, err)
 		return response

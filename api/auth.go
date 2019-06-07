@@ -11,11 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	_auth "github.com/semirm-dev/go-common/api/auth"
-	authUsecase "github.com/semirm-dev/go-common/api/auth"
-	"github.com/semirm-dev/go-common/api/domain"
-	"github.com/semirm-dev/go-common/api/infra"
-	"github.com/semirm-dev/go-common/api/repository"
+	"github.com/semirm-dev/go-common/api/user"
 	"github.com/semirm-dev/go-common/storage/cache"
 
 	"github.com/semirm-dev/go-common/jwt"
@@ -37,8 +33,8 @@ type Auth struct {
 	OnError        func(error, http.ResponseWriter)
 	OnSuccess      func([]byte, http.ResponseWriter)
 
-	repository.UserAccount
-	repository.PasswordReset
+	UserAccountRepository   user.Repository
+	PasswordResetRepository user.PasswordResetRepository
 	*jwt.Token
 	Cache cache.Service
 
@@ -113,46 +109,44 @@ func (auth *Auth) Extract(r *http.Request) (int, string, string, error) {
 
 // register API endpoint will register user into system
 func (auth *Auth) register(w http.ResponseWriter, r *http.Request) {
-	user := &domain.User{}
+	account := &user.Account{}
 
-	if err := user.DecodeFromReader(r.Body); err != nil {
+	if err := account.DecodeFromReader(r.Body); err != nil {
 		w.Write([]byte(err.Error()))
 		return
 	}
 
-	// TODO: replace with DI framework
-	usecase := &authUsecase.UserAccount{
-		Repository: auth.UserAccount,
+	authUsecase := &user.AuthUsecase{
+		Repository: auth.UserAccountRepository,
 		Token:      auth.Token,
-		Session: &infra.Session{
+		Session: &user.Session{
 			Cache: auth.Cache,
 		},
 	}
 
-	response := usecase.Register(user)
+	response := authUsecase.Register(account)
 
 	auth.OnSuccess(response.ToBytes(), w)
 }
 
 // login API endpoint will login user into system
 func (auth *Auth) login(w http.ResponseWriter, r *http.Request) {
-	user := &domain.User{}
+	account := &user.Account{}
 
-	if err := user.DecodeFromReader(r.Body); err != nil {
+	if err := account.DecodeFromReader(r.Body); err != nil {
 		w.Write([]byte(err.Error()))
 		return
 	}
 
-	// TODO: replace with DI framework
-	usecase := &authUsecase.UserAccount{
-		Repository: auth.UserAccount,
+	authUsecase := &user.AuthUsecase{
+		Repository: auth.UserAccountRepository,
 		Token:      auth.Token,
-		Session: &infra.Session{
+		Session: &user.Session{
 			Cache: auth.Cache,
 		},
 	}
 
-	response := usecase.Login(user)
+	response := authUsecase.Login(account)
 
 	auth.OnSuccess(response.ToBytes(), w)
 }
@@ -165,34 +159,32 @@ func (auth *Auth) logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: replace with DI framework
-	usecase := &authUsecase.UserAccount{
+	authUsecase := &user.AuthUsecase{
 		Token: auth.Token,
-		Session: &infra.Session{
+		Session: &user.Session{
 			Cache: auth.Cache,
 		},
 	}
 
-	response := usecase.Logout(email)
+	response := authUsecase.Logout(email)
 
 	auth.OnSuccess(response.ToBytes(), w)
 }
 
 // createResetToken API endpoint will create password reset token
 func (auth *Auth) createResetToken(w http.ResponseWriter, r *http.Request) {
-	passwordReset := &domain.PasswordReset{}
+	passwordReset := &user.PasswordReset{}
 
 	if err := passwordReset.DecodeFromReader(r.Body); err != nil {
 		w.Write([]byte(err.Error()))
 		return
 	}
 
-	// TODO: replace with DI framework
-	usecase := &_auth.PasswordReset{
-		Repository: auth.PasswordReset,
+	passwordResetUsecase := &user.PasswordResetUsecase{
+		Repository: auth.PasswordResetRepository,
 	}
 
-	response := usecase.CreateResetToken(passwordReset.Email)
+	response := passwordResetUsecase.CreateResetToken(passwordReset.Email)
 
 	w.Write(response.ToBytes())
 }
@@ -226,7 +218,7 @@ func (auth *Auth) applyDefaults() {
 	}
 
 	if strings.TrimSpace(auth.LoginPath) == "" {
-		auth.LogoutPath = "/login"
+		auth.LoginPath = "/login"
 	}
 
 	if strings.TrimSpace(auth.LogoutPath) == "" {

@@ -1,7 +1,7 @@
-package repository
+package user
 
-// PasswordReset repository
-type PasswordReset interface {
+// PasswordResetRepository for password reset
+type PasswordResetRepository interface {
 	// CreateOrUpdate password reset token, return created token
 	CreateOrUpdate(string) (string, error)
 }

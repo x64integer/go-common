@@ -1,26 +1,22 @@
-package auth
+package user
 
 import (
 	"fmt"
 	"time"
 
-	"github.com/semirm-dev/go-common/api/domain"
-	"github.com/semirm-dev/go-common/api/infra"
-	"github.com/semirm-dev/go-common/api/repository"
-	"github.com/semirm-dev/go-common/password"
-
 	"github.com/semirm-dev/go-common/jwt"
+	"github.com/semirm-dev/go-common/password"
 )
 
-// UserAccount usecase will handle user authentication
-type UserAccount struct {
-	Repository repository.UserAccount
+// AuthUsecase will handle user authentication
+type AuthUsecase struct {
+	Repository
 	*jwt.Token
-	*infra.Session
+	*Session
 }
 
-// Response for authentication usecase
-type Response struct {
+// AuthResponse for authentication
+type AuthResponse struct {
 	ErrorMessage string `json:"error_message"`
 	ID           int    `json:"id"`
 	Email        string `json:"email"`
@@ -28,8 +24,8 @@ type Response struct {
 }
 
 // Register new user account
-func (userAccount *UserAccount) Register(user *domain.User) *Response {
-	response := &Response{}
+func (usecase *AuthUsecase) Register(user *Account) *AuthResponse {
+	response := &AuthResponse{}
 
 	hashedPassword, err := password.Hash(user.Password)
 	if err != nil {
@@ -39,12 +35,12 @@ func (userAccount *UserAccount) Register(user *domain.User) *Response {
 
 	user.Password = hashedPassword
 
-	if err := userAccount.Repository.Store(user); err != nil {
+	if err := usecase.Repository.Store(user); err != nil {
 		response.ErrorMessage = fmt.Sprintf("failed to store new user account [%v]: %s", user, err)
 		return response
 	}
 
-	token, err := userAccount.loginUser(user)
+	token, err := usecase.loginUser(user)
 	if err != nil {
 		response.ErrorMessage = fmt.Sprintf("failed to login user [%v]: %s", user, err)
 		return response
@@ -58,11 +54,11 @@ func (userAccount *UserAccount) Register(user *domain.User) *Response {
 }
 
 // Login user
-func (userAccount *UserAccount) Login(user *domain.User) *Response {
-	response := &Response{}
+func (usecase *AuthUsecase) Login(user *Account) *AuthResponse {
+	response := &AuthResponse{}
 
 	// validate credentials and create login session/token
-	existingUser, err := userAccount.Repository.GetByEmail(user.Email)
+	existingUser, err := usecase.Repository.GetByEmail(user.Email)
 	if err != nil {
 		response.ErrorMessage = fmt.Sprintf("failed to get user by email [%v]: %s", user, err)
 		return response
@@ -73,7 +69,7 @@ func (userAccount *UserAccount) Login(user *domain.User) *Response {
 		return response
 	}
 
-	token, err := userAccount.loginUser(existingUser)
+	token, err := usecase.loginUser(existingUser)
 	if err != nil {
 		response.ErrorMessage = fmt.Sprintf("failed to login user [%v]: %s", existingUser, err)
 		return response
@@ -85,10 +81,10 @@ func (userAccount *UserAccount) Login(user *domain.User) *Response {
 }
 
 // Logout user
-func (userAccount *UserAccount) Logout(email string) *Response {
-	response := &Response{}
+func (usecase *AuthUsecase) Logout(email string) *AuthResponse {
+	response := &AuthResponse{}
 
-	if err := userAccount.Session.Destroy(email); err != nil {
+	if err := usecase.Session.Destroy(email); err != nil {
 		response.ErrorMessage = fmt.Sprintf("failed to destroy user session [%s]: %s", email, err)
 	}
 
@@ -98,13 +94,13 @@ func (userAccount *UserAccount) Logout(email string) *Response {
 }
 
 // ToBytes will marshal Response to []byte
-func (response *Response) ToBytes() []byte {
+func (response *AuthResponse) ToBytes() []byte {
 	return toBytes(response)
 }
 
 // loginUser is helper function to create user token and session
-func (userAccount *UserAccount) loginUser(user *domain.User) (string, error) {
-	if err := userAccount.Token.Generate(&jwt.Claims{
+func (usecase *AuthUsecase) loginUser(user *Account) (string, error) {
+	if err := usecase.Token.Generate(&jwt.Claims{
 		Expiration: time.Hour * 24,
 		Fields: map[string]interface{}{
 			"id":    user.ID,
@@ -114,9 +110,9 @@ func (userAccount *UserAccount) loginUser(user *domain.User) (string, error) {
 		return "", err
 	}
 
-	token := userAccount.Token.Content
+	token := usecase.Token.Content
 
-	if err := userAccount.Session.Create(user.Email, token); err != nil {
+	if err := usecase.Session.Create(user.Email, token); err != nil {
 		return "", err
 	}
 

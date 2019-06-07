@@ -42,7 +42,7 @@ func NewRouter(config *Config) *Router {
 
 	if config.Auth != nil {
 		config.Auth.applyRoutes(handler)
-		logrus.Infof("registered auth routes: register -> %v, login -> %v", config.Auth.RegisterPath, config.Auth.LoginPath)
+		logrus.Infof("registered auth routes: register -> %v, login -> %v, logout -> %v", config.Auth.RegisterPath, config.Auth.LoginPath, config.Auth.LogoutPath)
 	}
 
 	srv := &http.Server{
