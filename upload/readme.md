@@ -31,6 +31,7 @@ service := &upload.Service{
         FormFile:    "topicUpload",
         FileSize:    32 << 20, // 32MB
         // AllowExtensionExceptions: true,
+        AllowedExtensions:          []string{".jpg", ".png", ".exe"},
     },
 
     // required only if UseMiddleware

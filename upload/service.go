@@ -35,7 +35,7 @@ type Config struct {
 // Response for file uploads
 type Response struct {
 	Uploaded []*Uploaded `json:"uploaded"`
-	Failed   []string    `json:"failed"`
+	Failed   []*Failed   `json:"failed"`
 }
 
 // Initialize Service
@@ -78,7 +78,7 @@ func (service *Service) upload(w http.ResponseWriter, r *http.Request) {
 
 	response := &Response{
 		Uploaded: make([]*Uploaded, 0),
-		Failed:   make([]string, 0),
+		Failed:   make([]*Failed, 0),
 	}
 
 	for _, handler := range r.MultipartForm.File[service.Uploader.FormFile] {
@@ -90,8 +90,10 @@ func (service *Service) upload(w http.ResponseWriter, r *http.Request) {
 
 		fileBytes, err := ioutil.ReadAll(file)
 		if err != nil {
-			response.Failed = append(response.Failed, handler.Filename)
-			service.OnError(err, w)
+			response.Failed = append(response.Failed, &Failed{
+				File:    handler.Filename,
+				Message: "failed to read file bytes",
+			})
 
 			continue
 		}
@@ -100,8 +102,10 @@ func (service *Service) upload(w http.ResponseWriter, r *http.Request) {
 		file.Close()
 
 		if err != nil {
-			response.Failed = append(response.Failed, handler.Filename)
-			service.OnError(err, w)
+			response.Failed = append(response.Failed, &Failed{
+				File:    handler.Filename,
+				Message: err.Error(),
+			})
 
 			continue
 		}
