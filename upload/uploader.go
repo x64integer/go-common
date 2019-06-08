@@ -1,14 +1,14 @@
 package upload
 
 import (
+	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"mime"
 	"net/http"
 	"os"
 	"strings"
-
-	"github.com/sirupsen/logrus"
 )
 
 // Uploader is responsible to upload files
@@ -19,22 +19,15 @@ type Uploader struct {
 	FileSize    int64
 }
 
-// Uploaded after successful file upload
+// Uploaded contains uploaded file infomration
 type Uploaded struct {
 	File string `json:"file"`
 }
 
 // Upload file
 func (uploader *Uploader) Upload(fileReader io.Reader, fileName string) (*Uploaded, error) {
-	if _, err := os.Stat(uploader.Destination); os.IsNotExist(err) {
-		if err := os.MkdirAll(uploader.Destination, os.ModePerm); err != nil {
-			logrus.Errorf(
-				"failed to create upload destination directory [%v], consider creeating one manually",
-				uploader.Destination,
-			)
-
-			return nil, err
-		}
+	if err := createPathIfNotExists(uploader.Destination); err != nil {
+		return nil, err
 	}
 
 	fileBytes, err := ioutil.ReadAll(fileReader)
@@ -42,30 +35,55 @@ func (uploader *Uploader) Upload(fileReader io.Reader, fileName string) (*Upload
 		return nil, err
 	}
 
-	fileExtension, err := uploader.fileExtension(fileBytes)
+	fileExtension, err := fileExtension(fileBytes)
 
 	file := uploader.FilePrefix + "*-" + strings.TrimSuffix(fileName, fileExtension) + fileExtension
 
-	tempFile, err := ioutil.TempFile(uploader.Destination, file)
+	uploadedFile, err := uploader.writeFile(fileBytes, uploader.Destination, file)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Uploaded{
+		File: uploadedFile.Name(),
+	}, nil
+}
+
+// writeFile will create file in path and write content to the file
+func (uploader *Uploader) writeFile(content []byte, path string, fileName string) (*os.File, error) {
+	tempFile, err := ioutil.TempFile(path, fileName)
 	if err != nil {
 		return nil, err
 	}
 	defer tempFile.Close()
 
-	tempFile.Write(fileBytes)
+	tempFile.Write(content)
 
-	return &Uploaded{
-		File: tempFile.Name(),
-	}, nil
+	return tempFile, nil
+}
+
+// createPathIfNotExists is helper function to create directory + subdirectories if such path does not exist
+func createPathIfNotExists(path string) error {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		if err := os.MkdirAll(path, os.ModePerm); err != nil {
+			return fmt.Errorf("failed to create upload destination directory [%v], consider creeating one manually: %v", path, err)
+		}
+	}
+
+	return nil
 }
 
 // fileExtension returns .jpg, .png, etc...
-func (uploader *Uploader) fileExtension(fileBytes []byte) (string, error) {
+func fileExtension(fileBytes []byte) (string, error) {
 	fileType := http.DetectContentType(fileBytes)
 
 	fileEndings, err := mime.ExtensionsByType(fileType)
 	if err != nil {
 		return "", err
+	}
+
+	if len(fileEndings) < 1 {
+		return "", errors.New("failed to get file extension")
 	}
 
 	return fileEndings[0], nil
