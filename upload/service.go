@@ -19,10 +19,8 @@ type Service struct {
 	*api.Router
 	*jwt.Token
 	Cache cache.Service
-	*Uploader
-	OnError      func(error, http.ResponseWriter)
-	OnFinished   func(*Response, http.ResponseWriter, *http.Request)
-	OnPreExecute func(http.ResponseWriter, *http.Request) ([]byte, bool)
+
+	Endpoints []*Endpoint
 }
 
 // Config for router
@@ -39,34 +37,43 @@ type Response struct {
 	Failed   []*Failed   `json:"failed"`
 }
 
+// Endpoint is used for multiple endpoints on upload router
+type Endpoint struct {
+	URL           string
+	UseMiddleware bool
+	*Uploader
+	OnPreExecute func(http.ResponseWriter, *http.Request) ([]byte, bool)
+	OnFinished   func(*Response, http.ResponseWriter, *http.Request)
+}
+
 // Initialize Service
 func (service *Service) Initialize() {
-	if service.OnFinished == nil {
-		service.OnFinished = onFinished
-	}
-
-	if service.OnError == nil {
-		service.OnError = onError
-	}
-
-	if service.OnPreExecute == nil {
-		service.OnPreExecute = onPreExecute
-	}
-
 	r := api.NewRouter(&api.Config{
 		Host: service.Config.Host,
 		Port: service.Config.Port,
 	})
 
-	if service.Config.UseMiddleware {
-		r.Auth = &api.Auth{
-			Token:       service.Token,
-			CacheClient: service.Cache,
-		}
+	if len(service.Endpoints) > 0 {
+		for _, endpoint := range service.Endpoints {
+			if endpoint.OnPreExecute == nil {
+				endpoint.OnPreExecute = onPreExecute
+			}
 
-		r.Handle(service.Config.URL, r.Auth.Middleware(service.upload), "POST")
-	} else {
-		r.HandleFunc(service.Config.URL, service.upload, "POST")
+			if endpoint.OnFinished == nil {
+				endpoint.OnFinished = onFinished
+			}
+
+			if endpoint.UseMiddleware {
+				r.Auth = &api.Auth{
+					Token:       service.Token,
+					CacheClient: service.Cache,
+				}
+
+				r.Handle(endpoint.URL, r.Auth.Middleware(service.uploadFunc(endpoint.Uploader, endpoint.OnPreExecute, endpoint.OnFinished)), "POST")
+			} else {
+				r.HandleFunc(endpoint.URL, service.uploadFunc(endpoint.Uploader, endpoint.OnPreExecute, endpoint.OnFinished), "POST")
+			}
+		}
 	}
 
 	service.Router = r
@@ -78,57 +85,59 @@ func (service *Service) Listen() {
 }
 
 // upload API endpoint will handle file upload
-func (service *Service) upload(w http.ResponseWriter, r *http.Request) {
-	if b, ok := service.OnPreExecute(w, r); !ok {
-		w.Write(b)
-		return
-	}
+func (service *Service) uploadFunc(
+	uploader *Uploader,
+	onPreExecute func(http.ResponseWriter, *http.Request) ([]byte, bool),
+	onFinished func(*Response, http.ResponseWriter, *http.Request),
+) func(http.ResponseWriter, *http.Request) {
 
-	response := &Response{
-		Uploaded: make([]*Uploaded, 0),
-		Failed:   make([]*Failed, 0),
-	}
-
-	r.ParseMultipartForm(service.Uploader.FileSize)
-
-	for _, handler := range r.MultipartForm.File[service.Uploader.FormFile] {
-		file, err := handler.Open()
-		if err != nil {
-			logrus.Error("unexpected error while opening file: ", err)
-			continue
+	return func(w http.ResponseWriter, r *http.Request) {
+		if b, ok := onPreExecute(w, r); !ok {
+			w.Write(b)
+			return
 		}
 
-		fileBytes, err := ioutil.ReadAll(file)
-		if err != nil {
-			response.Failed = append(response.Failed, &Failed{
-				File:    handler.Filename,
-				Message: "failed to read file bytes",
-			})
-
-			continue
+		response := &Response{
+			Uploaded: make([]*Uploaded, 0),
+			Failed:   make([]*Failed, 0),
 		}
 
-		uploaded, err := service.Uploader.Upload(fileBytes, handler.Filename)
-		file.Close()
+		r.ParseMultipartForm(uploader.FileSize)
 
-		if err != nil {
-			response.Failed = append(response.Failed, &Failed{
-				File:    handler.Filename,
-				Message: err.Error(),
-			})
+		for _, handler := range r.MultipartForm.File[uploader.FormFile] {
+			file, err := handler.Open()
+			if err != nil {
+				logrus.Error("unexpected error while opening file: ", err)
+				continue
+			}
 
-			continue
+			fileBytes, err := ioutil.ReadAll(file)
+			if err != nil {
+				response.Failed = append(response.Failed, &Failed{
+					File:    handler.Filename,
+					Message: "failed to read file bytes",
+				})
+
+				continue
+			}
+
+			uploaded, err := uploader.Upload(fileBytes, handler.Filename)
+			file.Close()
+
+			if err != nil {
+				response.Failed = append(response.Failed, &Failed{
+					File:    handler.Filename,
+					Message: err.Error(),
+				})
+
+				continue
+			}
+
+			response.Uploaded = append(response.Uploaded, uploaded)
 		}
 
-		response.Uploaded = append(response.Uploaded, uploaded)
+		onFinished(response, w, r)
 	}
-
-	service.OnFinished(response, w, r)
-}
-
-// onError default callback
-func onError(err error, w http.ResponseWriter) {
-	logrus.Error("upload failed: ", err)
 }
 
 // onFinished default callback
