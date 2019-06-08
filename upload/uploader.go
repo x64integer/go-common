@@ -36,7 +36,7 @@ func (uploader *Uploader) Upload(fileBytes []byte, file string) (*Uploaded, erro
 	}
 
 	if fileExtension != "" {
-		// in case of AllowExtensionExceptions (executables and non-media types)
+		// media types only
 		file = trimExtension(file)
 	}
 
