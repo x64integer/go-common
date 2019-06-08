@@ -21,7 +21,7 @@ service := &upload.Service{
 
 topicUploadEndpoint := &upload.Endpoint{
     URL:           "/upload/topic",
-    UseMiddleware: true,
+    UseAuthMiddleware: true,
     Uploader: &upload.Uploader{
         Destination:       "./uploads/topic",
         FilePrefix:        "topic_",
@@ -64,7 +64,7 @@ topicUploadEndpoint := &upload.Endpoint{
 
 profileUploadEndpoint := &upload.Endpoint{
     URL:           "/upload/profile",
-    UseMiddleware: true,
+    UseAuthMiddleware: true,
     Uploader: &upload.Uploader{
         Destination:       "./uploads/profile",
         FilePrefix:        "profile_",

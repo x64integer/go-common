@@ -37,8 +37,8 @@ type Response struct {
 
 // Endpoint is used for multiple endpoints on upload router
 type Endpoint struct {
-	URL           string
-	UseMiddleware bool
+	URL               string
+	UseAuthMiddleware bool
 	*Uploader
 	OnPreExecute func(http.ResponseWriter, *http.Request) ([]byte, bool)
 	OnFinished   func(*Response, http.ResponseWriter, *http.Request)
@@ -61,7 +61,7 @@ func (service *Service) Initialize() {
 				endpoint.OnFinished = onFinished
 			}
 
-			if endpoint.UseMiddleware {
+			if endpoint.UseAuthMiddleware {
 				r.Auth = &api.Auth{
 					Token:       service.Token,
 					CacheClient: service.Cache,
