@@ -73,7 +73,7 @@ func (service *Service) Listen() {
 
 // upload API endpoint will handle file upload
 func (service *Service) upload(w http.ResponseWriter, r *http.Request) {
-	r.ParseMultipartForm(service.Uploader.FileSize)
+	r.ParseMultipartForm(service.Uploader.MaxFileSize)
 
 	response := &Response{
 		Uploaded: make([]*Uploaded, 0),

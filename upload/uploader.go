@@ -16,7 +16,7 @@ type Uploader struct {
 	Destination string
 	FilePrefix  string
 	FormFile    string
-	FileSize    int64
+	MaxFileSize int64
 }
 
 // Uploaded contains uploaded file infomration
