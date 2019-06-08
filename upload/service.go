@@ -106,7 +106,6 @@ func (service *Service) upload(w http.ResponseWriter, r *http.Request) {
 // onError default callback
 func onError(err error, w http.ResponseWriter) {
 	logrus.Error("upload failed: ", err)
-	w.Write([]byte("upload failed"))
 }
 
 // onFinished default callback
