@@ -35,7 +35,12 @@ func (uploader *Uploader) Upload(fileBytes []byte, file string) (*Uploaded, erro
 		return nil, err
 	}
 
-	fileName := uploader.FilePrefix + "*-" + strings.TrimSuffix(file, fileExtension) + fileExtension
+	if fileExtension != "" {
+		// in case of AllowExtensionExceptions (executables and non-media types)
+		file = trimExtension(file)
+	}
+
+	fileName := uploader.FilePrefix + "*-" + file + fileExtension
 
 	uploadedFile, err := uploader.writeFile(fileBytes, uploader.Destination, fileName)
 	if err != nil {
@@ -89,4 +94,12 @@ func createPathIfNotExists(path string) error {
 	}
 
 	return nil
+}
+
+func trimExtension(file string) string {
+	_file := strings.Split(file, ".")
+
+	_file = _file[:len(_file)-1]
+
+	return strings.Join(_file, "")
 }
