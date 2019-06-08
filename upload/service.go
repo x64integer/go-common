@@ -2,6 +2,7 @@ package upload
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/sirupsen/logrus"
@@ -87,7 +88,15 @@ func (service *Service) upload(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		uploaded, err := service.Uploader.Upload(file, handler.Filename)
+		fileBytes, err := ioutil.ReadAll(file)
+		if err != nil {
+			response.Failed = append(response.Failed, handler.Filename)
+			service.OnError(err, w)
+
+			continue
+		}
+
+		uploaded, err := service.Uploader.Upload(fileBytes, handler.Filename)
 		file.Close()
 
 		if err != nil {

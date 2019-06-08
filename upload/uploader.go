@@ -3,7 +3,6 @@ package upload
 import (
 	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"mime"
 	"net/http"
@@ -26,13 +25,8 @@ type Uploaded struct {
 }
 
 // Upload file
-func (uploader *Uploader) Upload(fileReader io.Reader, fileName string) (*Uploaded, error) {
+func (uploader *Uploader) Upload(fileBytes []byte, file string) (*Uploaded, error) {
 	if err := createPathIfNotExists(uploader.Destination); err != nil {
-		return nil, err
-	}
-
-	fileBytes, err := ioutil.ReadAll(fileReader)
-	if err != nil {
 		return nil, err
 	}
 
@@ -41,9 +35,9 @@ func (uploader *Uploader) Upload(fileReader io.Reader, fileName string) (*Upload
 		return nil, err
 	}
 
-	file := uploader.FilePrefix + "*-" + strings.TrimSuffix(fileName, fileExtension) + fileExtension
+	fileName := uploader.FilePrefix + "*-" + strings.TrimSuffix(file, fileExtension) + fileExtension
 
-	uploadedFile, err := uploader.writeFile(fileBytes, uploader.Destination, file)
+	uploadedFile, err := uploader.writeFile(fileBytes, uploader.Destination, fileName)
 	if err != nil {
 		return nil, err
 	}
@@ -66,17 +60,6 @@ func (uploader *Uploader) writeFile(content []byte, path string, fileName string
 	return tempFile, nil
 }
 
-// createPathIfNotExists is helper function to create directory + subdirectories if such path does not exist
-func createPathIfNotExists(path string) error {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		if err := os.MkdirAll(path, os.ModePerm); err != nil {
-			return fmt.Errorf("failed to create upload destination directory [%v], consider creeating one manually: %v", path, err)
-		}
-	}
-
-	return nil
-}
-
 // fileExtension returns .jpg, .png, etc...
 func (uploader *Uploader) fileExtension(fileBytes []byte) (string, error) {
 	fileType := http.DetectContentType(fileBytes)
@@ -95,4 +78,15 @@ func (uploader *Uploader) fileExtension(fileBytes []byte) (string, error) {
 	}
 
 	return "", errors.New("invalid or failed to get file extension")
+}
+
+// createPathIfNotExists is helper function to create directory + subdirectories if such path does not exist
+func createPathIfNotExists(path string) error {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		if err := os.MkdirAll(path, os.ModePerm); err != nil {
+			return fmt.Errorf("failed to create upload destination directory [%v], consider creeating one manually: %v", path, err)
+		}
+	}
+
+	return nil
 }
