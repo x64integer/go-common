@@ -19,7 +19,7 @@ service := &upload.Service{
     Cache: st.Cache,
 }
 
-topicUploader := &upload.Endpoint{
+topicUploadEndpoint := &upload.Endpoint{
     URL:           "/upload/topic",
     UseMiddleware: true,
     Uploader: &upload.Uploader{
@@ -62,7 +62,7 @@ topicUploader := &upload.Endpoint{
     },
 }
 
-profileUploader := &upload.Endpoint{
+profileUploadEndpoint := &upload.Endpoint{
     URL:           "/upload/profile",
     UseMiddleware: true,
     Uploader: &upload.Uploader{
@@ -74,7 +74,7 @@ profileUploader := &upload.Endpoint{
     },
 }
 
-service.Endpoints = append(service.Endpoints, topicUploader, profileUploader)
+service.Endpoints = append(service.Endpoints, topicUploadEndpoint, profileUploadEndpoint)
 
 service.Initialize()
 
