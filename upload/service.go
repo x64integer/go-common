@@ -25,10 +25,8 @@ type Service struct {
 
 // Config for router
 type Config struct {
-	Host          string
-	Port          string
-	URL           string
-	UseMiddleware bool
+	Host string
+	Port string
 }
 
 // Response for file uploads
