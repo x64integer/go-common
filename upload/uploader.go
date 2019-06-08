@@ -13,10 +13,11 @@ import (
 
 // Uploader is responsible to upload files
 type Uploader struct {
-	Destination string
-	FilePrefix  string
-	FormFile    string
-	MaxFileSize int64
+	Destination              string
+	FilePrefix               string
+	FormFile                 string
+	FileSize                 int64
+	AllowExtensionExceptions bool
 }
 
 // Uploaded contains uploaded file infomration
@@ -35,7 +36,10 @@ func (uploader *Uploader) Upload(fileReader io.Reader, fileName string) (*Upload
 		return nil, err
 	}
 
-	fileExtension, err := fileExtension(fileBytes)
+	fileExtension, err := uploader.fileExtension(fileBytes)
+	if err != nil {
+		return nil, err
+	}
 
 	file := uploader.FilePrefix + "*-" + strings.TrimSuffix(fileName, fileExtension) + fileExtension
 
@@ -74,7 +78,7 @@ func createPathIfNotExists(path string) error {
 }
 
 // fileExtension returns .jpg, .png, etc...
-func fileExtension(fileBytes []byte) (string, error) {
+func (uploader *Uploader) fileExtension(fileBytes []byte) (string, error) {
 	fileType := http.DetectContentType(fileBytes)
 
 	fileEndings, err := mime.ExtensionsByType(fileType)
@@ -82,9 +86,13 @@ func fileExtension(fileBytes []byte) (string, error) {
 		return "", err
 	}
 
-	if len(fileEndings) < 1 {
-		return "", errors.New("failed to get file extension")
+	if len(fileEndings) > 0 {
+		return fileEndings[0], nil
 	}
 
-	return fileEndings[0], nil
+	if uploader.AllowExtensionExceptions && len(fileEndings) < 1 {
+		return "", nil
+	}
+
+	return "", errors.New("invalid or failed to get file extension")
 }

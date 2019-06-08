@@ -19,8 +19,8 @@ type Service struct {
 	*jwt.Token
 	Cache cache.Service
 	*Uploader
-	OnError   func(error, http.ResponseWriter)
-	OnSuccess func(*Response, http.ResponseWriter)
+	OnError    func(error, http.ResponseWriter)
+	OnFinished func(*Response, http.ResponseWriter)
 }
 
 // Config for router
@@ -39,8 +39,8 @@ type Response struct {
 
 // Initialize Service
 func (service *Service) Initialize() {
-	if service.OnSuccess == nil {
-		service.OnSuccess = onSuccess
+	if service.OnFinished == nil {
+		service.OnFinished = onFinished
 	}
 
 	if service.OnError == nil {
@@ -73,7 +73,7 @@ func (service *Service) Listen() {
 
 // upload API endpoint will handle file upload
 func (service *Service) upload(w http.ResponseWriter, r *http.Request) {
-	r.ParseMultipartForm(service.Uploader.MaxFileSize)
+	r.ParseMultipartForm(service.Uploader.FileSize)
 
 	response := &Response{
 		Uploaded: make([]*Uploaded, 0),
@@ -100,7 +100,7 @@ func (service *Service) upload(w http.ResponseWriter, r *http.Request) {
 		response.Uploaded = append(response.Uploaded, uploaded)
 	}
 
-	service.OnSuccess(response, w)
+	service.OnFinished(response, w)
 }
 
 // onError default callback
@@ -109,8 +109,8 @@ func onError(err error, w http.ResponseWriter) {
 	w.Write([]byte("upload failed"))
 }
 
-// onSuccess default callback
-func onSuccess(response *Response, w http.ResponseWriter) {
+// onFinished default callback
+func onFinished(response *Response, w http.ResponseWriter) {
 	b, err := json.Marshal(response)
 	if err != nil {
 		logrus.Error("upload failed: ", err)

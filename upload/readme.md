@@ -15,11 +15,22 @@ service := &upload.Service{
         // UseMiddleware: true,
     },
 
+    // OnFinished: func(response *upload.Response, w http.ResponseWriter) {
+    // 	b, err := json.Marshal(response.Uploaded)
+    // 	if err != nil {
+    // 		logrus.Error("failed to marshal response.Uploaded: ", err)
+    // 		return
+    // 	}
+
+    // 	w.Write(b)
+    // },
+
     Uploader: &upload.Uploader{
         Destination: "./uploads/topics",
         FilePrefix:  "topic_", // optional
         FormFile:    "topicUpload",
         FileSize:    32 << 20, // 32MB
+        // AllowExtensionExceptions: true,
     },
 
     // required only if UseMiddleware
