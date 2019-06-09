@@ -15,6 +15,11 @@ type PasswordResetResponse struct {
 	Token        string `json:"token"`
 }
 
+// PasswordUpdateResponse for password reset
+type PasswordUpdateResponse struct {
+	ErrorMessage string `json:"error_message"`
+}
+
 // CreateResetToken for password reset usecase
 func (usecase *PasswordResetUsecase) CreateResetToken(email string) *PasswordResetResponse {
 	response := &PasswordResetResponse{}
@@ -30,7 +35,26 @@ func (usecase *PasswordResetUsecase) CreateResetToken(email string) *PasswordRes
 	return response
 }
 
+// UpdatePassword usecase
+func (usecase *PasswordResetUsecase) UpdatePassword(passwordReset *PasswordReset) *PasswordUpdateResponse {
+	response := &PasswordUpdateResponse{}
+
+	// TODO: get email from password_reset based on given token, delete doken, update password
+
+	if err := usecase.Repository.UpdatePassword(passwordReset.Email, passwordReset.Password); err != nil {
+		response.ErrorMessage = fmt.Sprintf("update password failed [%s]: %s", passwordReset.Email, err)
+		return response
+	}
+
+	return response
+}
+
 // ToBytes will marshal Response to []byte
 func (response *PasswordResetResponse) ToBytes() []byte {
+	return toBytes(response)
+}
+
+// ToBytes will marshal Response to []byte
+func (response *PasswordUpdateResponse) ToBytes() []byte {
 	return toBytes(response)
 }

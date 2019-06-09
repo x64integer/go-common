@@ -30,15 +30,26 @@ type Auth struct {
 	*jwt.Token
 	CacheClient cache.Service
 
+	// confirm email on registration
+	RequireConfirmation bool
+
 	// optional, required for /register, /login, /logout routes
 	UserAccountRepository user.Repository
-	// optional, required for /password/reset route
+	// optional, required for /password/reset, /password/reset/{token}, /password/update routes
 	PasswordResetRepository user.PasswordResetRepository
 
 	// optional
-	RegisterPath string
-	LoginPath    string
-	LogoutPath   string
+	RegisterPath            string
+	LoginPath               string
+	LogoutPath              string
+	ConfirmRegistrationPath string
+
+	// optional
+	PasswordResetRequestPath string
+	PasswordResetFormPath    string
+	PasswordResetPath        string
+	// callback to run from password reset request (click on password reset generated link)
+	PasswordResetCallback func(http.ResponseWriter, *http.Request)
 
 	// optional
 	MiddlewareFunc func(http.HandlerFunc) http.Handler
@@ -63,7 +74,7 @@ func (auth *Auth) apply(handler Handler) {
 		logrus.Fatal("either auth.Token or auth.CacheClient (or both) is not provided")
 	}
 
-	auth.applyDefaults()
+	auth.defaults()
 
 	if auth.UserAccountRepository != nil {
 		handler.HandleFunc(auth.RegisterPath, func(w http.ResponseWriter, r *http.Request) {
@@ -78,11 +89,40 @@ func (auth *Auth) apply(handler Handler) {
 			auth.logout(w, r)
 		}), "GET")
 
-		logrus.Infof("registered auth routes: register -> %v, login -> %v, logout -> %v", auth.RegisterPath, auth.LoginPath, auth.LogoutPath)
+		if auth.RequireConfirmation {
+			handler.HandleFunc(auth.ConfirmRegistrationPath, func(w http.ResponseWriter, r *http.Request) {
+				auth.confirmRegistration(w, r)
+			}, "GET")
+		}
+
+		logrus.Infof(
+			"registered auth routes: register -> %v, login -> %v, logout -> %v, account confirmation -> %v",
+			auth.RegisterPath,
+			auth.LoginPath,
+			auth.LogoutPath,
+			auth.ConfirmRegistrationPath,
+		)
 	}
 
 	if auth.PasswordResetRepository != nil {
-		// TODO: create password reset routes
+		handler.HandleFunc(auth.PasswordResetRequestPath, func(w http.ResponseWriter, r *http.Request) {
+			auth.createResetToken(w, r)
+		}, "POST")
+
+		handler.HandleFunc(auth.PasswordResetFormPath, func(w http.ResponseWriter, r *http.Request) {
+			auth.passwordResetForm(w, r)
+		}, "GET")
+
+		handler.HandleFunc(auth.PasswordResetPath, func(w http.ResponseWriter, r *http.Request) {
+			auth.updatePassword(w, r)
+		}, "POST")
+
+		logrus.Infof(
+			"registered password reset routes: token request -> %v, reset form -> %v, update password -> %v",
+			auth.PasswordResetRequestPath,
+			auth.PasswordResetFormPath,
+			auth.PasswordResetPath,
+		)
 	}
 }
 
@@ -194,6 +234,11 @@ func (auth *Auth) logout(w http.ResponseWriter, r *http.Request) {
 	auth.OnSuccess(response.ToBytes(), w)
 }
 
+// confirmRegistration API endpoint will confirm user account registration
+func (auth *Auth) confirmRegistration(w http.ResponseWriter, r *http.Request) {
+
+}
+
 // createResetToken API endpoint will create password reset token
 func (auth *Auth) createResetToken(w http.ResponseWriter, r *http.Request) {
 	passwordReset := &user.PasswordReset{}
@@ -212,6 +257,29 @@ func (auth *Auth) createResetToken(w http.ResponseWriter, r *http.Request) {
 	w.Write(response.ToBytes())
 }
 
+// passwordResetForm API endpoint will show password reset form
+func (auth *Auth) passwordResetForm(w http.ResponseWriter, r *http.Request) {
+	auth.PasswordResetCallback(w, r)
+}
+
+// updatePassword API endpoint will update password
+func (auth *Auth) updatePassword(w http.ResponseWriter, r *http.Request) {
+	passwordReset := &user.PasswordReset{}
+
+	if err := passwordReset.DecodeFromReader(r.Body); err != nil {
+		w.Write([]byte(err.Error()))
+		return
+	}
+
+	passwordResetUsecase := &user.PasswordResetUsecase{
+		Repository: auth.PasswordResetRepository,
+	}
+
+	response := passwordResetUsecase.UpdatePassword(passwordReset)
+
+	w.Write(response.ToBytes())
+}
+
 // onError default callback
 func onError(err error, w http.ResponseWriter) {
 	log.Println(err)
@@ -222,8 +290,8 @@ func onSuccess(payload []byte, w http.ResponseWriter) {
 	w.Write(payload)
 }
 
-// applyDefaults is helper function to apply default values
-func (auth *Auth) applyDefaults() {
+// defaults is helper function to apply default values
+func (auth *Auth) defaults() {
 	if auth.OnError == nil {
 		auth.OnError = onError
 	}
@@ -246,6 +314,22 @@ func (auth *Auth) applyDefaults() {
 
 	if strings.TrimSpace(auth.LogoutPath) == "" {
 		auth.LogoutPath = "/logout"
+	}
+
+	if strings.TrimSpace(auth.ConfirmRegistrationPath) == "" {
+		auth.ConfirmRegistrationPath = "/account/confirm/{token}"
+	}
+
+	if strings.TrimSpace(auth.PasswordResetRequestPath) == "" {
+		auth.PasswordResetRequestPath = "/password/reset"
+	}
+
+	if strings.TrimSpace(auth.PasswordResetFormPath) == "" {
+		auth.PasswordResetFormPath = "/password/reset/{token}"
+	}
+
+	if strings.TrimSpace(auth.PasswordResetPath) == "" {
+		auth.PasswordResetPath = "/password/update"
 	}
 }
 
