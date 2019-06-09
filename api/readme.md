@@ -1,5 +1,5 @@
 ### Usage
-> NOTE: Middlewares and Auth in progress
+> NOTE: Auth in progress still
 
 * **Initialize router**
 ```
@@ -19,9 +19,7 @@ r := api.NewRouter(&api.Config{
             Secret: []byte(util.Env("JWT_SECRET_KEY", "some-random-string-123")),
         },
         CacheClient:        st.Cache,
-        UserAccountRepository: &my.UserAccountRepositoryImpl{
-            SQL: st.SQL,
-        },
+        UserAccountRepository: &my.UserAccountRepositoryImpl{},
     },
 })
 
