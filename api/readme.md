@@ -13,10 +13,7 @@ gateway := &Gateway{
         Secret: []byte(util.Env("JWT_SECRET_KEY", "some-random-string-123")),
     },
     Storage: st,
-    UserAccountRepo: &my.UserAccountRepositoryImpl{
-        SQL: st.SQL,
-    },
-    PasswordResetRepo: &my.PasswordResetRepositoryImpl{
+    UserAccountRepository: &my.UserAccountRepositoryImpl{
         SQL: st.SQL,
     },
 }
@@ -30,7 +27,7 @@ r := api.NewRouter(&api.Config{
     Auth: &api.Auth{
         Token:              gateway.Token,
         CacheClient:        gateway.Storage.Cache,
-        RepositoryProvider: gateway,
+        UserAccountRepository: gateway.UserAccountRepository,
     },
 })
 
@@ -43,27 +40,6 @@ r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 * **Start http server**
 ```
 r.Listen()
-```
-
-* **RepositoryProvider impl**
-```
-// Gateway is usually wrapper for api.Router and implements api.auth.RepositoryProvider
-type Gateway struct {
-    *jwt.Token
-    Storage *storage.Container
-    UserAccountRepo   *my.UserAccountRepositoryImpl
-    PasswordResetRepo *my.PasswordResetRepositoryImpl
-}
-
-// UserAccountRepository implements api.auth.RepositoryProvider.UserAccountRepository
-func (gateway *Gateway) UserAccountRepository() user.Repository {
-	return gateway.UserAccountRepo
-}
-
-// PasswordResetRepository implements api.auth.RepositoryProvider.PasswordResetRepository
-func (gateway *Gateway) PasswordResetRepository() user.PasswordResetRepository {
-	return gateway.PasswordResetRepo
-}
 ```
 
 Example: https://github.com/semirm-dev/spotted-gateway/blob/master/api/gateway.go

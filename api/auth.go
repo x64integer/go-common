@@ -24,21 +24,16 @@ import (
 // It might change in the future, if such need arises
 type Authenticatable interface{}
 
-// RepositoryProvider provides required repositories for authentication service
-// If provided, auth routes will be applied to route handler
-type RepositoryProvider interface {
-	UserAccountRepository() user.Repository
-	PasswordResetRepository() user.PasswordResetRepository
-}
-
 // Auth configuration
 type Auth struct {
 	// required
 	*jwt.Token
 	CacheClient cache.Service
 
-	// optional
-	RepositoryProvider
+	// optional, required for /register, /login, /logout routes
+	UserAccountRepository user.Repository
+	// optional, required for /password/reset route
+	PasswordResetRepository user.PasswordResetRepository
 
 	// optional
 	RegisterPath string
@@ -68,25 +63,27 @@ func (auth *Auth) apply(handler Handler) {
 		logrus.Fatal("either auth.Token or auth.CacheClient (or both) is not provided")
 	}
 
-	if auth.RepositoryProvider == nil {
-		return
-	}
-
 	auth.applyDefaults()
 
-	handler.HandleFunc(auth.RegisterPath, func(w http.ResponseWriter, r *http.Request) {
-		auth.register(w, r)
-	}, "POST")
+	if auth.UserAccountRepository != nil {
+		handler.HandleFunc(auth.RegisterPath, func(w http.ResponseWriter, r *http.Request) {
+			auth.register(w, r)
+		}, "POST")
 
-	handler.HandleFunc(auth.LoginPath, func(w http.ResponseWriter, r *http.Request) {
-		auth.login(w, r)
-	}, "POST")
+		handler.HandleFunc(auth.LoginPath, func(w http.ResponseWriter, r *http.Request) {
+			auth.login(w, r)
+		}, "POST")
 
-	handler.Handle(auth.LogoutPath, auth.MiddlewareFunc(func(w http.ResponseWriter, r *http.Request) {
-		auth.logout(w, r)
-	}), "GET")
+		handler.Handle(auth.LogoutPath, auth.MiddlewareFunc(func(w http.ResponseWriter, r *http.Request) {
+			auth.logout(w, r)
+		}), "GET")
 
-	logrus.Infof("registered auth routes: register -> %v, login -> %v, logout -> %v", auth.RegisterPath, auth.LoginPath, auth.LogoutPath)
+		logrus.Infof("registered auth routes: register -> %v, login -> %v, logout -> %v", auth.RegisterPath, auth.LoginPath, auth.LogoutPath)
+	}
+
+	if auth.PasswordResetRepository != nil {
+		// TODO: create password reset routes
+	}
 }
 
 // Middleware will authenticate request
@@ -143,7 +140,7 @@ func (auth *Auth) register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	authUsecase := &user.AuthUsecase{
-		Repository: auth.UserAccountRepository(),
+		Repository: auth.UserAccountRepository,
 		Token:      auth.Token,
 		Session: &user.Session{
 			Cache: auth.CacheClient,
@@ -165,7 +162,7 @@ func (auth *Auth) login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	authUsecase := &user.AuthUsecase{
-		Repository: auth.UserAccountRepository(),
+		Repository: auth.UserAccountRepository,
 		Token:      auth.Token,
 		Session: &user.Session{
 			Cache: auth.CacheClient,
@@ -207,7 +204,7 @@ func (auth *Auth) createResetToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	passwordResetUsecase := &user.PasswordResetUsecase{
-		Repository: auth.PasswordResetRepository(),
+		Repository: auth.PasswordResetRepository,
 	}
 
 	response := passwordResetUsecase.CreateResetToken(passwordReset.Email)
