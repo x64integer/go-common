@@ -80,30 +80,20 @@ func (auth *Auth) apply(handler Handler) {
 	auth.defaults()
 
 	if auth.UserAccountRepository != nil {
-		handler.HandleFunc(auth.RegisterPath, func(w http.ResponseWriter, r *http.Request) {
-			auth.register(w, r)
-		}, "POST")
-
-		handler.HandleFunc(auth.LoginPath, func(w http.ResponseWriter, r *http.Request) {
-			auth.login(w, r)
-		}, "POST")
-
-		handler.Handle(auth.LogoutPath, auth.MiddlewareFunc(func(w http.ResponseWriter, r *http.Request) {
-			auth.logout(w, r)
-		}), "GET")
+		handler.HandleFunc(auth.RegisterPath, auth.register, "POST")
+		handler.HandleFunc(auth.LoginPath, auth.login, "POST")
+		handler.Handle(auth.LogoutPath, auth.MiddlewareFunc(auth.logout), "GET")
 
 		if auth.RequireConfirmation {
 			auth.mailer = &mail.Client{
 				Sender: mail.DefaultSMTP(),
 			}
 
-			handler.HandleFunc(auth.ConfirmRegistrationPath, func(w http.ResponseWriter, r *http.Request) {
-				auth.confirmRegistration(w, r)
-			}, "GET")
+			handler.HandleFunc(auth.ConfirmRegistrationPath, auth.confirmRegistration, "GET")
 		}
 
 		logrus.Infof(
-			"registered auth routes: register -> %v, login -> %v, logout -> %v, account confirmation -> %v",
+			"auth routes: register -> %v, login -> %v, logout -> %v, account confirmation -> %v",
 			auth.RegisterPath,
 			auth.LoginPath,
 			auth.LogoutPath,
@@ -112,20 +102,12 @@ func (auth *Auth) apply(handler Handler) {
 	}
 
 	if auth.PasswordResetRepository != nil {
-		handler.HandleFunc(auth.PasswordResetRequestPath, func(w http.ResponseWriter, r *http.Request) {
-			auth.createResetToken(w, r)
-		}, "POST")
-
-		handler.HandleFunc(auth.PasswordResetFormPath, func(w http.ResponseWriter, r *http.Request) {
-			auth.passwordResetForm(w, r)
-		}, "GET")
-
-		handler.HandleFunc(auth.PasswordResetPath, func(w http.ResponseWriter, r *http.Request) {
-			auth.updatePassword(w, r)
-		}, "POST")
+		handler.HandleFunc(auth.PasswordResetRequestPath, auth.createResetToken, "POST")
+		handler.HandleFunc(auth.PasswordResetFormPath, auth.passwordResetForm, "GET")
+		handler.HandleFunc(auth.PasswordResetPath, auth.updatePassword, "POST")
 
 		logrus.Infof(
-			"registered password reset routes: token request -> %v, reset form -> %v, update password -> %v",
+			"password reset routes: token request -> %v, reset form -> %v, update password -> %v",
 			auth.PasswordResetRequestPath,
 			auth.PasswordResetFormPath,
 			auth.PasswordResetPath,
