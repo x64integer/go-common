@@ -3,8 +3,8 @@
 
 * **Initialize router**
 ```
-// setup storage clients
-st := storage.DefaultContainer(storage.SQLClient | storage.CacheClient)
+// setup storage cache client, needed for Auth
+st := storage.DefaultContainer(storage.CacheClient)
 
 st.Connect()
 
