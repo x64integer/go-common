@@ -8,16 +8,6 @@ st := storage.DefaultContainer(storage.SQLClient | storage.CacheClient)
 
 st.Connect()
 
-gateway := &Gateway{
-    Token: &jwt.Token{
-        Secret: []byte(util.Env("JWT_SECRET_KEY", "some-random-string-123")),
-    },
-    Storage: st,
-    UserAccountRepository: &my.UserAccountRepositoryImpl{
-        SQL: st.SQL,
-    },
-}
-
 // create router
 r := api.NewRouter(&api.Config{
     Host:        "localhost",
@@ -25,9 +15,13 @@ r := api.NewRouter(&api.Config{
     
     // optionally, setup authentication
     Auth: &api.Auth{
-        Token:              gateway.Token,
-        CacheClient:        gateway.Storage.Cache,
-        UserAccountRepository: gateway.UserAccountRepository,
+        Token: &jwt.Token{
+            Secret: []byte(util.Env("JWT_SECRET_KEY", "some-random-string-123")),
+        },
+        CacheClient:        st.Cache,
+        UserAccountRepository: &my.UserAccountRepositoryImpl{
+            SQL: st.SQL,
+        },
     },
 })
 
