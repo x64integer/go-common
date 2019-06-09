@@ -14,6 +14,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/semirm-dev/go-common/api/user"
+	"github.com/semirm-dev/go-common/mail"
 	"github.com/semirm-dev/go-common/storage/cache"
 
 	"github.com/semirm-dev/go-common/jwt"
@@ -33,9 +34,9 @@ type Auth struct {
 	// confirm email on registration
 	RequireConfirmation bool
 
-	// optional, required for /register, /login, /logout routes
+	// optional, for /register, /login, /logout routes
 	UserAccountRepository user.Repository
-	// optional, required for /password/reset, /password/reset/{token}, /password/update routes
+	// optional, for /password/reset, /password/reset/{token}, /password/update routes
 	PasswordResetRepository user.PasswordResetRepository
 
 	// optional
@@ -58,6 +59,8 @@ type Auth struct {
 
 	// TODO: Implement customizable Auth entity
 	Entity Authenticatable
+
+	mailer *mail.Client
 }
 
 // entityField is helper struct to hold information/data from extracted auth Entity (Authenticatable)
@@ -90,6 +93,10 @@ func (auth *Auth) apply(handler Handler) {
 		}), "GET")
 
 		if auth.RequireConfirmation {
+			auth.mailer = &mail.Client{
+				Sender: mail.DefaultSMTP(),
+			}
+
 			handler.HandleFunc(auth.ConfirmRegistrationPath, func(w http.ResponseWriter, r *http.Request) {
 				auth.confirmRegistration(w, r)
 			}, "GET")
@@ -180,11 +187,13 @@ func (auth *Auth) register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	authUsecase := &user.AuthUsecase{
-		Repository: auth.UserAccountRepository,
-		Token:      auth.Token,
+		RequireConfirmation: auth.RequireConfirmation,
+		Repository:          auth.UserAccountRepository,
+		Token:               auth.Token,
 		Session: &user.Session{
 			Cache: auth.CacheClient,
 		},
+		Mailer: auth.mailer,
 	}
 
 	response := authUsecase.Register(account)
@@ -236,7 +245,24 @@ func (auth *Auth) logout(w http.ResponseWriter, r *http.Request) {
 
 // confirmRegistration API endpoint will confirm user account registration
 func (auth *Auth) confirmRegistration(w http.ResponseWriter, r *http.Request) {
+	account := &user.Account{}
 
+	if err := account.DecodeFromReader(r.Body); err != nil {
+		w.Write([]byte(err.Error()))
+		return
+	}
+
+	authUsecase := &user.AuthUsecase{
+		Repository: auth.UserAccountRepository,
+		Token:      auth.Token,
+		Session: &user.Session{
+			Cache: auth.CacheClient,
+		},
+	}
+
+	response := authUsecase.ConfirmRegistration(account)
+
+	auth.OnSuccess(response.ToBytes(), w)
 }
 
 // createResetToken API endpoint will create password reset token

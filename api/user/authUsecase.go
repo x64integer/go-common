@@ -2,17 +2,21 @@ package user
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/semirm-dev/go-common/jwt"
+	"github.com/semirm-dev/go-common/mail"
 	"github.com/semirm-dev/go-common/password"
 )
 
 // AuthUsecase will handle user authentication
 type AuthUsecase struct {
+	RequireConfirmation bool
 	Repository
 	*jwt.Token
 	*Session
+	Mailer *mail.Client
 }
 
 // AuthResponse for authentication
@@ -35,20 +39,47 @@ func (usecase *AuthUsecase) Register(user *Account) *AuthResponse {
 
 	user.Password = hashedPassword
 
+	if !usecase.RequireConfirmation {
+		user.Status = Activated
+	}
+
+	if strings.TrimSpace(user.Email) == "" {
+		response.ErrorMessage = "email is required"
+		return response
+	}
+
+	if strings.TrimSpace(user.Username) == "" {
+		user.Username = user.Email
+	}
+
 	if err := usecase.Repository.Store(user); err != nil {
 		response.ErrorMessage = fmt.Sprintf("failed to store new user account [%v]: %s", user, err)
 		return response
 	}
 
-	token, err := usecase.loginUser(user)
-	if err != nil {
-		response.ErrorMessage = fmt.Sprintf("failed to login user [%v]: %s", user, err)
-		return response
-	}
-
 	response.ID = user.ID
 	response.Email = user.Email
-	response.Token = token
+
+	if usecase.RequireConfirmation {
+		content := &mail.Content{
+			To:      []string{user.Email},
+			Subject: "Confirm registration",
+			Body:    []byte("Please confirm email by clicking on the link: <token>"),
+		}
+
+		if err := usecase.Mailer.Send(content); err != nil {
+			response.ErrorMessage = fmt.Sprintf("failed to send email confirmation [%v]: %s", user, err)
+			return response
+		}
+	} else {
+		token, err := usecase.loginUser(user)
+		if err != nil {
+			response.ErrorMessage = fmt.Sprintf("failed to login user [%v]: %s", user, err)
+			return response
+		}
+
+		response.Token = token
+	}
 
 	return response
 }
@@ -66,6 +97,11 @@ func (usecase *AuthUsecase) Login(user *Account) *AuthResponse {
 
 	if existingUser == nil || !password.Valid(existingUser.Password, user.Password) {
 		response.ErrorMessage = fmt.Sprint("invalid credentials")
+		return response
+	}
+
+	if existingUser.Status != Activated {
+		response.ErrorMessage = fmt.Sprint("account not activated")
 		return response
 	}
 
@@ -89,6 +125,26 @@ func (usecase *AuthUsecase) Logout(email string) *AuthResponse {
 	}
 
 	response.Email = email
+
+	return response
+}
+
+// ConfirmRegistration for user account
+func (usecase *AuthUsecase) ConfirmRegistration(user *Account) *AuthResponse {
+	response := &AuthResponse{}
+
+	if err := usecase.Repository.Activate(user.ActivationToken); err != nil {
+		response.ErrorMessage = fmt.Sprintf("failed to activate user [%v]: %s", user, err)
+		return response
+	}
+
+	token, err := usecase.loginUser(user)
+	if err != nil {
+		response.ErrorMessage = fmt.Sprintf("failed to login user [%v]: %s", user, err)
+		return response
+	}
+
+	response.Token = token
 
 	return response
 }
