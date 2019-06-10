@@ -31,13 +31,15 @@ type AuthResponse struct {
 func (usecase *AuthUsecase) Register(user *Account) *AuthResponse {
 	response := &AuthResponse{}
 
-	hashedPassword, err := password.Hash(user.Password)
-	if err != nil {
+	argon := password.NewArgon2()
+	argon.Plain = user.Password
+
+	if err := argon.Hash(); err != nil {
 		response.ErrorMessage = fmt.Sprint("failed to hash password: ", err)
 		return response
 	}
 
-	user.Password = hashedPassword
+	user.Password = argon.Hashed
 
 	if !usecase.RequireConfirmation {
 		user.Status = Activated
@@ -95,7 +97,11 @@ func (usecase *AuthUsecase) Login(user *Account) *AuthResponse {
 		return response
 	}
 
-	if existingUser == nil || !password.Valid(existingUser.Password, user.Password) {
+	argon := password.NewArgon2()
+	argon.Plain = user.Password
+	argon.Hashed = existingUser.Password
+
+	if existingUser == nil || !argon.Validate() {
 		response.ErrorMessage = fmt.Sprint("invalid credentials")
 		return response
 	}

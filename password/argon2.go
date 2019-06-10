@@ -63,7 +63,7 @@ func (argon *Argon2) Validate() bool {
 		return false
 	}
 
-	dk := argon2.IDKey([]byte(argon.Plain), argon.Salt, argon.Time, argon.Memory, argon.Threads, argon.KeyLen)
+	dk := argon2.IDKey([]byte(argon.Plain), existing.Salt, existing.Time, existing.Memory, existing.Threads, existing.KeyLen)
 
 	if subtle.ConstantTimeCompare(existing.DK, dk) == 1 {
 		return true
