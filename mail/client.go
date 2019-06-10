@@ -7,7 +7,7 @@ type Sender interface {
 	Send(*Content) error
 }
 
-// Client ...
+// Client is used to safely send email
 type Client struct {
 	Sender
 	SendLock sync.Mutex

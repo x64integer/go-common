@@ -35,7 +35,7 @@ type Response struct {
 	Failed   []*Failed   `json:"failed"`
 }
 
-// Endpoint is used for multiple endpoints on upload router
+// Endpoint for upload router
 type Endpoint struct {
 	URL               string
 	UseAuthMiddleware bool

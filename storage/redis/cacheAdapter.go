@@ -30,6 +30,7 @@ func (adapter *CacheAdapter) Truncate() error {
 }
 
 // Custom implements and adapts cache.Service.Custom
+//
 // TODO: test calls to custom func fn()
 func (adapter *CacheAdapter) Custom(fn func(...*cache.Item) error, cacheItems ...*cache.Item) error {
 	redisItems := adapter.toRedisItems(cacheItems...)

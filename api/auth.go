@@ -21,7 +21,8 @@ import (
 )
 
 // Authenticatable contract
-// Such empty definition is used to satisfy reflection dependencies only
+//
+// Such empty definition is used to satisfy reflection dependencies only.
 // It might change in the future, if such need arises
 type Authenticatable interface{}
 

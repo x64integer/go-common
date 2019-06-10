@@ -5,8 +5,7 @@ import (
 	"io"
 )
 
-// GenerateSalt with given length
-// 32 or 64 in most cases
+// GenerateSalt with given length, 32 or 64 in most cases
 func GenerateSalt(length int) ([]byte, error) {
 	salt := make([]byte, length)
 

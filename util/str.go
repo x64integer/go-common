@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 )
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -22,6 +22,7 @@ func UUID() string {
 }
 
 // RandomStr - generate random string using masking with source
+//
 // Credits to: https://medium.com/@kpbird/golang-generate-fixed-size-random-string-dd6dbd5e63c0
 func RandomStr(n int) string {
 	src := rand.NewSource(time.Now().UnixNano())

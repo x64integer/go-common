@@ -13,7 +13,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// Handler decouples direct dependency on *mux.Route
+// Handler decouples direct dependency on *mux.Route.
 // Add new functions as per need
 type Handler interface {
 	Handle(string, http.Handler, ...string)

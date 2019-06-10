@@ -2,7 +2,7 @@ package cache
 
 import "time"
 
-// Service ...
+// Service to cache Item
 type Service interface {
 	// Store item(s) into cache
 	Store(...*Item) error

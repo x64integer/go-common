@@ -33,7 +33,7 @@ type Entity struct {
 	Content interface{}
 }
 
-// SearchEntity ...
+// SearchEntity is used to query Elasticsearch
 type SearchEntity struct {
 	Term      string
 	Fields    []string
@@ -43,7 +43,7 @@ type SearchEntity struct {
 	SortOrder bool // true -> asc, false -> desc
 }
 
-// NewConfig will initialize default config struct for Elasticsearch
+// NewConfig will initialize default configuration for Elasticsearch
 func NewConfig() *Config {
 	return &Config{
 		Host: util.Env("ELASTIC_HOST", "127.0.0.1"),

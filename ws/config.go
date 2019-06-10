@@ -2,7 +2,7 @@ package ws
 
 import "github.com/semirm-dev/go-common/util"
 
-// Config struct
+// Config for websocket client/server
 type Config struct {
 	WSURL    string
 	Host     string
@@ -10,7 +10,7 @@ type Config struct {
 	Endpoint string
 }
 
-// NewConfig will init config struct
+// NewConfig will initialize default configuration
 func NewConfig() *Config {
 	return &Config{
 		WSURL:    util.Env("WS_URL", ""),
