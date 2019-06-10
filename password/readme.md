@@ -1,6 +1,6 @@
 ### Password hashing and validation
 
-> NOTE: Soon to be replaced with crypto.Password
+> NOTE: Soon to be replaced with password.SCrypt and password.Argon2
 
 * **Hash password**
 ```
