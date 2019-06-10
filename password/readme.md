@@ -1,13 +1,43 @@
 ### Password hashing and validation
 
-> NOTE: Soon to be replaced with password.SCrypt and password.Argon2
+* **Argon2**
+```
+argon := password.NewArgon2()
+argon.Plain = "pwd-123"
 
-* **Hash password**
-```
-hashed, err := password.Hash("my password")
+if err := argon.Hash(); err != nil {
+    logrus.Fatal("argon failed to hash pwd: ", err)
+}
+
+if argon.Validate() {
+    // valid password
+}
 ```
 
-* **Validate hashed password**
+* **SCrypt**
 ```
-valid := password.Valid("hashed password", "input clean password")
+sCrypt := password.NewSCrypt()
+sCrypt.Plain = "pwd-123"
+
+if err := sCrypt.Hash(); err != nil {
+    logrus.Fatal("scrypt failed to hash pwd: ", err)
+}
+
+if sCrypt.Validate() {
+    // valid password
+}
+```
+
+* **BCrypt**
+```
+bCrypt := password.NewBCrypt()
+bCrypt.Plain = "pwd-123"
+
+if err := bCrypt.Hash(); err != nil {
+    logrus.Fatal("bCrypt failed to hash pwd: ", err)
+}
+
+if bCrypt.Validate() {
+    // valid password
+}
 ```

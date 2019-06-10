@@ -26,7 +26,7 @@ type Argon2 struct {
 	KeyLen  uint32
 }
 
-// NewArgon2 will initialize default params for Argon2
+// NewArgon2 will initialize default Argon2 params
 func NewArgon2() *Argon2 {
 	return &Argon2{
 		Memory:  64 * 1024,

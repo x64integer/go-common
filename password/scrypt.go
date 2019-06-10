@@ -26,7 +26,7 @@ type SCrypt struct {
 	SaltLen int // 32
 }
 
-// NewSCrypt will initialize default params for SCrypt
+// NewSCrypt will initialize default SCrypt params
 func NewSCrypt() *SCrypt {
 	return &SCrypt{
 		N:       32768,
