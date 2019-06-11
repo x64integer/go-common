@@ -41,9 +41,9 @@ type Failed struct {
 // Upload file
 //
 // TODO: get rid of *Response parameter, return chan *Response instead
-func (uploader *Uploader) Upload(fileBytes []byte, file string, response *Response, done *sync.WaitGroup) {
+func (uploader *Uploader) Upload(fileBytes []byte, file string, response *Response, upload *sync.WaitGroup) {
 	go func() {
-		defer done.Done()
+		defer upload.Done()
 
 		if err := createPathIfNotExists(uploader.Destination); err != nil {
 			response.Failed = append(response.Failed, &Failed{

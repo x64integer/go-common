@@ -100,7 +100,7 @@ func (service *Service) uploadFunc(
 
 		startTime := time.Now()
 
-		var done sync.WaitGroup
+		var upload sync.WaitGroup
 
 		for _, handler := range r.MultipartForm.File[uploader.FormFile] {
 			file, err := handler.Open()
@@ -120,11 +120,11 @@ func (service *Service) uploadFunc(
 			}
 			file.Close()
 
-			done.Add(1)
-			uploader.Upload(fileBytes, handler.Filename, response, &done)
+			upload.Add(1)
+			uploader.Upload(fileBytes, handler.Filename, response, &upload)
 		}
 
-		done.Wait()
+		upload.Wait()
 
 		finishTime := time.Now()
 		logrus.Infof(
