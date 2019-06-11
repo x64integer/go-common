@@ -1,13 +1,13 @@
 package upload
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"mime"
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 )
 
 // Uploader is responsible to upload files
@@ -18,6 +18,13 @@ type Uploader struct {
 	FileSize                   int64
 	AllowNonMimeTypeExtensions bool
 	AllowedExtensions          []string
+}
+
+// Response for file uploads
+type Response struct {
+	TotalSize float32     `json:"total_size"`
+	Uploaded  []*Uploaded `json:"uploaded"`
+	Failed    []*Failed   `json:"failed"`
 }
 
 // Uploaded contains uploaded file infomration
@@ -32,32 +39,60 @@ type Failed struct {
 }
 
 // Upload file
-func (uploader *Uploader) Upload(fileBytes []byte, file string) (*Uploaded, error) {
-	if err := createPathIfNotExists(uploader.Destination); err != nil {
-		return nil, err
-	}
+//
+// TODO: get rid of *Response parameter, return chan *Response instead
+func (uploader *Uploader) Upload(fileBytes []byte, file string, response *Response, done *sync.WaitGroup) {
+	go func() {
+		defer done.Done()
 
-	fileExtension, err := uploader.fileExtension(fileBytes, file)
-	if err != nil {
-		return nil, err
-	}
+		if err := createPathIfNotExists(uploader.Destination); err != nil {
+			response.Failed = append(response.Failed, &Failed{
+				File:    file,
+				Message: err.Error(),
+			})
 
-	if !uploader.allowedExtension(fileExtension) {
-		return nil, errors.New("file extension not allowed: " + fileExtension)
-	}
+			return
+		}
 
-	file = trimExtension(file)
+		fileExtension, err := uploader.fileExtension(fileBytes, file)
+		if err != nil {
+			response.Failed = append(response.Failed, &Failed{
+				File:    file,
+				Message: err.Error(),
+			})
 
-	fileName := uploader.FilePrefix + "*-" + file + fileExtension
+			return
+		}
 
-	uploadedFile, err := uploader.writeFile(fileBytes, uploader.Destination, fileName)
-	if err != nil {
-		return nil, err
-	}
+		if !uploader.allowedExtension(fileExtension) {
+			response.Failed = append(response.Failed, &Failed{
+				File:    file,
+				Message: "file extension not allowed: " + fileExtension,
+			})
 
-	return &Uploaded{
-		File: uploadedFile.Name(),
-	}, nil
+			return
+		}
+
+		file = trimExtension(file)
+
+		fileName := uploader.FilePrefix + "*-" + file + fileExtension
+
+		uploadedFile, err := uploader.writeFile(fileBytes, uploader.Destination, fileName)
+		if err != nil {
+			response.Failed = append(response.Failed, &Failed{
+				File:    fileName,
+				Message: err.Error(),
+			})
+
+			return
+		}
+
+		response.Uploaded = append(response.Uploaded, &Uploaded{
+			File: uploadedFile.Name(),
+		})
+
+		response.TotalSize += float32(len(fileBytes)) / 1024
+	}()
 }
 
 // writeFile will create file in path and write content to the file

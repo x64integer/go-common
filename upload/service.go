@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"sync"
+	"time"
 
 	"github.com/sirupsen/logrus"
 
@@ -27,12 +29,6 @@ type Service struct {
 type Config struct {
 	Host string
 	Port string
-}
-
-// Response for file uploads
-type Response struct {
-	Uploaded []*Uploaded `json:"uploaded"`
-	Failed   []*Failed   `json:"failed"`
 }
 
 // Endpoint for upload router
@@ -102,6 +98,10 @@ func (service *Service) uploadFunc(
 
 		r.ParseMultipartForm(uploader.FileSize)
 
+		startTime := time.Now()
+
+		var done sync.WaitGroup
+
 		for _, handler := range r.MultipartForm.File[uploader.FormFile] {
 			file, err := handler.Open()
 			if err != nil {
@@ -118,21 +118,22 @@ func (service *Service) uploadFunc(
 
 				continue
 			}
-
-			uploaded, err := uploader.Upload(fileBytes, handler.Filename)
 			file.Close()
 
-			if err != nil {
-				response.Failed = append(response.Failed, &Failed{
-					File:    handler.Filename,
-					Message: err.Error(),
-				})
-
-				continue
-			}
-
-			response.Uploaded = append(response.Uploaded, uploaded)
+			done.Add(1)
+			uploader.Upload(fileBytes, handler.Filename, response, &done)
 		}
+
+		done.Wait()
+
+		finishTime := time.Now()
+		logrus.Infof(
+			"upload started at: %v | finished at: %v | finished in: %v | total size: %v",
+			startTime.Format("15:04:05"),
+			finishTime.Format("15:04:05.000"),
+			finishTime.Sub(startTime),
+			response.TotalSize,
+		)
 
 		onFinished(response, w, r)
 	}
