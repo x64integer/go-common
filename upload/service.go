@@ -2,6 +2,7 @@ package upload
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"sync"
@@ -86,6 +87,8 @@ func (service *Service) uploadFunc(
 ) func(http.ResponseWriter, *http.Request) {
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		startTime := time.Now()
+
 		if b, ok := onPreExecute(w, r); !ok {
 			w.Write(b)
 			return
@@ -98,7 +101,10 @@ func (service *Service) uploadFunc(
 
 		r.ParseMultipartForm(uploader.FileSize)
 
-		startTime := time.Now()
+		if r.MultipartForm == nil {
+			logrus.Error("no files provided")
+			return
+		}
 
 		var upload sync.WaitGroup
 
@@ -134,6 +140,8 @@ func (service *Service) uploadFunc(
 			finishTime.Sub(startTime),
 			response.TotalSize,
 		)
+
+		response.TotalTime = fmt.Sprint(finishTime.Sub(startTime))
 
 		onFinished(response, w, r)
 	}

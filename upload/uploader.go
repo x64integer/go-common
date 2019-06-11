@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 )
 
 // Uploader is responsible to upload files
@@ -23,6 +24,7 @@ type Uploader struct {
 // Response for file uploads
 type Response struct {
 	TotalSize float32     `json:"total_size"`
+	TotalTime string      `json:"total_time"`
 	Uploaded  []*Uploaded `json:"uploaded"`
 	Failed    []*Failed   `json:"failed"`
 }
@@ -30,11 +32,14 @@ type Response struct {
 // Uploaded contains uploaded file infomration
 type Uploaded struct {
 	File string `json:"file"`
+	Size string `json:"size"`
+	Time string `json:"time"`
 }
 
 // Failed upload
 type Failed struct {
 	File    string `json:"file"`
+	Size    string `json:"size"`
 	Message string `json:"message"`
 }
 
@@ -45,10 +50,15 @@ func (uploader *Uploader) Upload(fileBytes []byte, file string, response *Respon
 	go func() {
 		defer upload.Done()
 
+		startTime := time.Now()
+
+		size := float32(len(fileBytes)) / 1024
+
 		if err := createPathIfNotExists(uploader.Destination); err != nil {
 			response.Failed = append(response.Failed, &Failed{
 				File:    file,
 				Message: err.Error(),
+				Size:    fmt.Sprint(size) + " KB",
 			})
 
 			return
@@ -59,6 +69,7 @@ func (uploader *Uploader) Upload(fileBytes []byte, file string, response *Respon
 			response.Failed = append(response.Failed, &Failed{
 				File:    file,
 				Message: err.Error(),
+				Size:    fmt.Sprint(size) + " KB",
 			})
 
 			return
@@ -68,6 +79,7 @@ func (uploader *Uploader) Upload(fileBytes []byte, file string, response *Respon
 			response.Failed = append(response.Failed, &Failed{
 				File:    file,
 				Message: "file extension not allowed: " + fileExtension,
+				Size:    fmt.Sprint(size) + " KB",
 			})
 
 			return
@@ -82,16 +94,21 @@ func (uploader *Uploader) Upload(fileBytes []byte, file string, response *Respon
 			response.Failed = append(response.Failed, &Failed{
 				File:    fileName,
 				Message: err.Error(),
+				Size:    fmt.Sprint(size) + " KB",
 			})
 
 			return
 		}
 
+		finishTime := time.Now()
+
 		response.Uploaded = append(response.Uploaded, &Uploaded{
 			File: uploadedFile.Name(),
+			Size: fmt.Sprint(size) + " KB",
+			Time: fmt.Sprint(finishTime.Sub(startTime)),
 		})
 
-		response.TotalSize += float32(len(fileBytes)) / 1024
+		response.TotalSize += size
 	}()
 }
 
