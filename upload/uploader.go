@@ -44,15 +44,13 @@ type Failed struct {
 }
 
 // Upload file
-//
-// TODO: get rid of *Response parameter, return chan *Response instead
 func (uploader *Uploader) Upload(fileBytes []byte, file string, response *Response, upload *sync.WaitGroup) {
 	go func() {
 		defer upload.Done()
 
 		startTime := time.Now()
 
-		size := float32(len(fileBytes)) / 1024
+		size := float32(len(fileBytes)) / 1024 // change hardcoded calculation to KBs
 
 		if err := createPathIfNotExists(uploader.Destination); err != nil {
 			response.Failed = append(response.Failed, &Failed{
@@ -88,6 +86,15 @@ func (uploader *Uploader) Upload(fileBytes []byte, file string, response *Respon
 		file = trimExtension(file)
 
 		fileName := uploader.FilePrefix + "*-" + file + fileExtension
+
+		// switch fileExtension {
+		// case ".gif":
+		// 	time.Sleep(7 * time.Second)
+		// case ".jpg":
+		// 	time.Sleep(2 * time.Second)
+		// case ".png":
+		// 	time.Sleep(4 * time.Second)
+		// }
 
 		uploadedFile, err := uploader.writeFile(fileBytes, uploader.Destination, fileName)
 		if err != nil {
