@@ -68,7 +68,7 @@ func (usecase *AuthUsecase) Register(user *Account) *AuthResponse {
 		content := &mail.Content{
 			To:      []string{user.Email},
 			Subject: "Please verify account registration",
-			Body:    []byte("Click on the link to confirm account registration: " + usecase.registrationTokenLink()),
+			Body:    []byte("Click on the link to confirm account registration: <a href=\"" + usecase.ConfirmRegistrationPath + usecase.RegistrationToken + "\">Confirm</a>"),
 		}
 
 		if err := usecase.Mailer.Send(content); err != nil {
@@ -182,9 +182,4 @@ func (usecase *AuthUsecase) loginUser(user *Account) (string, error) {
 	}
 
 	return token, nil
-}
-
-// registrationTokenLink will generate confirmation link
-func (usecase *AuthUsecase) registrationTokenLink() string {
-	return usecase.ConfirmRegistrationPath + usecase.RegistrationToken
 }

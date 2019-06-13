@@ -185,7 +185,7 @@ func (auth *Auth) register(w http.ResponseWriter, r *http.Request) {
 			Cache: auth.CacheClient,
 		},
 		Mailer:                  auth.mailer,
-		ConfirmRegistrationPath: auth.serviceURL + accountConfirm,
+		ConfirmRegistrationPath: "http://" + auth.serviceURL + accountConfirm,
 		RegistrationToken:       token,
 	}
 
@@ -250,6 +250,7 @@ func (auth *Auth) confirmRegistration(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
+	// TODO: remove mux dependency, expand Handler interface with getVar(v string) string
 	var vars = mux.Vars(r)
 
 	account.ActivationToken = vars["token"]
