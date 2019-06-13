@@ -175,7 +175,7 @@ func (auth *Auth) register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token := util.RandomStr(32)
+	activationToken := util.RandomStr(32)
 
 	authUsecase := &user.AuthUsecase{
 		RequireConfirmation: auth.RequireConfirmation,
@@ -184,12 +184,13 @@ func (auth *Auth) register(w http.ResponseWriter, r *http.Request) {
 		Session: &user.Session{
 			Cache: auth.CacheClient,
 		},
-		Mailer:                  auth.mailer,
-		ConfirmRegistrationPath: "http://" + auth.serviceURL + accountConfirm,
-		RegistrationToken:       token,
+		Mailer: auth.mailer,
+
+		ActivationToken:         activationToken,
+		ConfirmRegistrationPath: auth.serviceURL + accountConfirm,
 	}
 
-	account.ActivationToken = token
+	account.ActivationToken = activationToken
 
 	response := authUsecase.Register(account)
 

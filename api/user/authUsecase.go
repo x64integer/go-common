@@ -12,13 +12,14 @@ import (
 
 // AuthUsecase will handle user authentication
 type AuthUsecase struct {
-	RequireConfirmation     bool
-	ConfirmRegistrationPath string
-	RegistrationToken       string
+	RequireConfirmation bool
 	Repository
 	*jwt.Token
 	*Session
 	Mailer *mail.Client
+
+	ActivationToken         string
+	ConfirmRegistrationPath string
 }
 
 // AuthResponse for authentication
@@ -65,13 +66,7 @@ func (usecase *AuthUsecase) Register(user *Account) *AuthResponse {
 	response.Email = user.Email
 
 	if usecase.RequireConfirmation {
-		content := &mail.Content{
-			To:      []string{user.Email},
-			Subject: "Please verify account registration",
-			Body:    []byte("Click on the link to confirm account registration: <a href=\"" + usecase.ConfirmRegistrationPath + usecase.RegistrationToken + "\">Confirm</a>"),
-		}
-
-		if err := usecase.Mailer.Send(content); err != nil {
+		if err := usecase.sendRegistrationMail(user.Email); err != nil {
 			response.ErrorMessage = fmt.Sprintf("failed to send email confirmation [%v]: %s", user, err)
 			return response
 		}
@@ -182,4 +177,20 @@ func (usecase *AuthUsecase) loginUser(user *Account) (string, error) {
 	}
 
 	return token, nil
+}
+
+// sendRegistrationMail will cosntruct registration mail body and send it
+//
+// TODO: parse subject and body from external template
+func (usecase *AuthUsecase) sendRegistrationMail(to string) error {
+	subject := "Please verify account registration"
+	body := []byte("Click on the link to confirm account registration: <a href=\"http://" + usecase.ConfirmRegistrationPath + usecase.ActivationToken + "\">Confirm</a>")
+
+	content := &mail.Content{
+		To:      []string{to},
+		Subject: subject,
+		Body:    body,
+	}
+
+	return usecase.Mailer.Send(content)
 }
