@@ -175,7 +175,7 @@ func (auth *Auth) register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	activationToken := util.RandomStr(32)
+	activationToken := util.RandomStr(64)
 
 	authUsecase := &user.AuthUsecase{
 		RequireConfirmation: auth.RequireConfirmation,
