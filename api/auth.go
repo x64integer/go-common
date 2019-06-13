@@ -11,14 +11,19 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gorilla/mux"
+
 	"github.com/sirupsen/logrus"
 
 	"github.com/semirm-dev/go-common/api/user"
 	"github.com/semirm-dev/go-common/mail"
 	"github.com/semirm-dev/go-common/storage/cache"
+	"github.com/semirm-dev/go-common/util"
 
 	"github.com/semirm-dev/go-common/jwt"
 )
+
+const accountConfirm = "/account/confirm/"
 
 // Authenticatable contract
 //
@@ -44,11 +49,12 @@ type Auth struct {
 	RegisterPath            string
 	LoginPath               string
 	LogoutPath              string
-	ConfirmRegistrationPath string
+	confirmRegistrationPath string
+	serviceURL              string
 
 	// optional
 	PasswordResetRequestPath string
-	PasswordResetFormPath    string
+	passwordResetFormPath    string
 	PasswordResetPath        string
 	// callback to run from password reset request (click on password reset generated link)
 	PasswordResetCallback func(http.ResponseWriter, *http.Request)
@@ -90,7 +96,7 @@ func (auth *Auth) apply(handler Handler) {
 				Sender: mail.DefaultSMTP(),
 			}
 
-			handler.HandleFunc(auth.ConfirmRegistrationPath, auth.confirmRegistration, "GET")
+			handler.HandleFunc(auth.confirmRegistrationPath, auth.confirmRegistration, "GET")
 		}
 
 		logrus.Infof(
@@ -98,19 +104,19 @@ func (auth *Auth) apply(handler Handler) {
 			auth.RegisterPath,
 			auth.LoginPath,
 			auth.LogoutPath,
-			auth.ConfirmRegistrationPath,
+			auth.confirmRegistrationPath,
 		)
 	}
 
 	if auth.PasswordResetRepository != nil {
 		handler.HandleFunc(auth.PasswordResetRequestPath, auth.createResetToken, "POST")
-		handler.HandleFunc(auth.PasswordResetFormPath, auth.passwordResetForm, "GET")
+		handler.HandleFunc(auth.passwordResetFormPath, auth.passwordResetForm, "GET")
 		handler.HandleFunc(auth.PasswordResetPath, auth.updatePassword, "POST")
 
 		logrus.Infof(
 			"password reset routes: token request -> %v, reset form -> %v, update password -> %v",
 			auth.PasswordResetRequestPath,
-			auth.PasswordResetFormPath,
+			auth.passwordResetFormPath,
 			auth.PasswordResetPath,
 		)
 	}
@@ -169,6 +175,8 @@ func (auth *Auth) register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	token := util.RandomStr(32)
+
 	authUsecase := &user.AuthUsecase{
 		RequireConfirmation: auth.RequireConfirmation,
 		Repository:          auth.UserAccountRepository,
@@ -176,8 +184,12 @@ func (auth *Auth) register(w http.ResponseWriter, r *http.Request) {
 		Session: &user.Session{
 			Cache: auth.CacheClient,
 		},
-		Mailer: auth.mailer,
+		Mailer:                  auth.mailer,
+		ConfirmRegistrationPath: auth.serviceURL + accountConfirm,
+		RegistrationToken:       token,
 	}
+
+	account.ActivationToken = token
 
 	response := authUsecase.Register(account)
 
@@ -230,11 +242,6 @@ func (auth *Auth) logout(w http.ResponseWriter, r *http.Request) {
 func (auth *Auth) confirmRegistration(w http.ResponseWriter, r *http.Request) {
 	account := &user.Account{}
 
-	if err := account.DecodeFromReader(r.Body); err != nil {
-		w.Write([]byte(err.Error()))
-		return
-	}
-
 	authUsecase := &user.AuthUsecase{
 		Repository: auth.UserAccountRepository,
 		Token:      auth.Token,
@@ -242,6 +249,10 @@ func (auth *Auth) confirmRegistration(w http.ResponseWriter, r *http.Request) {
 			Cache: auth.CacheClient,
 		},
 	}
+
+	var vars = mux.Vars(r)
+
+	account.ActivationToken = vars["token"]
 
 	response := authUsecase.ConfirmRegistration(account)
 
@@ -325,16 +336,16 @@ func (auth *Auth) defaults() {
 		auth.LogoutPath = "/logout"
 	}
 
-	if strings.TrimSpace(auth.ConfirmRegistrationPath) == "" {
-		auth.ConfirmRegistrationPath = "/account/confirm/{token}"
+	if strings.TrimSpace(auth.confirmRegistrationPath) == "" {
+		auth.confirmRegistrationPath = accountConfirm + "{token}"
 	}
 
 	if strings.TrimSpace(auth.PasswordResetRequestPath) == "" {
 		auth.PasswordResetRequestPath = "/password/reset"
 	}
 
-	if strings.TrimSpace(auth.PasswordResetFormPath) == "" {
-		auth.PasswordResetFormPath = "/password/reset/{token}"
+	if strings.TrimSpace(auth.passwordResetFormPath) == "" {
+		auth.passwordResetFormPath = "/password/reset/{token}"
 	}
 
 	if strings.TrimSpace(auth.PasswordResetPath) == "" {

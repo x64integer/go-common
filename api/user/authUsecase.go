@@ -12,7 +12,9 @@ import (
 
 // AuthUsecase will handle user authentication
 type AuthUsecase struct {
-	RequireConfirmation bool
+	RequireConfirmation     bool
+	ConfirmRegistrationPath string
+	RegistrationToken       string
 	Repository
 	*jwt.Token
 	*Session
@@ -65,8 +67,8 @@ func (usecase *AuthUsecase) Register(user *Account) *AuthResponse {
 	if usecase.RequireConfirmation {
 		content := &mail.Content{
 			To:      []string{user.Email},
-			Subject: "Confirm registration",
-			Body:    []byte("Please confirm email by clicking on the link: <token>"),
+			Subject: "Please verify account registration",
+			Body:    []byte("Click on the link to confirm account registration: " + usecase.registrationTokenLink()),
 		}
 
 		if err := usecase.Mailer.Send(content); err != nil {
@@ -144,13 +146,14 @@ func (usecase *AuthUsecase) ConfirmRegistration(user *Account) *AuthResponse {
 		return response
 	}
 
-	token, err := usecase.loginUser(user)
-	if err != nil {
-		response.ErrorMessage = fmt.Sprintf("failed to login user [%v]: %s", user, err)
-		return response
-	}
+	// TODO: autologin
+	// token, err := usecase.loginUser(user)
+	// if err != nil {
+	// 	response.ErrorMessage = fmt.Sprintf("failed to login user [%v]: %s", user, err)
+	// 	return response
+	// }
 
-	response.Token = token
+	// response.Token = token
 
 	return response
 }
@@ -179,4 +182,9 @@ func (usecase *AuthUsecase) loginUser(user *Account) (string, error) {
 	}
 
 	return token, nil
+}
+
+// registrationTokenLink will generate confirmation link
+func (usecase *AuthUsecase) registrationTokenLink() string {
+	return usecase.ConfirmRegistrationPath + usecase.RegistrationToken
 }

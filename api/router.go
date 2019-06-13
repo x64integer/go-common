@@ -40,12 +40,15 @@ func NewRouter(config *Config) *Router {
 
 	handler := &MuxRouterAdapter{Router: muxRouter}
 
+	addr := config.Host + ":" + config.Port
+
 	if config.Auth != nil {
+		config.Auth.serviceURL = addr
 		config.Auth.apply(handler)
 	}
 
 	srv := &http.Server{
-		Addr: config.Host + ":" + config.Port,
+		Addr: addr,
 		// NOTE: these values could be passed through Config
 		WriteTimeout: time.Second * 15,
 		ReadTimeout:  time.Second * 15,

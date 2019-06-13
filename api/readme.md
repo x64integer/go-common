@@ -20,6 +20,7 @@ r := api.NewRouter(&api.Config{
         },
         CacheClient:        st.Cache,
         UserAccountRepository: &my.UserAccountRepositoryImpl{},
+        RequireConfirmation:   true,
     },
 })
 
