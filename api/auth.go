@@ -18,7 +18,6 @@ import (
 	"github.com/semirm-dev/go-common/api/user"
 	"github.com/semirm-dev/go-common/mail"
 	"github.com/semirm-dev/go-common/storage/cache"
-	"github.com/semirm-dev/go-common/util"
 
 	"github.com/semirm-dev/go-common/jwt"
 )
@@ -175,8 +174,6 @@ func (auth *Auth) register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	activationToken := util.RandomStr(64)
-
 	authUsecase := &user.AuthUsecase{
 		RequireConfirmation: auth.RequireConfirmation,
 		Repository:          auth.UserAccountRepository,
@@ -186,11 +183,8 @@ func (auth *Auth) register(w http.ResponseWriter, r *http.Request) {
 		},
 		Mailer: auth.mailer,
 
-		ActivationToken:         activationToken,
 		ConfirmRegistrationPath: auth.serviceURL + accountConfirm,
 	}
-
-	account.ActivationToken = activationToken
 
 	response := authUsecase.Register(account)
 

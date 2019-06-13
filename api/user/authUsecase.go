@@ -8,6 +8,7 @@ import (
 	"github.com/semirm-dev/go-common/jwt"
 	"github.com/semirm-dev/go-common/mail"
 	"github.com/semirm-dev/go-common/password"
+	"github.com/semirm-dev/go-common/util"
 )
 
 // AuthUsecase will handle user authentication
@@ -18,7 +19,6 @@ type AuthUsecase struct {
 	*Session
 	Mailer *mail.Client
 
-	ActivationToken         string
 	ConfirmRegistrationPath string
 }
 
@@ -57,6 +57,8 @@ func (usecase *AuthUsecase) Register(user *Account) *AuthResponse {
 		user.Username = user.Email
 	}
 
+	user.ActivationToken = util.RandomStr(64)
+
 	if err := usecase.Repository.Store(user); err != nil {
 		response.ErrorMessage = fmt.Sprintf("failed to store new user account [%v]: %s", user, err)
 		return response
@@ -66,7 +68,7 @@ func (usecase *AuthUsecase) Register(user *Account) *AuthResponse {
 	response.Email = user.Email
 
 	if usecase.RequireConfirmation {
-		if err := usecase.sendRegistrationMail(user.Email); err != nil {
+		if err := usecase.sendRegistrationMail(user); err != nil {
 			response.ErrorMessage = fmt.Sprintf("failed to send email confirmation [%v]: %s", user, err)
 			return response
 		}
@@ -136,19 +138,30 @@ func (usecase *AuthUsecase) Logout(email string) *AuthResponse {
 func (usecase *AuthUsecase) ConfirmRegistration(user *Account) *AuthResponse {
 	response := &AuthResponse{}
 
-	if err := usecase.Repository.Activate(user.ActivationToken); err != nil {
-		response.ErrorMessage = fmt.Sprintf("failed to activate user [%v]: %s", user, err)
+	existingUser, err := usecase.Repository.GetByActivationToken(user.ActivationToken)
+	if err != nil {
+		response.ErrorMessage = fmt.Sprintf("failed to get user by activation token [%v]: %s", user, err)
 		return response
 	}
 
-	// TODO: autologin
-	// token, err := usecase.loginUser(user)
-	// if err != nil {
-	// 	response.ErrorMessage = fmt.Sprintf("failed to login user [%v]: %s", user, err)
-	// 	return response
-	// }
+	if existingUser != nil {
+		if err := usecase.Repository.Activate(existingUser.ActivationToken); err != nil {
+			response.ErrorMessage = fmt.Sprintf("failed to activate user [%v]: %s", existingUser, err)
+			return response
+		}
 
-	// response.Token = token
+		token, err := usecase.loginUser(existingUser)
+		if err != nil {
+			response.ErrorMessage = fmt.Sprintf("failed to login user [%v]: %s", existingUser, err)
+			return response
+		}
+
+		response.Token = token
+
+		return response
+	}
+
+	response.ErrorMessage = "there is no such user account: " + user.ActivationToken
 
 	return response
 }
@@ -182,12 +195,12 @@ func (usecase *AuthUsecase) loginUser(user *Account) (string, error) {
 // sendRegistrationMail will cosntruct registration mail body and send it
 //
 // TODO: parse subject and body from external template
-func (usecase *AuthUsecase) sendRegistrationMail(to string) error {
+func (usecase *AuthUsecase) sendRegistrationMail(to *Account) error {
 	subject := "Please verify account registration"
-	body := []byte("Click on the link to confirm account registration: <a href=\"http://" + usecase.ConfirmRegistrationPath + usecase.ActivationToken + "\">Confirm</a>")
+	body := []byte("Click on the link to confirm account registration: <a href=\"http://" + usecase.ConfirmRegistrationPath + to.ActivationToken + "\">Confirm</a>")
 
 	content := &mail.Content{
-		To:      []string{to},
+		To:      []string{to.Email},
 		Subject: subject,
 		Body:    body,
 	}

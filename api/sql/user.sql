@@ -39,10 +39,18 @@ $$;
 
 -- function get_by_email
 CREATE OR REPLACE FUNCTION get_by_email(_email varchar(255))
-RETURNS TABLE (id integer, username varchar(50), email varchar(255), password varchar(255), status integer)
+RETURNS TABLE (id integer, username varchar(50), email varchar(255), password varchar(255), status integer, activation_token varchar(255))
 LANGUAGE SQL
 AS $$
-    SELECT id, username, email, password, status FROM users WHERE email = _email LIMIT 1;
+    SELECT id, username, email, password, status, activation_token FROM users WHERE email = _email LIMIT 1;
+$$;
+
+-- function get_by_activation_token
+CREATE OR REPLACE FUNCTION get_by_activation_token(_activation_token varchar(255))
+RETURNS TABLE (id integer, username varchar(50), email varchar(255), password varchar(255), status integer, activation_token varchar(255))
+LANGUAGE SQL
+AS $$
+    SELECT id, username, email, password, status, activation_token FROM users WHERE activation_token = _activation_token LIMIT 1;
 $$;
 
 -- function update_password
