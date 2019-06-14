@@ -1,12 +1,18 @@
 package crypto
 
 import (
+	"errors"
 	"sync"
 )
 
+// ErrMissingCrypter error
+var ErrMissingCrypter = errors.New("missing Crypter implementation")
+
 // Crypter for encryption and decryption
 type Crypter interface {
+	// Encrypt returns original encrypted value, hex, base64 and error
 	Encrypt([]byte) (string, string, string, error)
+	// Decrypt returns original message and error
 	Decrypt(string) (string, error)
 }
 
@@ -25,6 +31,10 @@ type Cipher struct {
 func (cipher *Cipher) Encrypt(payload []byte) error {
 	cipher.EncryptLock.Lock()
 	defer cipher.EncryptLock.Unlock()
+
+	if cipher.Crypter == nil {
+		return ErrMissingCrypter
+	}
 
 	enc, hex, b64, err := cipher.Crypter.Encrypt(payload)
 	if err != nil {
