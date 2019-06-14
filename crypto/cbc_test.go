@@ -9,9 +9,9 @@ import (
 )
 
 var (
-	encryptedCBC    = "\xe4\xe2V\xef1\x17\x1c?R[\\NS\x8dN0"
-	encryptedCBCHex = "e4e256ef31171c3f525b5c4e538d4e30"
-	encryptedCBCB64 = "5OJW7zEXHD9SW1xOU41OMA=="
+	cbcEncrypted    = "\xe4\xe2V\xef1\x17\x1c?R[\\NS\x8dN0"
+	cbcEncryptedHex = "e4e256ef31171c3f525b5c4e538d4e30"
+	cbcEncryptedB64 = "5OJW7zEXHD9SW1xOU41OMA=="
 )
 
 func TestCBCEncrypt(t *testing.T) {
@@ -25,9 +25,9 @@ func TestCBCEncrypt(t *testing.T) {
 	err := cipher.Encrypt([]byte(message))
 
 	assert.NoError(t, err)
-	assert.Equal(t, encryptedCBC, cipher.Encrypted)
-	assert.Equal(t, encryptedCBCHex, cipher.Hex)
-	assert.Equal(t, encryptedCBCB64, cipher.Base64)
+	assert.Equal(t, cbcEncrypted, cipher.Encrypted)
+	assert.Equal(t, cbcEncryptedHex, cipher.Hex)
+	assert.Equal(t, cbcEncryptedB64, cipher.Base64)
 }
 
 func TestCBCDecrypt(t *testing.T) {
@@ -38,7 +38,7 @@ func TestCBCDecrypt(t *testing.T) {
 		},
 	}
 
-	err := cipher.Decrypt(encryptedCBC)
+	err := cipher.Decrypt(cbcEncrypted)
 
 	assert.NoError(t, err)
 	assert.Equal(t, message, cipher.Decrypted)
