@@ -8,6 +8,9 @@ import (
 	jwtLib "github.com/dgrijalva/jwt-go"
 )
 
+// ErrMissingSecret error
+var ErrMissingSecret = errors.New("missing secret key")
+
 // Token wrapper
 type Token struct {
 	Secret  []byte
@@ -26,6 +29,10 @@ type Claims struct {
 func (token *Token) Generate(claims *Claims) error {
 	token.Lock.Lock()
 	defer token.Lock.Unlock()
+
+	if token.Secret == nil || len(token.Secret) == 0 {
+		return ErrMissingSecret
+	}
 
 	claims.StandardClaims.ExpiresAt = time.Now().Add(claims.Expiration).Unix()
 
@@ -50,7 +57,7 @@ func (token *Token) ValidateAndExtract(tokenStr string) (*Claims, bool) {
 		return claims, false
 	}
 
-	return claims, token.valid(tokenLib)
+	return claims, token.valid(tokenLib, claims)
 }
 
 // parse is helper function to parse jwt
@@ -70,11 +77,11 @@ func (token *Token) parse(tokenStr string, claims *Claims) (*jwtLib.Token, error
 }
 
 // valid is helper function to validate jwt
-func (token *Token) valid(tokenLib *jwtLib.Token) bool {
+func (token *Token) valid(tokenLib *jwtLib.Token, claims *Claims) bool {
 	if tokenLib != nil {
 		_, claimsOk := tokenLib.Claims.(jwtLib.Claims)
 
-		if claimsOk && tokenLib.Valid {
+		if claimsOk && tokenLib.Valid && claims.ExpiresAt > time.Now().Unix() {
 			return true
 		}
 	}
