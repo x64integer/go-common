@@ -19,8 +19,8 @@ type Content struct {
 	ContentType string
 }
 
-// construct content for email
-func (content *Content) construct() []byte {
+// Construct content for email
+func (content *Content) Construct() []byte {
 	if content.ContentType == "" {
 		content.ContentType = "text/html"
 	}

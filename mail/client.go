@@ -1,6 +1,12 @@
 package mail
 
-import "sync"
+import (
+	"errors"
+	"sync"
+)
+
+// ErrMissingSender error
+var ErrMissingSender = errors.New("missing Sender implementation")
 
 // Sender for sending email
 type Sender interface {
@@ -17,6 +23,10 @@ type Client struct {
 func (client *Client) Send(content *Content) error {
 	client.SendLock.Lock()
 	defer client.SendLock.Unlock()
+
+	if client.Sender == nil {
+		return ErrMissingSender
+	}
 
 	return client.Sender.Send(content)
 }

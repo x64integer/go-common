@@ -11,6 +11,11 @@ import (
 	"golang.org/x/crypto/argon2"
 )
 
+var (
+	// ErrMissingPlainArgon error
+	ErrMissingPlainArgon = errors.New("missing Plain property")
+)
+
 // Credits to: https://www.alexedwards.net/blog/how-to-hash-and-verify-passwords-with-argon2-in-go
 
 // Argon2 hashing algorithm
@@ -39,6 +44,10 @@ func NewArgon2() *Argon2 {
 
 // Hash argon.Plain
 func (argon *Argon2) Hash() error {
+	if argon.Plain == "" {
+		return ErrMissingPlainArgon
+	}
+
 	salt, err := GenerateSalt(argon.SaltLen)
 	if err != nil {
 		return err
@@ -50,7 +59,6 @@ func (argon *Argon2) Hash() error {
 	argon.DK = dk
 
 	hash := fmt.Sprintf("%d$%d$%d$%d$%x$%x", argon2.Version, argon.Memory, argon.Time, argon.Threads, argon.Salt, argon.DK)
-
 	argon.Hashed = hash
 
 	return nil

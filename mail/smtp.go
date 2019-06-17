@@ -101,7 +101,7 @@ func (smtpServer *SMTP) send(content *Content) error {
 		return err
 	}
 
-	_, err = w.Write(content.construct())
+	_, err = w.Write(content.Construct())
 	if err != nil {
 		return err
 	}

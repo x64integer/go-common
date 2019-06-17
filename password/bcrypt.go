@@ -1,7 +1,14 @@
 package password
 
 import (
+	"errors"
+
 	"golang.org/x/crypto/bcrypt"
+)
+
+var (
+	// ErrMissingPlainBCrypt error
+	ErrMissingPlainBCrypt = errors.New("missing Plain property")
 )
 
 // BCrypt hashing algorithm
@@ -20,6 +27,10 @@ func NewBCrypt() *BCrypt {
 
 // Hash bCrypt.Plain
 func (bCrypt *BCrypt) Hash() error {
+	if bCrypt.Plain == "" {
+		return ErrMissingPlainBCrypt
+	}
+
 	hashed, err := bcrypt.GenerateFromPassword([]byte(bCrypt.Plain), bCrypt.Cost)
 	if err != nil {
 		return err

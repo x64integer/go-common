@@ -11,6 +11,11 @@ import (
 	"golang.org/x/crypto/scrypt"
 )
 
+var (
+	// ErrMissingPlainScrypt error
+	ErrMissingPlainScrypt = errors.New("missing Plain property")
+)
+
 // Credits to: https://github.com/elithrar/simple-scrypt/blob/master/scrypt.go
 
 // SCrypt hashing algorithm
@@ -39,6 +44,10 @@ func NewSCrypt() *SCrypt {
 
 // Hash sCrypt.Plain
 func (sCrypt *SCrypt) Hash() error {
+	if sCrypt.Plain == "" {
+		return ErrMissingPlainScrypt
+	}
+
 	salt, err := GenerateSalt(sCrypt.SaltLen)
 	if err != nil {
 		return err
