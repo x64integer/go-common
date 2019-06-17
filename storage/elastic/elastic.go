@@ -104,8 +104,11 @@ func (conn *Connection) SearchByTerm(ctx context.Context, index string, t string
 		Type(t).
 		From(searchEntity.From).
 		Size(searchEntity.Limit).
-		Sort(searchEntity.Sort, searchEntity.SortOrder).
 		Query(query)
+
+	if searchEntity.Sort != "" {
+		searchService.Sort(searchEntity.Sort, searchEntity.SortOrder)
+	}
 
 	if strings.TrimSpace(searchEntity.Term) == "" {
 		searchService.Query(elastic.NewMatchAllQuery())

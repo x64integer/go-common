@@ -134,8 +134,8 @@ func (c *Connection) Consume(done chan bool) error {
 	}
 }
 
-// ConsumerWithConfig will start consumer with passed config values
-func (c *Connection) ConsumerWithConfig(done chan bool, config *Config, callback func(msgs <-chan amqp.Delivery)) error {
+// ConsumeWithConfig will start consumer with passed config values
+func (c *Connection) ConsumeWithConfig(done chan bool, config *Config, callback func(msgs <-chan amqp.Delivery)) error {
 	msgs, err := c.Channel.Consume(
 		config.Queue,
 		config.ConsumerTag,
