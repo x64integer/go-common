@@ -97,22 +97,19 @@ func (conn *Connection) SearchByTerm(ctx context.Context, index string, t string
 		searchEntity.Limit = defaultSearchLimit
 	}
 
-	query := elastic.NewMultiMatchQuery(searchEntity.Term, searchEntity.Fields...)
-
 	searchService := conn.Search().
 		Index(index).
 		Type(t).
 		From(searchEntity.From).
-		Size(searchEntity.Limit).
-		Query(query)
-
-	if searchEntity.Sort != "" {
-		searchService.Sort(searchEntity.Sort, searchEntity.SortOrder)
-	}
+		Size(searchEntity.Limit)
 
 	if strings.TrimSpace(searchEntity.Term) == "" {
 		searchService.Query(elastic.NewMatchAllQuery())
+	} else {
+		searchService.Query(elastic.NewMultiMatchQuery(searchEntity.Term, searchEntity.Fields...).Type("phrase_prefix"))
 	}
+
+	// searchService.Sort(searchEntity.Sort, searchEntity.SortOrder)
 
 	searchResult, err := searchService.Do(ctx)
 	if err != nil {
