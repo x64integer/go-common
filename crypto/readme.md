@@ -56,6 +56,10 @@ if err := argon.Hash(); err != nil {
     logrus.Fatal("argon failed to hash Plain: ", err)
 }
 
+// validation 
+argon.Plain = "value to hash"
+argon.Hashed = "hashed-value"
+
 if argon.Validate() {
     // hash valid
 }
@@ -70,6 +74,10 @@ if err := sCrypt.Hash(); err != nil {
     logrus.Fatal("scrypt failed to hash Plain: ", err)
 }
 
+// validation 
+sCrypt.Plain = "value to hash"
+sCrypt.Hashed = "hashed-value"
+
 if sCrypt.Validate() {
     // hash valid
 }
@@ -83,6 +91,10 @@ bCrypt.Plain = "value to hash"
 if err := bCrypt.Hash(); err != nil {
     logrus.Fatal("bCrypt failed to hash Plain: ", err)
 }
+
+// validation 
+bCrypt.Plain = "value to hash"
+bCrypt.Hashed = "hashed-value"
 
 if bCrypt.Validate() {
     // hash valid

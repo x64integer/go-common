@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/semirm-dev/go-common/crypto"
 	"github.com/semirm-dev/go-common/jwt"
 	"github.com/semirm-dev/go-common/mail"
-	"github.com/semirm-dev/go-common/password"
 	"github.com/semirm-dev/go-common/util"
 )
 
@@ -34,7 +34,7 @@ type AuthResponse struct {
 func (usecase *AuthUsecase) Register(user *Account) *AuthResponse {
 	response := &AuthResponse{}
 
-	argon := password.NewArgon2()
+	argon := crypto.NewArgon2()
 	argon.Plain = user.Password
 
 	if err := argon.Hash(); err != nil {
@@ -96,7 +96,7 @@ func (usecase *AuthUsecase) Login(user *Account) *AuthResponse {
 		return response
 	}
 
-	argon := password.NewArgon2()
+	argon := crypto.NewArgon2()
 	argon.Plain = user.Password
 	argon.Hashed = existingUser.Password
 
