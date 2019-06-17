@@ -5,7 +5,7 @@
 
 ### Common wrappers
 * GCM and CBC encryption/decryption
-* Argon2, SCrypt, BCrypt ashing
+* Argon2, SCrypt, BCrypt hashing
 * API http server
 * JWT
 * Mail client
