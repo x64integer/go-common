@@ -18,7 +18,7 @@ const (
 
 // UUID will return cryptographically-secure unique id
 func UUID() string {
-	return uuid.Must(uuid.NewV4()).String()
+	return uuid.NewV4().String()
 }
 
 // RandomStr - generate random string using masking with source
