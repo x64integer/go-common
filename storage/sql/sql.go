@@ -37,15 +37,15 @@ type Config struct {
 
 // NewConfig will initialize default config for SQL connection
 func NewConfig() *Config {
-	config := new(Config)
-
-	config.Driver = util.Env("SQL_DRIVER", PostgresDriver)
-	config.Host = util.Env("SQL_HOST", "localhost")
-	config.Name = util.Env("SQL_NAME", "")
-	config.Port = util.Env("SQL_PORT", "5432")
-	config.User = util.Env("SQL_USER", "postgres")
-	config.Password = util.Env("SQL_PASSWORD", "postgres")
-	config.SSLMode = util.Env("SSLMODE", "disable")
+	config := &Config{
+		Driver:   util.Env("SQL_DRIVER", PostgresDriver),
+		Host:     util.Env("SQL_HOST", "localhost"),
+		Name:     util.Env("SQL_NAME", ""),
+		Port:     util.Env("SQL_PORT", "5432"),
+		User:     util.Env("SQL_USER", "postgres"),
+		Password: util.Env("SQL_PASSWORD", "postgres"),
+		SSLMode:  util.Env("SSLMODE", "disable"),
+	}
 
 	maxConn, err := strconv.Atoi(util.Env("SQL_MAX_DB_CONN", "20"))
 	if err != nil {

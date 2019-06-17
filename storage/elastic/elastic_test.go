@@ -1,7 +1,21 @@
 package elastic_test
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/semirm-dev/go-common/storage/elastic"
+	"github.com/semirm-dev/go-common/util"
+)
 
 func TestNewConfig(t *testing.T) {
-	t.Skip("missing implementation")
+	expected := &elastic.Config{
+		Host: util.Env("ELASTIC_HOST", "127.0.0.1"),
+		Port: util.Env("ELASTIC_PORT", "9200"),
+	}
+
+	config := elastic.NewConfig()
+
+	assert.Equal(t, expected, config)
 }
