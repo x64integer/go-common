@@ -1,11 +1,11 @@
-package password_test
+package crypto_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/semirm-dev/go-common/password"
+	"github.com/semirm-dev/go-common/crypto"
 )
 
 var (
@@ -14,7 +14,7 @@ var (
 )
 
 func TestNewArgon2(t *testing.T) {
-	expected := &password.Argon2{
+	expected := &crypto.Argon2{
 		Memory:  64 * 1024,
 		Time:    3,
 		Threads: 2,
@@ -22,13 +22,13 @@ func TestNewArgon2(t *testing.T) {
 		KeyLen:  32,
 	}
 
-	argon := password.NewArgon2()
+	argon := crypto.NewArgon2()
 
 	assert.Equal(t, expected, argon)
 }
 
 func TestArgon2Hash(t *testing.T) {
-	argon := password.NewArgon2()
+	argon := crypto.NewArgon2()
 
 	argon.Plain = plainArgon
 
@@ -42,7 +42,7 @@ func TestArgon2Hash(t *testing.T) {
 }
 
 func TestArgon2Validate(t *testing.T) {
-	argon := password.NewArgon2()
+	argon := crypto.NewArgon2()
 
 	argon.Plain = plainArgon
 	argon.Hashed = hashedArgon
@@ -53,11 +53,11 @@ func TestArgon2Validate(t *testing.T) {
 }
 
 func TestArgon2HashPlainMissing(t *testing.T) {
-	argon := password.NewArgon2()
+	argon := crypto.NewArgon2()
 
 	argon.Plain = ""
 
 	err := argon.Hash()
 
-	assert.Equal(t, password.ErrMissingPlainArgon, err)
+	assert.Equal(t, crypto.ErrMissingPlain, err)
 }

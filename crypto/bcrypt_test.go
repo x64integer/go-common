@@ -1,9 +1,9 @@
-package password_test
+package crypto_test
 
 import (
 	"testing"
 
-	"github.com/semirm-dev/go-common/password"
+	"github.com/semirm-dev/go-common/crypto"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -14,17 +14,17 @@ var (
 )
 
 func TestNewBCrypt(t *testing.T) {
-	expected := &password.BCrypt{
+	expected := &crypto.BCrypt{
 		Cost: bcrypt.DefaultCost,
 	}
 
-	bCrypt := password.NewBCrypt()
+	bCrypt := crypto.NewBCrypt()
 
 	assert.Equal(t, expected, bCrypt)
 }
 
 func TestBCryptHash(t *testing.T) {
-	bCrypt := password.NewBCrypt()
+	bCrypt := crypto.NewBCrypt()
 
 	bCrypt.Plain = plainBCrypt
 
@@ -35,7 +35,7 @@ func TestBCryptHash(t *testing.T) {
 }
 
 func TestBCryptValidate(t *testing.T) {
-	bCrypt := password.NewBCrypt()
+	bCrypt := crypto.NewBCrypt()
 
 	bCrypt.Plain = plainBCrypt
 	bCrypt.Hashed = hashedBCrypt
@@ -46,11 +46,11 @@ func TestBCryptValidate(t *testing.T) {
 }
 
 func TestBCryptHashPlainMissing(t *testing.T) {
-	bCrypt := password.NewBCrypt()
+	bCrypt := crypto.NewBCrypt()
 
 	bCrypt.Plain = ""
 
 	err := bCrypt.Hash()
 
-	assert.Equal(t, password.ErrMissingPlainBCrypt, err)
+	assert.Equal(t, crypto.ErrMissingPlain, err)
 }

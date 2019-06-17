@@ -1,4 +1,4 @@
-package password
+package crypto
 
 import (
 	"crypto/subtle"
@@ -9,11 +9,6 @@ import (
 	"strings"
 
 	"golang.org/x/crypto/argon2"
-)
-
-var (
-	// ErrMissingPlainArgon error
-	ErrMissingPlainArgon = errors.New("missing Plain property")
 )
 
 // Credits to: https://www.alexedwards.net/blog/how-to-hash-and-verify-passwords-with-argon2-in-go
@@ -45,7 +40,7 @@ func NewArgon2() *Argon2 {
 // Hash argon.Plain
 func (argon *Argon2) Hash() error {
 	if argon.Plain == "" {
-		return ErrMissingPlainArgon
+		return ErrMissingPlain
 	}
 
 	salt, err := GenerateSalt(argon.SaltLen)

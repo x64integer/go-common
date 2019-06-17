@@ -8,6 +8,9 @@ import (
 // ErrMissingCrypter error
 var ErrMissingCrypter = errors.New("missing Crypter implementation")
 
+// ErrMissingPlain error
+var ErrMissingPlain = errors.New("missing Plain property")
+
 // Crypter for encryption and decryption
 type Crypter interface {
 	// Encrypt returns original encrypted value, hex, base64 and error

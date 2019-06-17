@@ -1,9 +1,9 @@
-package password_test
+package crypto_test
 
 import (
 	"testing"
 
-	"github.com/semirm-dev/go-common/password"
+	"github.com/semirm-dev/go-common/crypto"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,7 +13,7 @@ var (
 )
 
 func TestNewSCrypt(t *testing.T) {
-	expected := &password.SCrypt{
+	expected := &crypto.SCrypt{
 		N:       32768,
 		R:       8,
 		P:       1,
@@ -21,13 +21,13 @@ func TestNewSCrypt(t *testing.T) {
 		SaltLen: 32,
 	}
 
-	sCrypt := password.NewSCrypt()
+	sCrypt := crypto.NewSCrypt()
 
 	assert.Equal(t, expected, sCrypt)
 }
 
 func TestSCryptHash(t *testing.T) {
-	sCrypt := password.NewSCrypt()
+	sCrypt := crypto.NewSCrypt()
 
 	sCrypt.Plain = plainSCrypt
 
@@ -39,7 +39,7 @@ func TestSCryptHash(t *testing.T) {
 }
 
 func TestSCryptValidate(t *testing.T) {
-	sCrypt := password.NewSCrypt()
+	sCrypt := crypto.NewSCrypt()
 
 	sCrypt.Plain = plainSCrypt
 	sCrypt.Hashed = hashedSCrypt
@@ -50,11 +50,11 @@ func TestSCryptValidate(t *testing.T) {
 }
 
 func TestSCryptHashPlainMissing(t *testing.T) {
-	sCrypt := password.NewSCrypt()
+	sCrypt := crypto.NewSCrypt()
 
 	sCrypt.Plain = ""
 
 	err := sCrypt.Hash()
 
-	assert.Equal(t, password.ErrMissingPlainScrypt, err)
+	assert.Equal(t, crypto.ErrMissingPlain, err)
 }

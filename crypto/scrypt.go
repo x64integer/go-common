@@ -1,4 +1,4 @@
-package password
+package crypto
 
 import (
 	"crypto/subtle"
@@ -9,11 +9,6 @@ import (
 	"strings"
 
 	"golang.org/x/crypto/scrypt"
-)
-
-var (
-	// ErrMissingPlainScrypt error
-	ErrMissingPlainScrypt = errors.New("missing Plain property")
 )
 
 // Credits to: https://github.com/elithrar/simple-scrypt/blob/master/scrypt.go
@@ -45,7 +40,7 @@ func NewSCrypt() *SCrypt {
 // Hash sCrypt.Plain
 func (sCrypt *SCrypt) Hash() error {
 	if sCrypt.Plain == "" {
-		return ErrMissingPlainScrypt
+		return ErrMissingPlain
 	}
 
 	salt, err := GenerateSalt(sCrypt.SaltLen)
