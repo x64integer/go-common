@@ -4,9 +4,9 @@
 * Websockets
 
 ### Common wrappers
-* Crypto (GCM and CBC)
+* GCM and CBC encryption/decryption
+* Argon2, SCrypt, BCrypt ashing
 * API http server
-* Password hashing
 * JWT
 * Mail client
 * Env helper
