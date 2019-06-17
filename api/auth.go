@@ -142,7 +142,13 @@ func (auth *Auth) Middleware(next http.HandlerFunc) http.Handler {
 
 // Extract authentication claims from request
 func (auth *Auth) Extract(r *http.Request) (int, string, string, error) {
-	token := r.Header.Get("auth")
+	reqToken := strings.Split(r.Header.Get("Authorization"), "Bearer")
+
+	if len(reqToken) != 2 {
+		return 0, "", "", errors.New("invalid token format")
+	}
+
+	token := reqToken[1]
 
 	if strings.TrimSpace(token) == "" {
 		return 0, "", "", errors.New(fmt.Sprint("missing token field"))
