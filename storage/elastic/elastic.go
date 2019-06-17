@@ -109,7 +109,9 @@ func (conn *Connection) SearchByTerm(ctx context.Context, index string, t string
 		searchService.Query(elastic.NewMultiMatchQuery(searchEntity.Term, searchEntity.Fields...).Type("phrase_prefix"))
 	}
 
-	// searchService.Sort(searchEntity.Sort, searchEntity.SortOrder)
+	if searchEntity.Sort != "" {
+		searchService.Sort(searchEntity.Sort+".keyword", searchEntity.SortOrder)
+	}
 
 	searchResult, err := searchService.Do(ctx)
 	if err != nil {
