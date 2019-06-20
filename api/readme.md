@@ -16,10 +16,10 @@ auth := &_api.Auth{
     Token:                 gateway.Token,
     CacheClient:           gateway.Storage.Cache,
     UserAccountRepository: gateway.UserAccountRepository,
-    // RequireConfirmation:   true,
+    ServiceURL:            "localhost:8080",
+    RequireConfirmation:   true,
 }
 
-auth.ServiceURL = gateway.Config.Host + ":" + gateway.Config.Port
 auth.Apply(router)
 
 // define routes
@@ -28,8 +28,8 @@ router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 }, "GET")
 
 router.Listen(&_api.Config{
-    Host: gateway.Config.Host,
-    Port: gateway.Config.Port,
+    Host: "localhost",
+    Port: "8080",
 })
 ```
 
