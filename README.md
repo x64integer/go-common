@@ -6,7 +6,7 @@
 ### Common wrappers
 * GCM and CBC encryption/decryption
 * Argon2, SCrypt, BCrypt hashing
-* API http server
+* API HTTP Auth (/register, /login, /logout, /password/reset)
 * JWT
 * Mail client
 * Env helper

@@ -1,7 +1,6 @@
 ### Usage
 > NOTE: Auth in progress still
 
-* **Initialize router**
 ```
 // setup storage cache client, needed for Auth
 st := storage.DefaultContainer(storage.CacheClient)
