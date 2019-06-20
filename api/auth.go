@@ -49,7 +49,7 @@ type Auth struct {
 	LoginPath               string
 	LogoutPath              string
 	confirmRegistrationPath string
-	serviceURL              string
+	ServiceURL              string
 
 	// optional
 	PasswordResetRequestPath string
@@ -77,8 +77,8 @@ type entityField struct {
 	authTable string
 }
 
-// apply will setup auth (register, login, logout routes, validate requirements for Auth)
-func (auth *Auth) apply(handler Handler) {
+// Apply will setup auth (register, login, logout routes, validate requirements for Auth)
+func (auth *Auth) Apply(router Router) {
 	if auth.Token == nil || auth.CacheClient == nil {
 		logrus.Fatal("either auth.Token or auth.CacheClient (or both) is not provided")
 	}
@@ -86,16 +86,16 @@ func (auth *Auth) apply(handler Handler) {
 	auth.defaults()
 
 	if auth.UserAccountRepository != nil {
-		handler.HandleFunc(auth.RegisterPath, auth.register, "POST")
-		handler.HandleFunc(auth.LoginPath, auth.login, "POST")
-		handler.Handle(auth.LogoutPath, auth.MiddlewareFunc(auth.logout), "GET")
+		router.HandleFunc(auth.RegisterPath, auth.register, "POST")
+		router.HandleFunc(auth.LoginPath, auth.login, "POST")
+		router.Handle(auth.LogoutPath, auth.MiddlewareFunc(auth.logout), "GET")
 
 		if auth.RequireConfirmation {
 			auth.mailer = &mail.Client{
 				Sender: mail.DefaultSMTP(),
 			}
 
-			handler.HandleFunc(auth.confirmRegistrationPath, auth.confirmRegistration, "GET")
+			router.HandleFunc(auth.confirmRegistrationPath, auth.confirmRegistration, "GET")
 		}
 
 		logrus.Infof(
@@ -108,9 +108,9 @@ func (auth *Auth) apply(handler Handler) {
 	}
 
 	if auth.PasswordResetRepository != nil {
-		handler.HandleFunc(auth.PasswordResetRequestPath, auth.createResetToken, "POST")
-		handler.HandleFunc(auth.passwordResetFormPath, auth.passwordResetForm, "GET")
-		handler.HandleFunc(auth.PasswordResetPath, auth.updatePassword, "POST")
+		router.HandleFunc(auth.PasswordResetRequestPath, auth.createResetToken, "POST")
+		router.HandleFunc(auth.passwordResetFormPath, auth.passwordResetForm, "GET")
+		router.HandleFunc(auth.PasswordResetPath, auth.updatePassword, "POST")
 
 		logrus.Infof(
 			"password reset routes: token request -> %v, reset form -> %v, update password -> %v",
@@ -156,7 +156,7 @@ func (auth *Auth) Extract(r *http.Request) (int, string, string, error) {
 
 	claims, valid := auth.Token.ValidateAndExtract(token)
 	if claims == nil || !valid {
-		return 0, "", "", errors.New(fmt.Sprint("failed to validate and extract token: ", token))
+		return 0, "", "", errors.New(fmt.Sprint("token validation failed: ", token))
 	}
 
 	idClaim := fmt.Sprint(claims.Fields["id"])
@@ -189,7 +189,7 @@ func (auth *Auth) register(w http.ResponseWriter, r *http.Request) {
 		},
 		Mailer: auth.mailer,
 
-		ConfirmRegistrationPath: auth.serviceURL + accountConfirm,
+		ConfirmRegistrationPath: auth.ServiceURL + accountConfirm,
 	}
 
 	response := authUsecase.Register(account)

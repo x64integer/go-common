@@ -81,9 +81,7 @@ func (token *Token) valid(tokenLib *jwtLib.Token, claims *Claims) bool {
 	if tokenLib != nil {
 		_, claimsOk := tokenLib.Claims.(jwtLib.Claims)
 
-		if claimsOk && tokenLib.Valid && claims.ExpiresAt > time.Now().Unix() {
-			return true
-		}
+		return claimsOk && tokenLib.Valid && claims.ExpiresAt > time.Now().Unix()
 	}
 
 	return false

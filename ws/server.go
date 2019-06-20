@@ -4,9 +4,9 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/semirm-dev/go-common/api"
-
+	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+	"github.com/semirm-dev/go-common/api"
 )
 
 var upgrader = websocket.Upgrader{
@@ -28,12 +28,9 @@ func (server *Server) Run(done chan bool) {
 		log.Fatalln("nil Config struct for websocket server -> make sure valid Config is accessible to websocket server")
 	}
 
-	r := api.NewRouter(&api.Config{
-		Host: server.Config.Host,
-		Port: server.Config.Port,
-	})
+	router := &api.MuxRouterAdapter{Router: mux.NewRouter()}
 
-	r.HandleFunc(server.Config.Endpoint, func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc(server.Config.Endpoint, func(w http.ResponseWriter, r *http.Request) {
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			w.Write([]byte("failed to setup websocket upgrader"))
@@ -50,7 +47,10 @@ func (server *Server) Run(done chan bool) {
 		go ch.read()
 	})
 
-	go r.Listen()
+	go router.Listen(&api.Config{
+		Host: server.Config.Host,
+		Port: server.Config.Port,
+	})
 
 	<-done
 

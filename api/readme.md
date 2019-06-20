@@ -9,30 +9,28 @@ st := storage.DefaultContainer(storage.CacheClient)
 st.Connect()
 
 // create router
-r := api.NewRouter(&api.Config{
-    Host:        "localhost",
-    Port:        "8080",
-    
-    // optionally, setup authentication
-    Auth: &api.Auth{
-        Token: &jwt.Token{
-            Secret: []byte(util.Env("JWT_SECRET_KEY", "some-random-string-123")),
-        },
-        CacheClient:        st.Cache,
-        UserAccountRepository: &my.UserAccountRepositoryImpl{},
-        RequireConfirmation:   true,
-    },
-})
+router := &_api.MuxRouterAdapter{Router: mux.NewRouter()}
+// router := &_api.IrisRouterAdapter{Application: iris.Default()}
+
+auth := &_api.Auth{
+    Token:                 gateway.Token,
+    CacheClient:           gateway.Storage.Cache,
+    UserAccountRepository: gateway.UserAccountRepository,
+    // RequireConfirmation:   true,
+}
+
+auth.ServiceURL = gateway.Config.Host + ":" + gateway.Config.Port
+auth.Apply(router)
 
 // define routes
-r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
     w.Write([]byte("Spotted Gateway :)"))
 }, "GET")
-```
 
-* **Start http server**
-```
-r.Listen()
+router.Listen(&_api.Config{
+    Host: gateway.Config.Host,
+    Port: gateway.Config.Port,
+})
 ```
 
 Example: https://github.com/semirm-dev/spotted-gateway/blob/master/api/gateway.go
