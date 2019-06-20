@@ -12,9 +12,11 @@ router := &_api.MuxRouterAdapter{Router: mux.NewRouter()}
 // router := &_api.IrisRouterAdapter{Application: iris.Default()}
 
 auth := &_api.Auth{
-    Token:                 gateway.Token,
-    CacheClient:           gateway.Storage.Cache,
-    UserAccountRepository: gateway.UserAccountRepository,
+    Token: &jwt.Token{
+        Secret: []byte("my-random-string-123"),
+    },
+    CacheClient:           st.Cache,
+    UserAccountRepository: &my.UserAccountRepositoryImpl{},
     ServiceURL:            "localhost:8080",
     RequireConfirmation:   true,
 }
@@ -23,7 +25,7 @@ auth.Apply(router)
 
 // define routes
 router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-    w.Write([]byte("Spotted Gateway :)"))
+    w.Write([]byte("Home :)"))
 }, "GET")
 
 router.Listen(&_api.Config{
