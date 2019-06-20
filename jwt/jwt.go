@@ -69,11 +69,8 @@ func (token *Token) parse(tokenStr string, claims *Claims) (*jwtLib.Token, error
 
 		return token.Secret, nil
 	})
-	if err != nil {
-		return nil, err
-	}
 
-	return tokenLib, nil
+	return tokenLib, err
 }
 
 // valid is helper function to validate jwt
