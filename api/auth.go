@@ -148,9 +148,9 @@ func (auth *Auth) Extract(r *http.Request) (int, string, string, error) {
 		return 0, "", "", errors.New("invalid token format")
 	}
 
-	token := reqToken[1]
+	token := strings.TrimSpace(reqToken[1])
 
-	if strings.TrimSpace(token) == "" {
+	if token == "" {
 		return 0, "", "", errors.New(fmt.Sprint("missing token field"))
 	}
 
