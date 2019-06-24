@@ -2,6 +2,7 @@ package sql
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"strconv"
 	"strings"
@@ -14,6 +15,8 @@ const (
 	PostgresDriver = "postgres"
 	// MySQLDriver ...
 	MySQLDriver = "mysql"
+	// MSSQLDriver ...
+	MSSQLDriver = "mssql"
 )
 
 // Connection for SQL
@@ -99,9 +102,32 @@ func (sqlConn *Connection) dsn() string {
 
 	switch driver {
 	case PostgresDriver:
-		connString = "user=" + sqlConn.Config.User + " password=" + sqlConn.Config.Password + " dbname=" + sqlConn.Config.Name + " sslmode=" + sqlConn.Config.SSLMode
+		connString = fmt.Sprintf(
+			"user=%s password=%s dbname=%s sslmode=%s",
+			sqlConn.Config.User,
+			sqlConn.Config.Password,
+			sqlConn.Config.Name,
+			sqlConn.Config.SSLMode,
+		)
 	case MySQLDriver:
-		connString = sqlConn.Config.User + ":" + sqlConn.Config.Password + "@tcp(" + sqlConn.Config.Host + ":" + sqlConn.Port + ")" + "/" + sqlConn.Config.Name
+		connString = fmt.Sprintf(
+			"%s:%s@tcp(%s:%s)/%s",
+			sqlConn.Config.User,
+			sqlConn.Config.Password,
+			sqlConn.Config.Host,
+			sqlConn.Config.Port,
+			sqlConn.Config.Name,
+		)
+	case MSSQLDriver:
+		connString = fmt.Sprintf(
+			"server=%s;user id=%s;password=%s;port=%s;database=%s;",
+			sqlConn.Config.Host,
+			sqlConn.Config.User,
+			sqlConn.Config.Password,
+			sqlConn.Config.Port,
+			sqlConn.Config.Name,
+		)
+
 	default:
 		log.Fatalln("no such SQL driver: " + driver)
 	}
