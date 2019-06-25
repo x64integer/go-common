@@ -22,6 +22,7 @@ import (
 type Service struct {
 	*Config
 	api.Router
+	*api.Auth
 	*jwt.Token
 	Cache cache.Service
 
@@ -66,6 +67,8 @@ func (service *Service) Initialize() {
 				router.Handle(endpoint.URL, auth.Middleware(service.uploadFunc(endpoint.Uploader, endpoint.OnPreExecute, endpoint.OnFinished)), "POST")
 
 				auth.Apply(router)
+
+				service.Auth = auth
 			} else {
 				router.HandleFunc(endpoint.URL, service.uploadFunc(endpoint.Uploader, endpoint.OnPreExecute, endpoint.OnFinished), "POST")
 			}
