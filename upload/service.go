@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gorilla/mux"
+
 	"github.com/sirupsen/logrus"
 
 	"github.com/semirm-dev/go-common/storage/cache"
@@ -19,7 +21,7 @@ import (
 // Service for uploader
 type Service struct {
 	*Config
-	*api.Router
+	api.Router
 	*jwt.Token
 	Cache cache.Service
 
@@ -43,10 +45,7 @@ type Endpoint struct {
 
 // Initialize Service
 func (service *Service) Initialize() {
-	r := api.NewRouter(&api.Config{
-		Host: service.Config.Host,
-		Port: service.Config.Port,
-	})
+	router := &api.MuxRouterAdapter{Router: mux.NewRouter()}
 
 	if len(service.Endpoints) > 0 {
 		for _, endpoint := range service.Endpoints {
@@ -59,24 +58,29 @@ func (service *Service) Initialize() {
 			}
 
 			if endpoint.UseAuthMiddleware {
-				r.Auth = &api.Auth{
+				auth := &api.Auth{
 					Token:       service.Token,
 					CacheClient: service.Cache,
 				}
 
-				r.Handle(endpoint.URL, r.Auth.Middleware(service.uploadFunc(endpoint.Uploader, endpoint.OnPreExecute, endpoint.OnFinished)), "POST")
+				router.Handle(endpoint.URL, auth.Middleware(service.uploadFunc(endpoint.Uploader, endpoint.OnPreExecute, endpoint.OnFinished)), "POST")
+
+				auth.Apply(router)
 			} else {
-				r.HandleFunc(endpoint.URL, service.uploadFunc(endpoint.Uploader, endpoint.OnPreExecute, endpoint.OnFinished), "POST")
+				router.HandleFunc(endpoint.URL, service.uploadFunc(endpoint.Uploader, endpoint.OnPreExecute, endpoint.OnFinished), "POST")
 			}
 		}
 	}
 
-	service.Router = r
+	service.Router = router
 }
 
 // Listen and serve routes
 func (service *Service) Listen() {
-	service.Router.Listen()
+	service.Router.Listen(&api.Config{
+		Host: service.Config.Host,
+		Port: service.Config.Port,
+	})
 }
 
 // upload API endpoint will handle file upload
