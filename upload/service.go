@@ -3,7 +3,6 @@ package upload
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"sync"
 	"time"
@@ -122,19 +121,8 @@ func (service *Service) uploadFunc(
 				continue
 			}
 
-			fileBytes, err := ioutil.ReadAll(file)
-			if err != nil {
-				response.Failed = append(response.Failed, &Failed{
-					File:    handler.Filename,
-					Message: "failed to read file bytes",
-				})
-
-				continue
-			}
-			file.Close()
-
 			upload.Add(1)
-			uploader.Upload(fileBytes, handler.Filename, response, &upload)
+			uploader.Upload(file, handler.Filename, response, &upload)
 		}
 
 		upload.Wait()
