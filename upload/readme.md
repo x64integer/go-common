@@ -25,8 +25,9 @@ topicUploadEndpoint := &upload.Endpoint{
     Uploader: &upload.Uploader{
         Destination:       "./uploads/topic",
         FilePrefix:        "topic_",
-        FormFile:          "topicUpload",
-        FileSize:          32 << 20, // MB
+        MultipartForm:     "topicUpload",
+        FileSize:          1 << 20,  // MB
+		MaxMemory:         32 << 20, // MB
         AllowedExtensions: []string{".jpg", ".png", ".bmp", ".gif"},
     },
     OnPreExecute: func(w http.ResponseWriter, r *http.Request) ([]byte, bool) {

@@ -105,7 +105,7 @@ func (service *Service) uploadFunc(
 			Failed:   make([]*Failed, 0),
 		}
 
-		r.ParseMultipartForm(uploader.FileSize)
+		r.ParseMultipartForm(uploader.MaxMemory)
 
 		if r.MultipartForm == nil {
 			logrus.Error("no files provided")
@@ -114,7 +114,7 @@ func (service *Service) uploadFunc(
 
 		var upload sync.WaitGroup
 
-		for _, handler := range r.MultipartForm.File[uploader.FormFile] {
+		for _, handler := range r.MultipartForm.File[uploader.MultipartForm] {
 			file, err := handler.Open()
 			if err != nil {
 				logrus.Error("unexpected error while opening file: ", err)

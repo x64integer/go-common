@@ -18,8 +18,9 @@ const extBytesLen = 512
 type Uploader struct {
 	Destination                string
 	FilePrefix                 string
-	FormFile                   string
-	FileSize                   int64
+	MultipartForm              string
+	MaxMemory                  int64
+	FileSize                   int
 	AllowNonMimeTypeExtensions bool
 	AllowedExtensions          []string
 	L                          sync.Mutex
@@ -76,6 +77,15 @@ func (uploader *Uploader) Upload(reader io.Reader, fileName string, response *Re
 		}
 
 		size := float32(len(fileBytes)) / 1024
+
+		if len(fileBytes) > uploader.FileSize {
+			response.Failed = append(response.Failed, &Failed{
+				File:    fileName,
+				Message: fmt.Sprintf("file size exceeds limit by %d bytes, len[%d], maxLen[%d]", len(fileBytes)-uploader.FileSize, len(fileBytes), uploader.FileSize),
+			})
+
+			return
+		}
 
 		if len(fileBytes) < extBytesLen {
 			response.Failed = append(response.Failed, &Failed{
