@@ -2,9 +2,7 @@ package upload
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -100,11 +98,6 @@ func (service *Service) uploadFunc(
 			return
 		}
 
-		response := &Response{
-			Uploaded: make([]*Uploaded, 0),
-			Failed:   make([]*Failed, 0),
-		}
-
 		r.ParseMultipartForm(uploader.MaxMemory)
 
 		if r.MultipartForm == nil {
@@ -112,7 +105,10 @@ func (service *Service) uploadFunc(
 			return
 		}
 
-		var upload sync.WaitGroup
+		response := &Response{
+			Uploaded: make([]*Uploaded, 0),
+			Failed:   make([]*Failed, 0),
+		}
 
 		for _, handler := range r.MultipartForm.File[uploader.MultipartForm] {
 			file, err := handler.Open()
@@ -121,11 +117,15 @@ func (service *Service) uploadFunc(
 				continue
 			}
 
-			upload.Add(1)
-			uploader.Upload(file, handler.Filename, response, &upload)
+			uploaded, failed := uploader.Upload(file, handler.Filename)
+			select {
+			case u := <-uploaded:
+				response.TotalSize += u.Size
+				response.Uploaded = append(response.Uploaded, u)
+			case f := <-failed:
+				response.Failed = append(response.Failed, f)
+			}
 		}
-
-		upload.Wait()
 
 		finishTime := time.Now()
 		logrus.Infof(
@@ -135,8 +135,6 @@ func (service *Service) uploadFunc(
 			finishTime.Sub(startTime),
 			response.TotalSize,
 		)
-
-		response.TotalTime = fmt.Sprint(finishTime.Sub(startTime))
 
 		onFinished(response, w, r)
 	}

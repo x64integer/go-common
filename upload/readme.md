@@ -81,3 +81,34 @@ service.Initialize()
 
 service.Listen()
 ```
+
+
+### Standalone upload
+
+```
+// initialize *Uploader
+uploader := &upload.Uploader{
+    Destination:       "./uploads/topic",
+    FilePrefix:        "topic_",
+    FileSize:          2 << 20,  // MB
+    AllowedExtensions: []string{".jpg", ".png", ".bmp", ".gif"},
+}
+
+response := &upload.Response{
+    Uploaded: make([]*upload.Uploaded, 0),
+    Failed:   make([]*upload.Failed, 0),
+}
+
+// upload file with content from io.Reader
+uploaded, failed := uploader.Upload(myReader, "myFileName.txt")
+
+// read data from uploaded and failed channels
+select {
+case u := <-uploaded:
+    response.Uploaded = append(response.Uploaded, u)
+case f := <-failed:
+    response.Failed = append(response.Failed, f)
+}
+
+// do something with *Response
+```

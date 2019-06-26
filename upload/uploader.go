@@ -28,16 +28,16 @@ type Uploader struct {
 
 // Response for file uploads
 type Response struct {
-	TotalSize float32     `json:"-"`
-	TotalTime string      `json:"-"`
 	Uploaded  []*Uploaded `json:"uploaded"`
 	Failed    []*Failed   `json:"failed"`
+	TotalSize int         `json:"-"`
+	TotalTime string      `json:"-"`
 }
 
 // Uploaded contains uploaded file infomration
 type Uploaded struct {
 	File string `json:"file"`
-	Size string `json:"size"`
+	Size int    `json:"size"`
 	Time string `json:"time"`
 }
 
@@ -48,69 +48,72 @@ type Failed struct {
 }
 
 // Upload file
-func (uploader *Uploader) Upload(reader io.Reader, fileName string, response *Response, upload *sync.WaitGroup) {
+func (uploader *Uploader) Upload(reader io.Reader, fileName string) (chan *Uploaded, chan *Failed) {
+	uploaded := make(chan *Uploaded)
+	failed := make(chan *Failed)
+
 	go func() {
 		uploader.L.Lock()
-		defer upload.Done()
 
-		defer uploader.L.Unlock()
+		defer func() {
+			uploader.L.Unlock()
+
+			close(uploaded)
+			close(failed)
+		}()
 
 		startTime := time.Now()
 
 		if err := createPathIfNotExists(uploader.Destination); err != nil {
-			response.Failed = append(response.Failed, &Failed{
+			failed <- &Failed{
 				File:    fileName,
-				Message: err.Error(),
-			})
-
+				Message: "failed to create destination path: " + uploader.Destination,
+			}
 			return
 		}
 
 		fileBytes, err := ioutil.ReadAll(reader)
 		if err != nil {
-			response.Failed = append(response.Failed, &Failed{
+			failed <- &Failed{
 				File:    fileName,
-				Message: err.Error(),
-			})
-
+				Message: "failed to read from file reader: " + err.Error(),
+			}
 			return
 		}
 
-		size := float32(len(fileBytes)) / 1024
+		size := len(fileBytes) / 1024
 
 		if len(fileBytes) > uploader.FileSize {
-			response.Failed = append(response.Failed, &Failed{
+			failed <- &Failed{
 				File:    fileName,
 				Message: fmt.Sprintf("file size exceeds limit by %d bytes, len[%d], maxLen[%d]", len(fileBytes)-uploader.FileSize, len(fileBytes), uploader.FileSize),
-			})
-
+			}
 			return
 		}
 
 		if len(fileBytes) < extBytesLen {
-			response.Failed = append(response.Failed, &Failed{
+			failed <- &Failed{
 				File:    fileName,
 				Message: fmt.Sprintf("not enough bytes to read file extension, bytes[%d]", len(fileBytes)),
-			})
-
+			}
 			return
 		}
 
 		ext, err := fileExtension(fileBytes[:extBytesLen], fileName)
 		if err != nil {
-			response.Failed = append(response.Failed, &Failed{
+			failed <- &Failed{
 				File:    fileName,
 				Message: "failed to get file extension",
-			})
+			}
 
 			return
 		}
 
 		if !uploader.allowedExtension(ext) {
-			response.Failed = append(response.Failed, &Failed{
+			failed <- &Failed{
 				File:    fileName,
 				Message: "file extension not allowed: " + ext,
-			})
+			}
 
 			return
 		}
@@ -119,35 +122,27 @@ func (uploader *Uploader) Upload(reader io.Reader, fileName string, response *Re
 
 		name := uploader.FilePrefix + "*-" + fileName + ext
 
-		// switch ext {
-		// case ".gif":
-		// 	time.Sleep(7 * time.Second)
-		// case ".jpg":
-		// 	time.Sleep(2 * time.Second)
-		// case ".png":
-		// 	time.Sleep(4 * time.Second)
-		// }
+		// performLongUploadTest(ext) // for testing only
 
 		uploadedFile, err := uploader.writeFile(fileBytes, uploader.Destination, name)
 		if err != nil {
-			response.Failed = append(response.Failed, &Failed{
+			failed <- &Failed{
 				File:    fileName,
 				Message: "write file failed: " + name,
-			})
-
+			}
 			return
 		}
 
 		finishTime := time.Now()
 
-		response.Uploaded = append(response.Uploaded, &Uploaded{
+		uploaded <- &Uploaded{
 			File: uploadedFile.Name(),
-			Size: fmt.Sprint(size),
+			Size: size,
 			Time: fmt.Sprint(finishTime.Sub(startTime)),
-		})
-
-		response.TotalSize += size
+		}
 	}()
+
+	return uploaded, failed
 }
 
 // writeFile will create file in path and write content to the file
@@ -220,4 +215,15 @@ func trimExtension(file string) string {
 	_file = _file[:len(_file)-1]
 
 	return strings.Join(_file, ".")
+}
+
+func performLongUploadTest(ext string) {
+	switch ext {
+	case ".gif":
+		time.Sleep(7 * time.Second)
+	case ".jpg":
+		time.Sleep(2 * time.Second)
+	case ".png":
+		time.Sleep(4 * time.Second)
+	}
 }
