@@ -3,6 +3,7 @@ package upload
 import (
 	"encoding/json"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -118,6 +119,8 @@ func (service *Service) uploadFunc(
 			Failed:   make([]*Failed, 0),
 		}
 
+		var uploadProgress sync.WaitGroup
+
 		for _, handler := range r.MultipartForm.File[uploader.MultipartForm] {
 			file, err := handler.Open()
 			if err != nil {
@@ -125,15 +128,23 @@ func (service *Service) uploadFunc(
 				continue
 			}
 
+			uploadProgress.Add(1)
 			uploaded, failed := uploader.Upload(file, handler.Filename)
-			select {
-			case u := <-uploaded:
-				response.TotalSize += u.Size
-				response.Uploaded = append(response.Uploaded, u)
-			case f := <-failed:
-				response.Failed = append(response.Failed, f)
-			}
+
+			go func() {
+				select {
+				case u := <-uploaded:
+					response.TotalSize += u.Size
+					response.Uploaded = append(response.Uploaded, u)
+				case f := <-failed:
+					response.Failed = append(response.Failed, f)
+				}
+
+				uploadProgress.Done()
+			}()
 		}
+
+		uploadProgress.Wait()
 
 		finishTime := time.Now()
 		logrus.Infof(

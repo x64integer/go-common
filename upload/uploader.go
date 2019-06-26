@@ -52,11 +52,7 @@ func (uploader *Uploader) Upload(reader io.Reader, fileName string) (<-chan *Upl
 	failed := make(chan *Failed)
 
 	go func() {
-		uploader.L.Lock()
-
 		defer func() {
-			uploader.L.Unlock()
-
 			close(uploaded)
 			close(failed)
 		}()
@@ -121,7 +117,7 @@ func (uploader *Uploader) Upload(reader io.Reader, fileName string) (<-chan *Upl
 
 		name := uploader.FilePrefix + "*-" + fileName + ext
 
-		// performLongUploadTest(ext) // for testing only
+		performLongUploadTest(ext) // for testing only
 
 		uploadedFile, err := uploader.writeFile(fileBytes, uploader.Destination, name)
 		if err != nil {
