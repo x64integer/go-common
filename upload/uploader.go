@@ -26,14 +26,6 @@ type Uploader struct {
 	L                          sync.Mutex
 }
 
-// Response for file uploads
-type Response struct {
-	Uploaded  []*Uploaded `json:"uploaded"`
-	Failed    []*Failed   `json:"failed"`
-	TotalSize int         `json:"-"`
-	TotalTime string      `json:"-"`
-}
-
 // Uploaded contains uploaded file infomration
 type Uploaded struct {
 	File string `json:"file"`

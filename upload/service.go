@@ -41,6 +41,14 @@ type Endpoint struct {
 	OnFinished   func(*Response, http.ResponseWriter, *http.Request)
 }
 
+// Response for file uploads
+type Response struct {
+	Uploaded  []*Uploaded `json:"uploaded"`
+	Failed    []*Failed   `json:"failed"`
+	TotalSize int         `json:"-"`
+	TotalTime string      `json:"-"`
+}
+
 // Initialize Service
 func (service *Service) Initialize() {
 	router := &api.MuxRouterAdapter{Router: mux.NewRouter()}
