@@ -26,20 +26,27 @@ type Uploader struct {
 	L                          sync.Mutex
 }
 
-// Uploaded contains uploaded file infomration
+// Uploaded file data
 type Uploaded struct {
 	File string `json:"file"`
 	Size int    `json:"size"`
 	Time string `json:"time"`
 }
 
-// Failed upload
+// Failed upload file data
 type Failed struct {
 	File    string `json:"file"`
 	Message string `json:"message"`
 }
 
 // Upload file
+// Upload is run in separate goroutine for better performance and is thread-safe
+// Response is passed to either *Uploaded or *Failed channels, depends if the upload was successful or not
+// Both *Uploaded and *Failed channels will be closed automatically on goroutine's return
+//
+// Destination path will be created if it doesnt exist
+// FileSize will always be checked
+// AllowedExtensions is optional
 func (uploader *Uploader) Upload(reader io.Reader, fileName string) (<-chan *Uploaded, <-chan *Failed) {
 	uploaded := make(chan *Uploaded)
 	failed := make(chan *Failed)
