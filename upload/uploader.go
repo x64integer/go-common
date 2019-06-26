@@ -48,7 +48,7 @@ type Failed struct {
 }
 
 // Upload file
-func (uploader *Uploader) Upload(reader io.Reader, fileName string) (chan *Uploaded, chan *Failed) {
+func (uploader *Uploader) Upload(reader io.Reader, fileName string) (<-chan *Uploaded, <-chan *Failed) {
 	uploaded := make(chan *Uploaded)
 	failed := make(chan *Failed)
 
