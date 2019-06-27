@@ -56,6 +56,7 @@ go func() {
 ```
 
 * **Optionally, listen for reset signal from rmq connection and restart consumer.Consume()**
+> NOTE: Move this part to core implementation
 ```
 go func(done chan bool) {
 	for {
@@ -63,8 +64,7 @@ go func(done chan bool) {
 		case s := <-consumer.ResetSignal:
 			log.Print("consumer received rmq connection reset signal: ", s)
 
-			// NOTE: if consumer fails to recreate, attempt to recreate done channel
-			// usually required if we manually close done channel -> close(done)
+			// NOTE: required if we close done channel -> close(done)
 			// done := make(chan bool)
 
 			go func() {
@@ -101,6 +101,7 @@ go publisher.ListenNotifyClose(done)
 ```
 
 * **Optionally, listen for reset signal from rmq connection and re-create rmq connection**
+> NOTE: Move this part to core implementation
 ```
 go func() {
 	for {
