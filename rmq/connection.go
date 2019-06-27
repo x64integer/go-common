@@ -20,15 +20,17 @@ var (
 
 // Connection for RMQ
 type Connection struct {
-	Config             *Config
-	Conn               *amqp.Connection
-	Channel            *amqp.Channel
-	HandleMsgs         func(msgs <-chan amqp.Delivery)
-	Headers            amqp.Table
-	ResetSignal        chan int
-	ReconnectTime      time.Duration
-	Retrying           bool
-	EnabledHealthCheck bool
+	Config                     *Config
+	Conn                       *amqp.Connection
+	Channel                    *amqp.Channel
+	HandleMsgs                 func(msgs <-chan amqp.Delivery)
+	Headers                    amqp.Table
+	ResetSignal                chan int
+	ReconnectTime              time.Duration
+	Retrying                   bool
+	EnabledHealthCheck         bool
+	HandleResetSignalConsumer  func(chan bool)
+	HandleResetSignalPublisher func(chan bool)
 }
 
 // Setup RMQ Connection
@@ -72,6 +74,14 @@ func (c *Connection) Setup() error {
 
 	if c.EnabledHealthCheck {
 		go c.healthCheck()
+	}
+
+	if c.HandleResetSignalConsumer == nil {
+		c.HandleResetSignalConsumer = c.handleResetSignalConsumer
+	}
+
+	if c.HandleResetSignalPublisher == nil {
+		c.HandleResetSignalPublisher = c.handleResetSignalPublisher
 	}
 
 	return nil
@@ -284,6 +294,49 @@ func (c *Connection) queueBind(queue string, routingKey string, exchange string,
 	return err
 }
 
+// handleResetSignalConsumer is default callback for consumer to run when reset signal occurs
+func (c *Connection) handleResetSignalConsumer(done chan bool) {
+	go func(done chan bool) {
+		for {
+			select {
+			case s := <-c.ResetSignal:
+				log.Print("consumer received rmq connection reset signal: ", s)
+
+				if done == nil {
+					done = make(chan bool)
+				}
+
+				go func() {
+					if err := c.Consume(done); err != nil {
+						log.Print("rmq failed to consume: ", err)
+						return
+					}
+				}()
+			}
+		}
+	}(done)
+
+	<-done
+}
+
+// handleResetSignalPublisher is default callback for publisher to run when reset signal occurs
+func (c *Connection) handleResetSignalPublisher(done chan bool) {
+	go func() {
+		for {
+			select {
+			case s := <-c.ResetSignal:
+				log.Print("publisher received rmq connection reset signal: ", s)
+
+				if err := c.Setup(); err != nil {
+					log.Fatal(err)
+				}
+			}
+		}
+	}()
+
+	<-done
+}
+
 // recreateConn for rmq
 func (c *Connection) recreateConn() error {
 	log.Println("trying to recreate rmq connection for host: ", c.Config.Host)
@@ -297,6 +350,7 @@ func (c *Connection) recreateConn() error {
 }
 
 // healthCheck for rmq connection
+// NOTE: still experimental
 func (c *Connection) healthCheck() {
 	for {
 		select {

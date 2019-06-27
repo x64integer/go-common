@@ -12,124 +12,89 @@
 | RMQ_ROUTING_KEY    |               |
 | RMQ_CONSUMER_TAG   |               |
 
+> TODO: Merge Consume and ConsumeWithConfig into single func
+
 ## Usage
 
 ### Consumer
 
-* **Create new rmq.Connection struct and assign valid callback for HandleMsgs**
 ```
+// config
+config := rmq.NewConfig()
+config.Exchange = "test_exchange"
+config.Queue = "test_queue"
+config.RoutingKey = "test_queue"
+
+// setup connection
 consumer := &rmq.Connection{
-    Config:     rmq.NewConfig(), // can be customized
-    HandleMsgs: func(msgs <-chan amqp.Delivery) {
-        for m := range msgs {
-            log.Print(m)
-        }
-    },
-    ResetSignal: make(chan int),
-	EnabledHealthCheck: true, // false by default
+	Config: config,
+	HandleMsgs: func(msgs <-chan amqp.Delivery) {
+		for m := range msgs {
+			log.Print(string(m.Body))
+		}
+	},
+	ResetSignal: make(chan int),
 }
-```
 
-* **Call setup func on created consumer (*this will setup conn, exchange, queue, etc...*)**
-> Optionally, call ListenNotifyClose()
-```
 if err := consumer.Setup(); err != nil {
-    return err
+	log.Fatal(err)
 }
 
+// start consumer
 done := make(chan bool)
 
+// optionally ListenNotifyClose and HandleResetSignalConsumer
 go consumer.ListenNotifyClose(done)
-```
 
-* **Call consume func on created consumer to start consuming messages**
-```
+go consumer.HandleResetSignalConsumer(done)
+
 go func() {
-    if err := consumer.Consume(done); err != nil {
-        log.Print("rmq consume error: ", err)
-    }
+	if err := consumer.Consume(done); err != nil {
+		log.Print("rmq consume error: ", err)
+	}
 }()
 
-// NOTE: close done channel to close RMQ connection
-// close(done)
 <-done
 ```
 
-* **Optionally, listen for reset signal from rmq connection and restart consumer.Consume()**
-> NOTE: Move this part to core implementation
-```
-go func(done chan bool) {
-	for {
-		select {
-		case s := <-consumer.ResetSignal:
-			log.Print("consumer received rmq connection reset signal: ", s)
-
-			// NOTE: required if we close done channel -> close(done)
-			// done := make(chan bool)
-
-			go func() {
-				if err := consumer.Consume(done); err != nil {
-					log.Print("rmq failed to consume: ", err)
-					return
-				}
-			}()
-		}
-	}
-}(done)
-```
 
 ### Publisher
 
-* **Create new rmq.Connection struct**
 ```
+// config
+config := rmq.NewConfig()
+config.Exchange = "test_exchange"
+config.Queue = "test_queue"
+config.RoutingKey = "test_queue"
+
+// setup connection
 publisher := &rmq.Connection{
-    Config:     rmq.NewConfig(), // can be customized
+	Config:      config,
 	ResetSignal: make(chan int),
 }
-```
 
-* **Call setup func on created publisher (*this will setup conn, exchange, queue, etc...*)**
-> Optionally, call ListenNotifyClose()
-```
 if err := publisher.Setup(); err != nil {
-    return err
+	log.Fatal(err)
 }
 
+// optionally ListenNotifyClose and HandleResetSignalPublisher
 done := make(chan bool)
 
 go publisher.ListenNotifyClose(done)
-```
 
-* **Optionally, listen for reset signal from rmq connection and re-create rmq connection**
-> NOTE: Move this part to core implementation
-```
-go func() {
-	for {
-		select {
-		case s := <-publisher.ResetSignal:
-			log.Print("publisher received rmq connection reset signal: ", s)
+go publisher.HandleResetSignalPublisher(done)
 
-			if err := publisher.Setup(); err != nil {
-				return err
-			}
-		}
-	}
-}()
-```
-
-* **Optionally, set rmq headers**
-```
+// optionally set headers and publish message
 publisher.WithHeaders(map[string]interface{}{
-    "header-1": "value-1",
-    "header-2": "value-2,
+	"header-1": "value-1",
+	"header-2": "value-2",
 })
-```
 
-* **Publish message like so**
-```
 if err := publisher.Publish([]byte("message")); err != nil {
-    log.Print("rmq publish error: ", err)
+	log.Print("rmq publish error: ", err)
 }
+
+<-done
 ```
 
 ### Config customization, for both Consumer and Publisher (*pay close attention to options/structs nestings*)
