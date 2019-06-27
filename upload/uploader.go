@@ -100,7 +100,6 @@ func (uploader *Uploader) Upload(reader io.Reader, fileName string) (<-chan *Upl
 				File:    fileName,
 				Message: "failed to get file extension",
 			}
-
 			return
 		}
 
@@ -109,7 +108,6 @@ func (uploader *Uploader) Upload(reader io.Reader, fileName string) (<-chan *Upl
 				File:    fileName,
 				Message: "file extension not allowed: " + ext,
 			}
-
 			return
 		}
 
@@ -117,7 +115,7 @@ func (uploader *Uploader) Upload(reader io.Reader, fileName string) (<-chan *Upl
 
 		name := uploader.FilePrefix + "*-" + fileName + ext
 
-		performLongUploadTest(ext) // for testing only
+		// performLongUploadTest(ext) // for testing only
 
 		uploadedFile, err := uploader.writeFile(fileBytes, uploader.Destination, name)
 		if err != nil {
