@@ -29,6 +29,7 @@ type Connection struct {
 	ReconnectTime              time.Duration
 	Retrying                   bool
 	EnabledHealthCheck         bool
+	SkipDefaultQueue           bool
 	HandleResetSignalConsumer  func(chan bool)
 	HandleResetSignalPublisher func(chan bool)
 }
@@ -52,20 +53,22 @@ func (c *Connection) Setup() error {
 
 	c.Channel = ch
 
-	if _, err := c.queueDeclare(c.Config.Queue, c.Config.Options.Queue); err != nil {
-		return err
-	}
+	if !c.SkipDefaultQueue {
+		if _, err := c.queueDeclare(c.Config.Queue, c.Config.Options.Queue); err != nil {
+			return err
+		}
 
-	if err := c.exchangeDeclare(c.Config.Exchange, c.Config.ExchangeKind, c.Config.Options.Exchange); err != nil {
-		return err
-	}
+		if err := c.exchangeDeclare(c.Config.Exchange, c.Config.ExchangeKind, c.Config.Options.Exchange); err != nil {
+			return err
+		}
 
-	if err := c.qos(c.Config.Options.QoS); err != nil {
-		return err
-	}
+		if err := c.qos(c.Config.Options.QoS); err != nil {
+			return err
+		}
 
-	if err := c.queueBind(c.Config.Queue, c.Config.RoutingKey, c.Config.Exchange, c.Config.Options.QueueBind); err != nil {
-		return err
+		if err := c.queueBind(c.Config.Queue, c.Config.RoutingKey, c.Config.Exchange, c.Config.Options.QueueBind); err != nil {
+			return err
+		}
 	}
 
 	if c.ReconnectTime == 0 {
@@ -82,33 +85,6 @@ func (c *Connection) Setup() error {
 
 	if c.HandleResetSignalPublisher == nil {
 		c.HandleResetSignalPublisher = c.handleResetSignalPublisher
-	}
-
-	return nil
-}
-
-// DeclareWithConfig will initialize additional queues and exchanges on existing rmq setup/channel
-func (c *Connection) DeclareWithConfig(config []*Config) error {
-	if c.Channel == nil {
-		return errors.New("c.Channel is nil, make sure valid channel is assigned to connection")
-	}
-
-	for _, conf := range config {
-		if _, err := c.queueDeclare(conf.Queue, conf.Options.Queue); err != nil {
-			return err
-		}
-
-		if err := c.exchangeDeclare(conf.Exchange, conf.ExchangeKind, conf.Options.Exchange); err != nil {
-			return err
-		}
-
-		if err := c.qos(conf.Options.QoS); err != nil {
-			return err
-		}
-
-		if err := c.queueBind(conf.Queue, conf.RoutingKey, conf.Exchange, conf.Options.QueueBind); err != nil {
-			return err
-		}
 	}
 
 	return nil
@@ -142,6 +118,33 @@ func (c *Connection) Consume(done chan bool) error {
 			return nil
 		}
 	}
+}
+
+// DeclareWithConfig will initialize additional queues and exchanges on existing rmq setup/channel
+func (c *Connection) DeclareWithConfig(config []*Config) error {
+	if c.Channel == nil {
+		return errors.New("c.Channel is nil, make sure valid channel is assigned to connection")
+	}
+
+	for _, conf := range config {
+		if _, err := c.queueDeclare(conf.Queue, conf.Options.Queue); err != nil {
+			return err
+		}
+
+		if err := c.exchangeDeclare(conf.Exchange, conf.ExchangeKind, conf.Options.Exchange); err != nil {
+			return err
+		}
+
+		if err := c.qos(conf.Options.QoS); err != nil {
+			return err
+		}
+
+		if err := c.queueBind(conf.Queue, conf.RoutingKey, conf.Exchange, conf.Options.QueueBind); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // ConsumeWithConfig will start consumer with passed config values
