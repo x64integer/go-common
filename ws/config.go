@@ -13,8 +13,10 @@ type Config struct {
 // NewConfig will initialize default configuration
 func NewConfig() *Config {
 	return &Config{
-		WSURL:    util.Env("WS_URL", ""),
-		Host:     "",
+		// client will connect to this url
+		WSURL: util.Env("WS_URL", ""),
+		// server will open connection on this endpoint
+		Host:     "localhost",
 		Port:     "8080",
 		Endpoint: "/",
 	}

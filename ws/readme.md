@@ -10,15 +10,14 @@
 
 * **Create ws.Client**
 ```
-client := &ws.Client{
-    Config:       ws.NewConfig(), // can be customized
-    EventHandler: &mHandler{},
-    // DisabledReader: true, // false by default, if set to true client will not read messages from websocket channel
-}
-```
+config := ws.NewConfig()
+config.WSURL = "ws://echo.websocket.org"
 
-* **Setup ws Client and listen for messages**
-```
+client := &ws.Client{
+	Config:       config,
+	EventHandler: &mHandler{},
+}
+
 done := make(chan bool)
 ready := make(chan bool)
 
@@ -27,14 +26,9 @@ go client.Run(done, ready)
 <-ready
 
 // ready to send messages to websocket channel
-```
-
-* **Send message to ws channel**
-```
-// text type
-client.SendText([]byte("message"))
-// binary type
-client.SendBinary([]byte("message"))
+if err := client.SendText([]byte("test message")); err != nil {
+	logrus.Fatal("failed to send message: ", err)
+}
 ```
 
 ### Server (in progress)
@@ -43,20 +37,13 @@ client.SendBinary([]byte("message"))
 * **Create ws.Server**
 ```
 config := ws.NewConfig()
-// http server configurations
 config.Endpoint = "/test"
-config.Host = "localhost"
-config.Port = "8080"
 
 server := &ws.Server{
-    Config:       config,
-    EventHandler: &mHandler{},
-    // DisabledReader: true, // false by default, if set to true client will not read messages from websocket channel
+	Config:       config,
+	EventHandler: &mHandler{},
 }
-```
 
-* **Setup ws server and listen for messages**
-```
 done := make(chan bool)
 
 go server.Run(done)
