@@ -54,7 +54,7 @@ func (server *Server) Run(done chan bool) {
 
 	<-done
 
-	log.Println("reading stopped")
+	log.Println("server stopped")
 }
 
 // SendText message to websocket channel
