@@ -11,7 +11,7 @@
 * **Create ws.Client**
 ```
 config := ws.NewConfig()
-config.WSURL = "ws://echo.websocket.org"
+config.WSURL = "ws://localhost:8080/test"
 
 client := &ws.Client{
 	Config:       config,

@@ -45,7 +45,7 @@ func (server *Server) Run(done chan bool) {
 		server.Channel = ch
 
 		go ch.read()
-	})
+	}, "GET")
 
 	go router.Listen(&api.Config{
 		Host: server.Config.Host,
