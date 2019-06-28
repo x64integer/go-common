@@ -21,7 +21,7 @@ client := &ws.Client{
 done := make(chan bool)
 ready := make(chan bool)
 
-go client.Run(done, ready)
+go client.Connect(done, ready)
 
 <-ready
 
@@ -29,6 +29,8 @@ go client.Run(done, ready)
 if err := client.SendText([]byte("test message")); err != nil {
 	logrus.Fatal("failed to send message: ", err)
 }
+
+<-done
 ```
 
 ### Server (in progress)
