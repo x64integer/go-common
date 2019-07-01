@@ -19,6 +19,8 @@ type Connection interface {
 	ReadMessage() (int, []byte, error)
 	// WriteMessage to websocket connection
 	WriteMessage(int, []byte) error
+	// Close websocket connection
+	Close() error
 }
 
 // Channel for websocket connection
@@ -44,6 +46,15 @@ func (connClosed *ConnectionClosed) Error() string {
 // read data from websocket channel
 // Concurrent safe wrapper for Connection.ReadMessage()
 func (ch *Channel) read() {
+	defer func() {
+		if err := ch.Connection.Close(); err != nil {
+			log.Println("failed to close websocket connection: ", err)
+			return
+		}
+
+		log.Println("websocket connection closed")
+	}()
+
 	log.Println("listening for messages")
 
 	for {
@@ -52,7 +63,7 @@ func (ch *Channel) read() {
 		if err != nil {
 			ch.EventHandler.OnError(err)
 
-			continue
+			break
 		}
 
 		ch.EventHandler.OnMessage(msg)

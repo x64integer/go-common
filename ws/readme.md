@@ -72,7 +72,7 @@ func (h *mHandler) OnError(err error) {
 	}
 
 	if strings.Contains(err.Error(), "closed network connection") {
-		os.Exit(1)
+		log.Println(err.Error())
 	}
 }
 ```

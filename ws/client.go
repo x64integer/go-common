@@ -23,7 +23,7 @@ func (client *Client) Connect(done chan bool, ready chan bool) {
 	conn := client.connect()
 
 	defer func() {
-		log.Println("connection closed")
+		log.Println("websocket connection closed")
 		defer conn.Close()
 	}()
 
@@ -40,7 +40,7 @@ func (client *Client) Connect(done chan bool, ready chan bool) {
 
 	ready <- true
 
-	log.Printf("\nconnected to %s\n", client.Config.WSURL)
+	log.Println("connected to: ", client.Config.WSURL)
 
 	<-done
 }
