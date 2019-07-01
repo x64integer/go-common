@@ -16,7 +16,7 @@ var upgrader = websocket.Upgrader{
 
 // Server for websocket
 type Server struct {
-	EventHandler
+	MessageHandler
 	Config   *Config
 	Channel  *Channel
 	Upgrader websocket.Upgrader
@@ -38,8 +38,8 @@ func (server *Server) Run(done chan bool) {
 		}
 
 		ch := &Channel{
-			Connection:   conn,
-			EventHandler: server.EventHandler,
+			Connection:     conn,
+			MessageHandler: server.MessageHandler,
 		}
 
 		server.Channel = ch

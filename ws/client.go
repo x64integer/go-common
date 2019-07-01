@@ -8,7 +8,7 @@ import (
 
 // Client for websocket
 type Client struct {
-	EventHandler
+	MessageHandler
 	Config         *Config
 	Channel        *Channel
 	DisabledReader bool
@@ -28,8 +28,8 @@ func (client *Client) Connect(done chan bool, ready chan bool) {
 	}()
 
 	ch := &Channel{
-		Connection:   conn,
-		EventHandler: client.EventHandler,
+		Connection:     conn,
+		MessageHandler: client.MessageHandler,
 	}
 
 	client.Channel = ch

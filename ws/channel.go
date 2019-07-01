@@ -5,12 +5,20 @@ import (
 	"sync"
 )
 
-// EventHandler for websocket connection
-type EventHandler interface {
-	// OnMessage event from websocket connection
-	OnMessage(in []byte)
-	// OnError event from websocket connection
-	OnError(err error)
+const (
+	// TextMessage type
+	TextMessage = 1
+	// BinaryMessage type
+	BinaryMessage = 2
+)
+
+// MessageHandler for websocket connection
+type MessageHandler interface {
+	// OnMessage callback
+	// func(messageType, content) is used for reply back
+	OnMessage([]byte, func(int, []byte) error)
+	// OnError callback
+	OnError(error)
 }
 
 // Connection for websocket
@@ -25,7 +33,7 @@ type Connection interface {
 
 // Channel for websocket connection
 type Channel struct {
-	EventHandler
+	MessageHandler
 	Connection
 	ReadLock sync.Mutex
 	SendLock sync.Mutex
@@ -61,12 +69,14 @@ func (ch *Channel) read() {
 		_, msg, err := ch.readMessage()
 
 		if err != nil {
-			ch.EventHandler.OnError(err)
+			ch.MessageHandler.OnError(err)
 
 			break
 		}
 
-		ch.EventHandler.OnMessage(msg)
+		ch.MessageHandler.OnMessage(msg, func(t int, b []byte) error {
+			return ch.sendMessage(t, b)
+		})
 	}
 }
 

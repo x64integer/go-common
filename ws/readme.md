@@ -11,11 +11,11 @@
 * **Create ws.Client**
 ```
 config := ws.NewConfig()
-config.WSURL = "ws://localhost:8080/test"
+config.WSURL = "ws://localhost:8080"
 
 client := &ws.Client{
-	Config:       config,
-	EventHandler: &mHandler{},
+	Config:         config,
+	MessageHandler: &mHandler{},
 }
 
 done := make(chan bool)
@@ -25,10 +25,21 @@ go client.Connect(done, ready)
 
 <-ready
 
-// ready to send messages to websocket channel
-if err := client.SendText([]byte("test message")); err != nil {
-	logrus.Fatal("failed to send message: ", err)
-}
+go func() {
+	for i := 0; i < 50000; i++ {
+		// ready to send messages to websocket channel
+		if err := client.SendText([]byte(fmt.Sprint("message: ", i))); err != nil {
+			logrus.Fatal("failed to send message: ", err)
+		}
+	}
+}()
+
+// go func() {
+// 	select {
+// 	case <-time.After(2 * time.Second):
+// 		close(done)
+// 	}
+// }()
 
 <-done
 ```
@@ -38,11 +49,12 @@ if err := client.SendText([]byte("test message")); err != nil {
 * **Create ws.Server**
 ```
 config := ws.NewConfig()
-config.Endpoint = "/test"
+
+h := &mHandler{}
 
 server := &ws.Server{
-	Config:       config,
-	EventHandler: &mHandler{},
+	Config:         config,
+	MessageHandler: h,
 }
 
 done := make(chan bool)
@@ -52,26 +64,28 @@ go server.Run(done)
 <-done
 ```
 
-* **Handler example**
+### Handler example
 ```
 // mHandler example impl
 type mHandler struct{}
 
-func (h *mHandler) OnMessage(in []byte) {
+func (h *mHandler) OnMessage(in []byte, reply func(int, []byte) error) {
 	// handle message from ws channel
-	log.Println("received: " + string(in))
+	logrus.Info("received: " + string(in))
+
+	reply(ws.TextMessage, []byte("reply from server: "+string(in)))
 }
 
 func (h *mHandler) OnError(err error) {
 	// handle error from ws channel
-	log.Println("error from ws connection: ", err)
+	logrus.Error("error from ws connection: ", err)
 
 	if connClosed, ok := err.(*ws.ConnectionClosed); ok {
-		log.Println(connClosed)
+		logrus.Error(connClosed)
 	}
 
 	if strings.Contains(err.Error(), "closed network connection") {
-		log.Println(err.Error())
+		logrus.Error(err.Error())
 	}
 }
 ```
