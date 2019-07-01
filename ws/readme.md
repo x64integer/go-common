@@ -50,11 +50,9 @@ go func() {
 ```
 config := ws.NewConfig()
 
-h := &mHandler{}
-
 server := &ws.Server{
 	Config:         config,
-	MessageHandler: h,
+	MessageHandler: &mHandler{},
 }
 
 done := make(chan bool)
