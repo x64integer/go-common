@@ -16,16 +16,11 @@ type Client struct {
 
 // Connect will create websocket Client and start listening for messages
 func (client *Client) Connect(done chan bool, ready chan bool) {
-	if client.Config == nil {
-		log.Fatalln("nil Config struct for websocket Client -> make sure valid Config is accessible to websocket Client")
+	if client.Config == nil || client.MessageHandler == nil {
+		log.Fatalln("either Config or MessageHandler is missing")
 	}
 
-	conn := client.connect()
-
-	defer func() {
-		log.Println("websocket connection closed")
-		defer conn.Close()
-	}()
+	conn := client.connection()
 
 	ch := &Channel{
 		Connection:     conn,
@@ -43,20 +38,22 @@ func (client *Client) Connect(done chan bool, ready chan bool) {
 	log.Println("connected to: ", client.Config.WSURL)
 
 	<-done
+
+	log.Println("client returned")
 }
 
 // SendText message to websocket channel
 func (client *Client) SendText(msg []byte) error {
-	return client.Channel.sendMessage(websocket.TextMessage, msg)
+	return client.Channel.sendMessage(TextMessage, msg)
 }
 
 // SendBinary message to websocket channel
 func (client *Client) SendBinary(msg []byte) error {
-	return client.Channel.sendMessage(websocket.BinaryMessage, msg)
+	return client.Channel.sendMessage(BinaryMessage, msg)
 }
 
-// connect is helper function to create gorilla websocket connection
-func (client *Client) connect() *websocket.Conn {
+// connection is helper function to create gorilla websocket connection
+func (client *Client) connection() *websocket.Conn {
 	conn, _, err := websocket.DefaultDialer.Dial(client.Config.WSURL, nil)
 	if err != nil {
 		log.Fatalln("websocket dialer failed: ", err)

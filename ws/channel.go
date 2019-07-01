@@ -3,13 +3,15 @@ package ws
 import (
 	"log"
 	"sync"
+
+	"github.com/gorilla/websocket"
 )
 
 const (
 	// TextMessage type
-	TextMessage = 1
+	TextMessage = websocket.TextMessage
 	// BinaryMessage type
-	BinaryMessage = 2
+	BinaryMessage = websocket.BinaryMessage
 )
 
 // MessageHandler for websocket connection
@@ -37,7 +39,6 @@ type Channel struct {
 	Connection
 	ReadLock sync.Mutex
 	SendLock sync.Mutex
-	Error    chan error
 }
 
 // ConnectionClosed error type
@@ -55,7 +56,7 @@ func (connClosed *ConnectionClosed) Error() string {
 // Concurrent safe wrapper for Connection.ReadMessage()
 func (ch *Channel) read() {
 	defer func() {
-		if err := ch.Connection.Close(); err != nil {
+		if err := ch.close(); err != nil {
 			log.Println("failed to close websocket connection: ", err)
 			return
 		}
@@ -96,4 +97,9 @@ func (ch *Channel) readMessage() (int, []byte, error) {
 	ch.ReadLock.Unlock()
 
 	return t, p, err
+}
+
+// close websocket connection
+func (ch *Channel) close() error {
+	return ch.Connection.Close()
 }

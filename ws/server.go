@@ -24,8 +24,8 @@ type Server struct {
 
 // Run will create websocket Server and start listening for messages
 func (server *Server) Run(done chan bool) {
-	if server.Config == nil {
-		log.Fatalln("nil Config struct for websocket server -> make sure valid Config is accessible to websocket server")
+	if server.Config == nil || server.MessageHandler == nil {
+		log.Fatalln("either Config or MessageHandler is missing")
 	}
 
 	router := &api.MuxRouterAdapter{Router: mux.NewRouter()}
@@ -54,15 +54,15 @@ func (server *Server) Run(done chan bool) {
 
 	<-done
 
-	log.Println("server stopped")
+	log.Println("server returned")
 }
 
 // SendText message to websocket channel
 func (server *Server) SendText(msg []byte) error {
-	return server.Channel.sendMessage(websocket.TextMessage, msg)
+	return server.Channel.sendMessage(TextMessage, msg)
 }
 
 // SendBinary message to websocket channel
 func (server *Server) SendBinary(msg []byte) error {
-	return server.Channel.sendMessage(websocket.BinaryMessage, msg)
+	return server.Channel.sendMessage(BinaryMessage, msg)
 }
