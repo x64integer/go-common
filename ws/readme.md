@@ -33,8 +33,7 @@ if err := client.SendText([]byte("test message")); err != nil {
 <-done
 ```
 
-### Server (in progress)
-> NOTE: need to improve OnMessage handler (there is no reply to client support at the moment)
+### Server
 
 * **Create ws.Server**
 ```
