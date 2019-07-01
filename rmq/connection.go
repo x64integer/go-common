@@ -25,7 +25,6 @@ type Connection struct {
 	ResetSignal                chan int
 	ReconnectTime              time.Duration
 	Retrying                   bool
-	EnabledHealthCheck         bool
 	SkipDefaultQueue           bool
 	HandleResetSignalConsumer  func(chan bool)
 	HandleResetSignalPublisher func(chan bool)
@@ -332,11 +331,6 @@ func (c *Connection) handleResetSignalPublisher(done chan bool) {
 // recreateConn for rmq
 func (c *Connection) recreateConn() error {
 	log.Println("trying to recreate rmq connection for host: ", c.Config.Host)
-
-	// important step!
-	// prevent healthCheck() to be run once again in c.Setup()
-	// so we do not need/want it to be run again, it would start useless goroutine
-	c.EnabledHealthCheck = false
 
 	return c.Setup()
 }
