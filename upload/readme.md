@@ -24,7 +24,6 @@ topicUploadEndpoint := &upload.Endpoint{
     UseAuthMiddleware: true,
     Uploader: &upload.Uploader{
         Destination:       "./uploads/topic",
-        FilePrefix:        "topic_",
         MultipartForm:     "topicUpload",
         FileSize:          1 << 20,  // MB
 		MaxMemory:         32 << 20, // MB
@@ -68,7 +67,6 @@ profileUploadEndpoint := &upload.Endpoint{
     UseAuthMiddleware: true,
     Uploader: &upload.Uploader{
         Destination:       "./uploads/profile",
-        FilePrefix:        "profile_",
         FormFile:          "profileUpload",
         FileSize:          10 << 20, // MB
         AllowedExtensions: []string{".jpg", ".png"},
@@ -89,7 +87,6 @@ service.Listen()
 // initialize *Uploader
 uploader := &upload.Uploader{
     Destination:       "./uploads/topic",
-    FilePrefix:        "topic_",
     FileSize:          2 << 20,  // MB
     AllowedExtensions: []string{".jpg", ".png", ".bmp", ".gif"},
 }

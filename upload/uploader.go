@@ -17,7 +17,6 @@ const extBytesLen = 512
 // Uploader is responsible to upload files
 type Uploader struct {
 	Destination                string
-	FilePrefix                 string
 	MultipartForm              string
 	MaxMemory                  int64
 	FileSize                   int
@@ -115,7 +114,7 @@ func (uploader *Uploader) Upload(reader io.Reader, fileName string) (<-chan *Upl
 
 		fileName = trimExtension(fileName)
 
-		name := uploader.FilePrefix + "*-" + fileName + ext
+		name := fileName + "_*" + ext
 
 		// performLongUploadTest(ext) // for testing only
 
