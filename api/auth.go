@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -304,7 +303,7 @@ func (auth *Auth) updatePassword(w http.ResponseWriter, r *http.Request) {
 
 // onError default callback
 func onError(err error, w http.ResponseWriter) {
-	log.Println(err)
+	logrus.Error(err)
 }
 
 // onSuccess default callback

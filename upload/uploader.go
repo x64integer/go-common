@@ -47,6 +47,8 @@ type Failed struct {
 // Destination path will be created if it doesnt exist
 // FileSize will always be checked
 // AllowedExtensions is optional
+//
+// TODO: move calls to createPathIfNotExists, fileExtension, allowedExtension to validation interface
 func (uploader *Uploader) Upload(reader io.Reader, fileName string) (<-chan *Uploaded, <-chan *Failed) {
 	uploaded := make(chan *Uploaded)
 	failed := make(chan *Failed)

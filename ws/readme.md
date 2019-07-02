@@ -77,13 +77,5 @@ func (h *mHandler) OnMessage(in []byte, reply func(int, []byte) error) {
 func (h *mHandler) OnError(err error) {
 	// handle error from ws channel
 	logrus.Error("error from ws connection: ", err)
-
-	if connClosed, ok := err.(*ws.ConnectionClosed); ok {
-		logrus.Error(connClosed)
-	}
-
-	if strings.Contains(err.Error(), "closed network connection") {
-		logrus.Error(err.Error())
-	}
 }
 ```

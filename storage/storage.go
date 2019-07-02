@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"log"
+	"github.com/sirupsen/logrus"
 
 	"github.com/semirm-dev/go-common/storage/cache"
 	"github.com/semirm-dev/go-common/storage/cassandra"
@@ -41,25 +41,25 @@ type Container struct {
 func (cont *Container) Connect() {
 	if cont.SQL != nil {
 		if err := cont.SQL.Connect(); err != nil {
-			log.Fatalln("sql connection failed: ", err)
+			logrus.Fatal("sql connection failed: ", err)
 		}
 	}
 
 	if cont.Redis != nil {
 		if err := cont.Redis.Initialize(); err != nil {
-			log.Fatalln("redis initialization failed: ", err)
+			logrus.Fatal("redis initialization failed: ", err)
 		}
 	}
 
 	if cont.Elastic != nil {
 		if err := cont.Elastic.Initialize(); err != nil {
-			log.Fatalln("elasticsearch initialization failed: ", err)
+			logrus.Fatal("elasticsearch initialization failed: ", err)
 		}
 	}
 
 	if cont.Cassandra != nil {
 		if err := cont.Cassandra.Initialize(); err != nil {
-			log.Fatalln("cassandra initialization failed: ", err)
+			logrus.Fatal("cassandra initialization failed: ", err)
 		}
 	}
 

@@ -41,6 +41,10 @@ func (adapter *IrisRouterAdapter) Handle(path string, handler http.Handler, meth
 			adapter.Options(path, func(ctx iris.Context) {
 				handler.ServeHTTP(ctx.ResponseWriter(), ctx.Request())
 			})
+		default:
+			adapter.Get(path, func(ctx iris.Context) {
+				handler.ServeHTTP(ctx.ResponseWriter(), ctx.Request())
+			})
 		}
 	}
 }
@@ -67,6 +71,10 @@ func (adapter *IrisRouterAdapter) HandleFunc(path string, f func(http.ResponseWr
 			})
 		case "options":
 			adapter.Options(path, func(ctx iris.Context) {
+				f(ctx.ResponseWriter(), ctx.Request())
+			})
+		default:
+			adapter.Get(path, func(ctx iris.Context) {
 				f(ctx.ResponseWriter(), ctx.Request())
 			})
 		}

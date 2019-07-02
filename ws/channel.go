@@ -1,8 +1,9 @@
 package ws
 
 import (
-	"log"
 	"sync"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/gorilla/websocket"
 )
@@ -23,33 +24,12 @@ type MessageHandler interface {
 	OnError(error)
 }
 
-// Connection for websocket
-type Connection interface {
-	// ReadMessage from websocket connection
-	ReadMessage() (int, []byte, error)
-	// WriteMessage to websocket connection
-	WriteMessage(int, []byte) error
-	// Close websocket connection
-	Close() error
-}
-
 // Channel for websocket connection
 type Channel struct {
 	MessageHandler
-	Connection
-	ReadLock sync.Mutex
-	SendLock sync.Mutex
-}
-
-// ConnectionClosed error type
-type ConnectionClosed struct {
-	Code    int
-	Message string
-}
-
-// Error implements error interface
-func (connClosed *ConnectionClosed) Error() string {
-	return "connection closed"
+	Connection *websocket.Conn
+	ReadLock   sync.Mutex
+	SendLock   sync.Mutex
 }
 
 // read data from websocket channel
@@ -57,14 +37,14 @@ func (connClosed *ConnectionClosed) Error() string {
 func (ch *Channel) read() {
 	defer func() {
 		if err := ch.close(); err != nil {
-			log.Println("failed to close websocket connection: ", err)
+			logrus.Error("failed to close websocket connection: ", err)
 			return
 		}
 
-		log.Println("websocket connection closed")
+		logrus.Warn("websocket connection closed")
 	}()
 
-	log.Println("listening for messages")
+	logrus.Info("listening for messages")
 
 	for {
 		_, msg, err := ch.readMessage()

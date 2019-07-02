@@ -1,7 +1,6 @@
 package api
 
 import (
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -28,9 +27,10 @@ func (adapter *MuxRouterAdapter) Listen(config *Config) {
 	}
 
 	go func() {
-		logrus.Infof("listening on %v\n", server.Addr)
+		logrus.Info("listening on: ", server.Addr)
+
 		if err := server.ListenAndServe(); err != nil {
-			log.Println(err)
+			logrus.Error(err)
 		}
 	}()
 

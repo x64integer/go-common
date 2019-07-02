@@ -3,9 +3,10 @@ package sql
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/semirm-dev/go-common/util"
 )
@@ -93,7 +94,7 @@ func (sqlConn *Connection) WithDSN(connString string) *Connection {
 // dsn is helper function to construct SQL connection string
 func (sqlConn *Connection) dsn() string {
 	if sqlConn.Config.Name == "" {
-		log.Fatalln("missing database name")
+		logrus.Fatal("missing database name")
 	}
 
 	var connString string
@@ -129,7 +130,7 @@ func (sqlConn *Connection) dsn() string {
 		)
 
 	default:
-		log.Fatalln("no such SQL driver: " + driver)
+		logrus.Fatal("no such SQL driver: ", driver)
 	}
 
 	return connString

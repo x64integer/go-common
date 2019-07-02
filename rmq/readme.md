@@ -97,7 +97,7 @@ if err := publisher.Publish([]byte("message")); err != nil {
 <-done
 ```
 
-### Config customization, for both Consumer and Publisher (*pay close attention to options/structs nestings*)
+### Config customization, for both Consumer and Publisher
 ```
 // NewConfig will initialize RMQ default config values
 func NewConfig() *Config {

@@ -1,12 +1,12 @@
 package ws
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/semirm-dev/go-common/api"
+	"github.com/sirupsen/logrus"
 )
 
 var upgrader = websocket.Upgrader{
@@ -25,7 +25,7 @@ type Server struct {
 // Run will create websocket Server and start listening for messages
 func (server *Server) Run(done chan bool) {
 	if server.Config == nil || server.MessageHandler == nil {
-		log.Fatalln("either Config or MessageHandler is missing")
+		logrus.Fatal("either Config or MessageHandler is missing")
 	}
 
 	router := &api.MuxRouterAdapter{Router: mux.NewRouter()}
@@ -54,7 +54,7 @@ func (server *Server) Run(done chan bool) {
 
 	<-done
 
-	log.Println("server returned")
+	logrus.Warn("server returned")
 }
 
 // SendText message to websocket channel

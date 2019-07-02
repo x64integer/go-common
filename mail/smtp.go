@@ -2,8 +2,9 @@ package mail
 
 import (
 	"crypto/tls"
-	"log"
 	"net/smtp"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/semirm-dev/go-common/util"
 )
@@ -33,8 +34,7 @@ func DefaultSMTP() *SMTP {
 	}
 
 	if err := smtpServer.setupClient(); err != nil {
-		log.Fatalln("failed to initialize SMTP client: ", err)
-		return nil
+		logrus.Fatal("failed to initialize SMTP client: ", err)
 	}
 
 	return smtpServer

@@ -1,15 +1,15 @@
 package ws
 
 import (
-	"log"
+	"github.com/sirupsen/logrus"
 
 	"github.com/gorilla/websocket"
 )
 
 // Client for websocket
 type Client struct {
+	Config *Config
 	MessageHandler
-	Config         *Config
 	Channel        *Channel
 	DisabledReader bool
 }
@@ -17,7 +17,7 @@ type Client struct {
 // Connect will create websocket Client and start listening for messages
 func (client *Client) Connect(done chan bool, ready chan bool) {
 	if client.Config == nil || client.MessageHandler == nil {
-		log.Fatalln("either Config or MessageHandler is missing")
+		logrus.Fatal("either Config or MessageHandler is missing")
 	}
 
 	conn := client.connection()
@@ -35,11 +35,11 @@ func (client *Client) Connect(done chan bool, ready chan bool) {
 
 	ready <- true
 
-	log.Println("connected to: ", client.Config.WSURL)
+	logrus.Info("connected to: ", client.Config.WSURL)
 
 	<-done
 
-	log.Println("client returned")
+	logrus.Warn("client returned")
 }
 
 // SendText message to websocket channel
@@ -56,7 +56,7 @@ func (client *Client) SendBinary(msg []byte) error {
 func (client *Client) connection() *websocket.Conn {
 	conn, _, err := websocket.DefaultDialer.Dial(client.Config.WSURL, nil)
 	if err != nil {
-		log.Fatalln("websocket dialer failed: ", err)
+		logrus.Fatal("websocket dialer failed: ", err)
 	}
 
 	return conn
