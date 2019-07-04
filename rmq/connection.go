@@ -50,34 +50,12 @@ func (c *Connection) Setup() error {
 	c.Channel = ch
 
 	if !c.SkipDefaultQueue {
-		if _, err := c.queueDeclare(c.Config.Queue, c.Config.Options.Queue); err != nil {
-			return err
-		}
-
-		if err := c.exchangeDeclare(c.Config.Exchange, c.Config.ExchangeKind, c.Config.Options.Exchange); err != nil {
-			return err
-		}
-
-		if err := c.qos(c.Config.Options.QoS); err != nil {
-			return err
-		}
-
-		if err := c.queueBind(c.Config.Queue, c.Config.RoutingKey, c.Config.Exchange, c.Config.Options.QueueBind); err != nil {
+		if err := c.declareDefaultQueue(); err != nil {
 			return err
 		}
 	}
 
-	if c.ReconnectTime == 0 {
-		c.ReconnectTime = reconnectTime
-	}
-
-	if c.HandleResetSignalConsumer == nil {
-		c.HandleResetSignalConsumer = c.handleResetSignalConsumer
-	}
-
-	if c.HandleResetSignalPublisher == nil {
-		c.HandleResetSignalPublisher = c.handleResetSignalPublisher
-	}
+	c.applyDefaults()
 
 	return nil
 }
@@ -283,6 +261,42 @@ func (c *Connection) queueBind(queue string, routingKey string, exchange string,
 	)
 
 	return err
+}
+
+// declareDefaultQueue is helper function to setup queue, exchange, qos and bind queue to exchange
+func (c *Connection) declareDefaultQueue() error {
+	if _, err := c.queueDeclare(c.Config.Queue, c.Config.Options.Queue); err != nil {
+		return err
+	}
+
+	if err := c.exchangeDeclare(c.Config.Exchange, c.Config.ExchangeKind, c.Config.Options.Exchange); err != nil {
+		return err
+	}
+
+	if err := c.qos(c.Config.Options.QoS); err != nil {
+		return err
+	}
+
+	if err := c.queueBind(c.Config.Queue, c.Config.RoutingKey, c.Config.Exchange, c.Config.Options.QueueBind); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// applyDefaults is helper function to setup some default Connection properties
+func (c *Connection) applyDefaults() {
+	if c.ReconnectTime == 0 {
+		c.ReconnectTime = reconnectTime
+	}
+
+	if c.HandleResetSignalConsumer == nil {
+		c.HandleResetSignalConsumer = c.handleResetSignalConsumer
+	}
+
+	if c.HandleResetSignalPublisher == nil {
+		c.HandleResetSignalPublisher = c.handleResetSignalPublisher
+	}
 }
 
 // handleResetSignalConsumer is default callback for consumer to run when reset signal occurs
