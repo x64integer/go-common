@@ -7,6 +7,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/streadway/amqp"
 )
 
@@ -17,30 +19,54 @@ var (
 
 // Connection for RMQ
 type Connection struct {
-	Config                     *Config
-	Conn                       *amqp.Connection
-	Channel                    *amqp.Channel
+	Config *Config
+
+	// amqp
+	Conn        *amqp.Connection
+	Channel     *amqp.Channel
+	Headers     amqp.Table
+	ContentType string
+
+	// connection reset
+	ResetSignal   chan int
+	ReconnectTime time.Duration
+	Retrying      bool
+
+	// callbacks
 	HandleMsgs                 func(msgs <-chan amqp.Delivery)
-	Headers                    amqp.Table
-	ResetSignal                chan int
-	ReconnectTime              time.Duration
-	Retrying                   bool
-	SkipDefaultQueue           bool
 	HandleResetSignalConsumer  func(chan bool)
 	HandleResetSignalPublisher func(chan bool)
 }
 
-// Setup RMQ Connection
-func (c *Connection) Setup() error {
+// Connect to RabbitMQ and initialize channel
+func (c *Connection) Connect(declareDefaultQueue bool) error {
 	if c.Config == nil {
 		return errors.New("nil Config struct for RMQ Connection -> make sure valid Config is accessible to Connection")
 	}
+
+	c.applyDefaults()
 
 	conn, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%s/", c.Config.Username, c.Config.Password, c.Config.Host, c.Config.Port))
 	if err != nil {
 		return err
 	}
 	c.Conn = conn
+
+	if declareDefaultQueue {
+		if err := c.DeclareDefaultQueue(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// DeclareDefaultQueue will initialize channel, declare queue, exchange, qos and bind que to echange
+// RabbitMQ declarations
+func (c *Connection) DeclareDefaultQueue() error {
+	if c.Conn == nil {
+		return errors.New("amqp connection not initialized")
+	}
 
 	ch, err := c.Conn.Channel()
 	if err != nil {
@@ -49,13 +75,21 @@ func (c *Connection) Setup() error {
 
 	c.Channel = ch
 
-	if !c.SkipDefaultQueue {
-		if err := c.declareDefaultQueue(); err != nil {
-			return err
-		}
+	if _, err := c.queueDeclare(c.Config.Queue, c.Config.Options.Queue); err != nil {
+		return err
 	}
 
-	c.applyDefaults()
+	if err := c.exchangeDeclare(c.Config.Exchange, c.Config.ExchangeKind, c.Config.Options.Exchange); err != nil {
+		return err
+	}
+
+	if err := c.qos(c.Config.Options.QoS); err != nil {
+		return err
+	}
+
+	if err := c.queueBind(c.Config.Queue, c.Config.RoutingKey, c.Config.Exchange, c.Config.Options.QueueBind); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -77,7 +111,7 @@ func (c *Connection) Consume(done chan bool) error {
 
 	go c.HandleMsgs(msgs)
 
-	log.Println("Waiting for messages...")
+	logrus.Info("waiting for messages...")
 
 	for {
 		select {
@@ -134,7 +168,7 @@ func (c *Connection) ConsumeWithConfig(done chan bool, config *Config, callback 
 
 	go callback(msgs)
 
-	log.Println("Waiting for messages...")
+	logrus.Info("waiting for messages...")
 
 	for {
 		select {
@@ -156,7 +190,7 @@ func (c *Connection) Publish(payload []byte) error {
 		c.Config.Options.Publish.Immediate,
 		amqp.Publishing{
 			DeliveryMode: amqp.Persistent,
-			ContentType:  "text/plain",
+			ContentType:  c.ContentType,
 			Body:         payload,
 			Headers:      c.Headers,
 		})
@@ -180,8 +214,8 @@ func (c *Connection) ListenNotifyClose(done chan bool) {
 		for {
 			select {
 			case err := <-connClose:
-				log.Println("rmq connection lost: ", err)
-				log.Printf("reconnecting to rmq in %v...\n", c.ReconnectTime.String())
+				logrus.Warn("rmq connection lost: ", err)
+				logrus.Warn("reconnecting to rmq in ", c.ReconnectTime.String())
 
 				c.Retrying = true
 
@@ -191,11 +225,11 @@ func (c *Connection) ListenNotifyClose(done chan bool) {
 					killService("failed to recreate rmq connection: ", err)
 				}
 
-				log.Println("sending signal 1 to rmq connection...")
+				logrus.Info("sending signal 1 to rmq connection")
 
 				c.ResetSignal <- 1
 
-				log.Println("signal 1 sent to rmq connection")
+				logrus.Info("signal 1 sent to rmq connection")
 
 				// important step!
 				// recreate connClose channel so we can listen for NotifyClose once again
@@ -263,27 +297,6 @@ func (c *Connection) queueBind(queue string, routingKey string, exchange string,
 	return err
 }
 
-// declareDefaultQueue is helper function to setup queue, exchange, qos and bind queue to exchange
-func (c *Connection) declareDefaultQueue() error {
-	if _, err := c.queueDeclare(c.Config.Queue, c.Config.Options.Queue); err != nil {
-		return err
-	}
-
-	if err := c.exchangeDeclare(c.Config.Exchange, c.Config.ExchangeKind, c.Config.Options.Exchange); err != nil {
-		return err
-	}
-
-	if err := c.qos(c.Config.Options.QoS); err != nil {
-		return err
-	}
-
-	if err := c.queueBind(c.Config.Queue, c.Config.RoutingKey, c.Config.Exchange, c.Config.Options.QueueBind); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // applyDefaults is helper function to setup some default Connection properties
 func (c *Connection) applyDefaults() {
 	if c.ReconnectTime == 0 {
@@ -297,6 +310,10 @@ func (c *Connection) applyDefaults() {
 	if c.HandleResetSignalPublisher == nil {
 		c.HandleResetSignalPublisher = c.handleResetSignalPublisher
 	}
+
+	if c.ContentType == "" {
+		c.ContentType = "text/plain"
+	}
 }
 
 // handleResetSignalConsumer is default callback for consumer to run when reset signal occurs
@@ -305,7 +322,7 @@ func (c *Connection) handleResetSignalConsumer(done chan bool) {
 		for {
 			select {
 			case s := <-c.ResetSignal:
-				log.Print("consumer received rmq connection reset signal: ", s)
+				logrus.Warn("consumer received rmq connection reset signal: ", s)
 
 				if done == nil {
 					done = make(chan bool)
@@ -313,8 +330,7 @@ func (c *Connection) handleResetSignalConsumer(done chan bool) {
 
 				go func() {
 					if err := c.Consume(done); err != nil {
-						log.Print("rmq failed to consume: ", err)
-						return
+						logrus.Fatal("rmq failed to consume: ", err)
 					}
 				}()
 			}
@@ -330,9 +346,9 @@ func (c *Connection) handleResetSignalPublisher(done chan bool) {
 		for {
 			select {
 			case s := <-c.ResetSignal:
-				log.Print("publisher received rmq connection reset signal: ", s)
+				logrus.Warn("publisher received rmq connection reset signal: ", s)
 
-				if err := c.Setup(); err != nil {
+				if err := c.recreateConn(); err != nil {
 					log.Fatal(err)
 				}
 			}
@@ -344,13 +360,13 @@ func (c *Connection) handleResetSignalPublisher(done chan bool) {
 
 // recreateConn for rmq
 func (c *Connection) recreateConn() error {
-	log.Println("trying to recreate rmq connection for host: ", c.Config.Host)
+	logrus.Info("trying to recreate rmq connection for host: ", c.Config.Host)
 
-	return c.Setup()
+	return c.Connect(true)
 }
 
 // killService with message passed to console output
 func killService(msg ...interface{}) {
-	log.Println(msg...)
+	logrus.Warn(msg...)
 	os.Exit(101)
 }

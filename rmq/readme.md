@@ -36,7 +36,7 @@ consumer := &rmq.Connection{
 	ResetSignal: make(chan int),
 }
 
-if err := consumer.Setup(); err != nil {
+if err := consumer.Connect(true); err != nil {
 	log.Fatal(err)
 }
 
@@ -73,7 +73,7 @@ publisher := &rmq.Connection{
 	ResetSignal: make(chan int),
 }
 
-if err := publisher.Setup(); err != nil {
+if err := publisher.Connect(true); err != nil {
 	log.Fatal(err)
 }
 
