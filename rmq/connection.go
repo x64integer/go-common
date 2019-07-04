@@ -3,7 +3,6 @@ package rmq
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
@@ -347,10 +346,6 @@ func (c *Connection) handleResetSignalPublisher(done chan bool) {
 			select {
 			case s := <-c.ResetSignal:
 				logrus.Warn("publisher received rmq connection reset signal: ", s)
-
-				if err := c.recreateConn(); err != nil {
-					log.Fatal(err)
-				}
 			}
 		}
 	}()
