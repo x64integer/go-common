@@ -53,3 +53,8 @@ func (adapter *MuxRouterAdapter) Handle(path string, handler http.Handler, metho
 func (adapter *MuxRouterAdapter) HandleFunc(path string, f func(http.ResponseWriter, *http.Request), methods ...string) {
 	adapter.Router.HandleFunc(path, f).Methods(methods...)
 }
+
+// Vars implements Router.Vars()
+func (adapter *MuxRouterAdapter) Vars(r *http.Request) map[string]string {
+	return mux.Vars(r)
+}

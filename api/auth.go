@@ -10,8 +10,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gorilla/mux"
-
 	"github.com/sirupsen/logrus"
 
 	"github.com/semirm-dev/go-common/api/user"
@@ -36,6 +34,8 @@ type Auth struct {
 	// required
 	*jwt.Token
 	CacheClient cache.Service
+
+	Router
 
 	// confirm email on registration
 	RequireConfirmation bool
@@ -81,6 +81,8 @@ func (auth *Auth) Apply(router Router) {
 	if auth.Token == nil || auth.CacheClient == nil {
 		logrus.Fatal("either auth.Token or auth.CacheClient (or both) is not provided")
 	}
+
+	auth.Router = router
 
 	auth.defaults()
 
@@ -244,8 +246,7 @@ func (auth *Auth) confirmRegistration(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	// TODO: remove mux dependency, expand Handler interface with getVar(v string) string
-	var vars = mux.Vars(r)
+	var vars = auth.Router.Vars(r)
 
 	account.ActivationToken = vars["token"]
 

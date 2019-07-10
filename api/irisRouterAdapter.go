@@ -80,3 +80,8 @@ func (adapter *IrisRouterAdapter) HandleFunc(path string, f func(http.ResponseWr
 		}
 	}
 }
+
+// Vars implements Router.Vars()
+func (adapter *IrisRouterAdapter) Vars(r *http.Request) map[string]string {
+	return nil
+}

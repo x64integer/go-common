@@ -10,6 +10,7 @@ type Router interface {
 	Listen(*Config)
 	Handle(string, http.Handler, ...string)
 	HandleFunc(string, func(http.ResponseWriter, *http.Request), ...string)
+	Vars(*http.Request) map[string]string
 }
 
 // Config for router
