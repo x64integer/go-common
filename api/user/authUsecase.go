@@ -17,7 +17,6 @@ type AuthUsecase struct {
 	Repository
 	*jwt.Token
 	*Session
-	Mailer *mail.Client
 
 	ConfirmRegistrationPath string
 }
@@ -196,6 +195,8 @@ func (usecase *AuthUsecase) loginUser(user *Account) (string, error) {
 //
 // TODO: parse subject and body from external template
 func (usecase *AuthUsecase) sendRegistrationMail(to *Account) error {
+	mailer := mail.DefaultSMTP()
+
 	subject := "Please verify account registration"
 	body := []byte("Click on the link to confirm account registration: <a href=\"http://" + usecase.ConfirmRegistrationPath + to.ActivationToken + "\">Confirm</a>")
 
@@ -205,5 +206,5 @@ func (usecase *AuthUsecase) sendRegistrationMail(to *Account) error {
 		Body:    body,
 	}
 
-	return usecase.Mailer.Send(content)
+	return mailer.Send(content)
 }

@@ -10,7 +10,6 @@ import (
 // PasswordResetUsecase for password reset
 type PasswordResetUsecase struct {
 	Repository            PasswordResetRepository
-	Mailer                *mail.Client
 	ConfirmResetTokenPath string
 }
 
@@ -92,6 +91,8 @@ func (response *PasswordUpdateResponse) ToBytes() []byte {
 //
 // TODO: parse subject and body from external template
 func (usecase *PasswordResetUsecase) sendTokenResetMail(to string, token string) error {
+	mailer := mail.DefaultSMTP()
+
 	subject := "Password reset request"
 	body := []byte("Click on the link to reset password: <a href=\"http://" + usecase.ConfirmResetTokenPath + token + "\">Reset</a>")
 
@@ -101,5 +102,5 @@ func (usecase *PasswordResetUsecase) sendTokenResetMail(to string, token string)
 		Body:    body,
 	}
 
-	return usecase.Mailer.Send(content)
+	return mailer.Send(content)
 }

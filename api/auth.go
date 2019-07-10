@@ -15,7 +15,6 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/semirm-dev/go-common/api/user"
-	"github.com/semirm-dev/go-common/mail"
 	"github.com/semirm-dev/go-common/storage/cache"
 
 	"github.com/semirm-dev/go-common/jwt"
@@ -67,8 +66,6 @@ type Auth struct {
 
 	// TODO: Implement customizable Auth entity
 	Entity Authenticatable
-
-	mailer *mail.Client
 }
 
 // entityField is helper struct to hold information/data from extracted auth Entity (Authenticatable)
@@ -93,10 +90,6 @@ func (auth *Auth) Apply(router Router) {
 		router.Handle(auth.LogoutPath, auth.MiddlewareFunc(auth.logout), "GET")
 
 		if auth.RequireConfirmation {
-			auth.mailer = &mail.Client{
-				Sender: mail.DefaultSMTP(),
-			}
-
 			router.HandleFunc(auth.confirmRegistrationPath, auth.confirmRegistration, "GET")
 		}
 
@@ -189,8 +182,6 @@ func (auth *Auth) register(w http.ResponseWriter, r *http.Request) {
 		Session: &user.Session{
 			Cache: auth.CacheClient,
 		},
-		Mailer: auth.mailer,
-
 		ConfirmRegistrationPath: auth.ServiceURL + accountConfirm,
 	}
 
@@ -274,7 +265,6 @@ func (auth *Auth) createResetToken(w http.ResponseWriter, r *http.Request) {
 
 	passwordResetUsecase := &user.PasswordResetUsecase{
 		Repository:            auth.PasswordResetRepository,
-		Mailer:                auth.mailer,
 		ConfirmResetTokenPath: auth.ServiceURL + passwordResetConfirm,
 	}
 

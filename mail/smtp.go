@@ -110,7 +110,5 @@ func (smtpServer *SMTP) send(content *Content) error {
 		return nil
 	}
 
-	smtpServer.Client.Quit()
-
-	return nil
+	return smtpServer.Client.Quit()
 }
