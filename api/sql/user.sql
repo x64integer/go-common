@@ -77,6 +77,14 @@ AS $$
     SELECT token FROM password_reset WHERE email = _email LIMIT 1;
 $$;
 
+-- function get_by_token
+CREATE OR REPLACE FUNCTION get_by_token(_token varchar(255))
+RETURNS varchar(255)
+LANGUAGE SQL
+AS $$
+    SELECT email FROM password_reset WHERE token = _token LIMIT 1;
+$$;
+
 -- function update_reset_token
 CREATE OR REPLACE FUNCTION update_reset_token(_email varchar(255), _token varchar(255))
 RETURNS VOID
@@ -86,9 +94,9 @@ AS $$
 $$;
 
 -- function delete_reset_token
-CREATE OR REPLACE FUNCTION delete_reset_token(_email varchar(255))
+CREATE OR REPLACE FUNCTION delete_reset_token(_token varchar(255))
 RETURNS VOID
 LANGUAGE SQL
 AS $$
-    DELETE FROM password_reset WHERE email = _email;
+    DELETE FROM password_reset WHERE token = _token;
 $$;

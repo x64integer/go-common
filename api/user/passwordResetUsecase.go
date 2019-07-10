@@ -2,6 +2,8 @@ package user
 
 import (
 	"fmt"
+
+	"github.com/semirm-dev/go-common/crypto"
 )
 
 // PasswordResetUsecase for password reset
@@ -32,6 +34,8 @@ func (usecase *PasswordResetUsecase) CreateResetToken(email string) *PasswordRes
 
 	response.Token = token
 
+	// TODO: send email with reset token
+
 	return response
 }
 
@@ -39,10 +43,29 @@ func (usecase *PasswordResetUsecase) CreateResetToken(email string) *PasswordRes
 func (usecase *PasswordResetUsecase) UpdatePassword(passwordReset *PasswordReset) *PasswordUpdateResponse {
 	response := &PasswordUpdateResponse{}
 
-	// TODO: get email from password_reset based on given token, delete doken, update password
+	email, err := usecase.Repository.GetByToken(passwordReset.Token)
+	if err != nil || email == "" {
+		response.ErrorMessage = fmt.Sprint("failed to get email from password reset token: ", err)
+		return response
+	}
 
-	if err := usecase.Repository.UpdatePassword(passwordReset.Email, passwordReset.Password); err != nil {
-		response.ErrorMessage = fmt.Sprintf("update password failed [%s]: %s", passwordReset.Email, err)
+	argon := crypto.NewArgon2()
+	argon.Plain = passwordReset.Password
+
+	if err := argon.Hash(); err != nil {
+		response.ErrorMessage = fmt.Sprint("failed to hash password: ", err)
+		return response
+	}
+
+	password := argon.Hashed
+
+	if err := usecase.Repository.UpdatePassword(email, password); err != nil {
+		response.ErrorMessage = fmt.Sprintf("update password failed [%s]: %s", email, err)
+		return response
+	}
+
+	if err := usecase.Repository.DeleteToken(passwordReset.Token); err != nil {
+		response.ErrorMessage = fmt.Sprint("failed to delete password reset token: ", err)
 		return response
 	}
 
