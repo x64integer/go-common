@@ -21,7 +21,10 @@ import (
 	"github.com/semirm-dev/go-common/jwt"
 )
 
-const accountConfirm = "/account/confirm/"
+const (
+	accountConfirm       = "/account/confirm/"
+	passwordResetConfirm = "/password/reset/"
+)
 
 // Authenticatable contract
 //
@@ -270,7 +273,9 @@ func (auth *Auth) createResetToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	passwordResetUsecase := &user.PasswordResetUsecase{
-		Repository: auth.PasswordResetRepository,
+		Repository:            auth.PasswordResetRepository,
+		Mailer:                auth.mailer,
+		ConfirmResetTokenPath: auth.ServiceURL + passwordResetConfirm,
 	}
 
 	response := passwordResetUsecase.CreateResetToken(passwordReset.Email)
@@ -280,6 +285,11 @@ func (auth *Auth) createResetToken(w http.ResponseWriter, r *http.Request) {
 
 // passwordResetForm API endpoint will show password reset form
 func (auth *Auth) passwordResetForm(w http.ResponseWriter, r *http.Request) {
+	if auth.PasswordResetCallback == nil {
+		onError(errors.New("missing PasswordResetCallback implementation"), w)
+		return
+	}
+
 	auth.PasswordResetCallback(w, r)
 }
 
@@ -346,7 +356,7 @@ func (auth *Auth) defaults() {
 	}
 
 	if strings.TrimSpace(auth.passwordResetFormPath) == "" {
-		auth.passwordResetFormPath = "/password/reset/{token}"
+		auth.passwordResetFormPath = passwordResetConfirm + "{token}"
 	}
 
 	if strings.TrimSpace(auth.PasswordResetPath) == "" {

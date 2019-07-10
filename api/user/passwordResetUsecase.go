@@ -4,11 +4,14 @@ import (
 	"fmt"
 
 	"github.com/semirm-dev/go-common/crypto"
+	"github.com/semirm-dev/go-common/mail"
 )
 
 // PasswordResetUsecase for password reset
 type PasswordResetUsecase struct {
-	Repository PasswordResetRepository
+	Repository            PasswordResetRepository
+	Mailer                *mail.Client
+	ConfirmResetTokenPath string
 }
 
 // PasswordResetResponse for password reset
@@ -34,7 +37,10 @@ func (usecase *PasswordResetUsecase) CreateResetToken(email string) *PasswordRes
 
 	response.Token = token
 
-	// TODO: send email with reset token
+	if err := usecase.sendTokenResetMail(email, token); err != nil {
+		response.ErrorMessage = fmt.Sprintf("failed to send reset token confirmation mail [%s][%s]: %s", email, token, err)
+		return response
+	}
 
 	return response
 }
@@ -80,4 +86,20 @@ func (response *PasswordResetResponse) ToBytes() []byte {
 // ToBytes will marshal Response to []byte
 func (response *PasswordUpdateResponse) ToBytes() []byte {
 	return toBytes(response)
+}
+
+// sendTokenResetMail will cosntruct password reset mail body and send it
+//
+// TODO: parse subject and body from external template
+func (usecase *PasswordResetUsecase) sendTokenResetMail(to string, token string) error {
+	subject := "Password reset request"
+	body := []byte("Click on the link to reset password: <a href=\"http://" + usecase.ConfirmResetTokenPath + token + "\">Reset</a>")
+
+	content := &mail.Content{
+		To:      []string{to},
+		Subject: subject,
+		Body:    body,
+	}
+
+	return usecase.Mailer.Send(content)
 }
