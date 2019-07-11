@@ -4,9 +4,10 @@ import "io"
 
 // PasswordReset entity
 type PasswordReset struct {
-	Email    string `json:"email"`
-	Token    string `json:"token,omitempty"`
-	Password string `json:"password,omitempty"`
+	Email      string `json:"email"`
+	Token      string `json:"token,omitempty"`
+	Password   string `json:"password,omitempty"`
+	ServiceURL string `json:"-"`
 }
 
 // DecodeFromReader will decode password Reset from io.Reader

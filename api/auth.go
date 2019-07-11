@@ -320,6 +320,7 @@ func (auth *Auth) passwordResetCallback(w http.ResponseWriter, r *http.Request) 
 
 	passwordReset := &user.PasswordReset{}
 	passwordReset.Token = vars.Get("token")
+	passwordReset.ServiceURL = auth.ServiceURL
 
 	t, err := template.ParseFiles(passwordResetTemplate)
 	if err != nil {
