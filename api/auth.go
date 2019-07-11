@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html/template"
 	"io/ioutil"
 	"net/http"
 	"reflect"
@@ -19,8 +20,8 @@ import (
 )
 
 const (
-	accountConfirm       = "/account/confirm/"
-	passwordResetConfirm = "/password/reset/"
+	accountConfirm    = "/account/confirm/"
+	passwordResetPath = "/password/reset/"
 )
 
 // Authenticatable contract
@@ -266,7 +267,7 @@ func (auth *Auth) createResetToken(w http.ResponseWriter, r *http.Request) {
 
 	passwordResetUsecase := &user.PasswordResetUsecase{
 		Repository:            auth.PasswordResetRepository,
-		ConfirmResetTokenPath: auth.ServiceURL + passwordResetConfirm,
+		ConfirmResetTokenPath: auth.ServiceURL + passwordResetPath,
 	}
 
 	response := passwordResetUsecase.CreateResetToken(passwordReset.Email)
@@ -312,6 +313,25 @@ func onSuccess(payload []byte, w http.ResponseWriter) {
 	w.Write(payload)
 }
 
+// passwordResetCallback default callback
+func (auth *Auth) passwordResetCallback(w http.ResponseWriter, r *http.Request) {
+	var vars = r.URL.Query()
+
+	passwordReset := &user.PasswordReset{}
+	passwordReset.Token = vars.Get("token")
+
+	t, err := template.ParseFiles("../go-common/api/tpl/password_reset.gohtml")
+	if err != nil {
+		w.Write([]byte("password reset template parse failed: " + err.Error()))
+		return
+	}
+
+	if err := t.ExecuteTemplate(w, t.Name(), passwordReset); err != nil {
+		w.Write([]byte("password reset template execute failed: " + err.Error()))
+		return
+	}
+}
+
 // defaults is helper function to apply default values
 func (auth *Auth) defaults() {
 	if auth.OnError == nil {
@@ -324,6 +344,10 @@ func (auth *Auth) defaults() {
 
 	if auth.MiddlewareFunc == nil {
 		auth.MiddlewareFunc = auth.Middleware
+	}
+
+	if auth.PasswordResetCallback == nil {
+		auth.PasswordResetCallback = auth.passwordResetCallback
 	}
 
 	if strings.TrimSpace(auth.RegisterPath) == "" {
@@ -343,11 +367,11 @@ func (auth *Auth) defaults() {
 	}
 
 	if strings.TrimSpace(auth.PasswordResetRequestPath) == "" {
-		auth.PasswordResetRequestPath = "/password/reset"
+		auth.PasswordResetRequestPath = passwordResetPath
 	}
 
 	if strings.TrimSpace(auth.passwordResetFormPath) == "" {
-		auth.passwordResetFormPath = passwordResetConfirm + "{token}"
+		auth.passwordResetFormPath = passwordResetPath
 	}
 
 	if strings.TrimSpace(auth.PasswordResetPath) == "" {

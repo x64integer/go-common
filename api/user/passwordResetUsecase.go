@@ -94,7 +94,7 @@ func (usecase *PasswordResetUsecase) sendTokenResetMail(to string, token string)
 	mailer := mail.DefaultSMTP()
 
 	subject := "Password reset request"
-	body := []byte("Click on the link to reset password: <a href=\"http://" + usecase.ConfirmResetTokenPath + token + "\">Reset</a>")
+	body := []byte("Click on the link to reset password: <a href=\"http://" + usecase.ConfirmResetTokenPath + "?token=" + token + "\">Reset</a>")
 
 	content := &mail.Content{
 		To:      []string{to},
