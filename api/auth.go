@@ -59,7 +59,8 @@ type Auth struct {
 	passwordResetFormPath    string
 	PasswordResetPath        string
 	// callback to run from password reset request (click on password reset generated link)
-	PasswordResetCallback func(http.ResponseWriter, *http.Request)
+	PasswordResetCallback     func(http.ResponseWriter, *http.Request)
+	PasswordResetTemplatePath string
 
 	// optional
 	MiddlewareFunc func(http.HandlerFunc) http.Handler
@@ -322,7 +323,7 @@ func (auth *Auth) passwordResetCallback(w http.ResponseWriter, r *http.Request) 
 	passwordReset.Token = vars.Get("token")
 	passwordReset.ServiceURL = auth.ServiceURL
 
-	t, err := template.ParseFiles(passwordResetTemplate)
+	t, err := template.ParseFiles(auth.PasswordResetTemplatePath)
 	if err != nil {
 		w.Write([]byte("password reset template parse failed: " + err.Error()))
 		return
@@ -378,6 +379,10 @@ func (auth *Auth) defaults() {
 
 	if strings.TrimSpace(auth.PasswordResetPath) == "" {
 		auth.PasswordResetPath = "/password/update"
+	}
+
+	if strings.TrimSpace(auth.PasswordResetTemplatePath) == "" {
+		auth.PasswordResetTemplatePath = passwordResetTemplate
 	}
 }
 
