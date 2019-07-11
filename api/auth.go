@@ -20,8 +20,9 @@ import (
 )
 
 const (
-	accountConfirm    = "/account/confirm/"
-	passwordResetPath = "/password/reset/"
+	accountConfirm        = "/account/confirm/"
+	passwordResetPath     = "/password/reset/"
+	passwordResetTemplate = "../go-common/api/tpl/password_reset.gohtml"
 )
 
 // Authenticatable contract
@@ -320,7 +321,7 @@ func (auth *Auth) passwordResetCallback(w http.ResponseWriter, r *http.Request) 
 	passwordReset := &user.PasswordReset{}
 	passwordReset.Token = vars.Get("token")
 
-	t, err := template.ParseFiles("../go-common/api/tpl/password_reset.gohtml")
+	t, err := template.ParseFiles(passwordResetTemplate)
 	if err != nil {
 		w.Write([]byte("password reset template parse failed: " + err.Error()))
 		return
