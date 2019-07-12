@@ -15,10 +15,11 @@ auth := &_api.Auth{
     Token: &jwt.Token{
         Secret: []byte("my-random-string-123"),
     },
-    CacheClient:           st.Cache,
-    UserAccountRepository: &my.UserAccountRepositoryImpl{},
-    ServiceURL:            "localhost:8080",
-    RequireConfirmation:   true,
+    CacheClient:             st.Cache,
+    UserAccountRepository:   &my.UserAccountRepositoryImpl{},
+    PasswordResetRepository: &my.PasswordResetRepositoryImpl{},
+    ServiceURL:              "localhost:8080",
+    RequireConfirmation:     true,
 }
 
 auth.Apply(router)
