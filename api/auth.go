@@ -280,7 +280,7 @@ func (auth *Auth) createResetToken(w http.ResponseWriter, r *http.Request) {
 // passwordResetForm API endpoint will show password reset form
 func (auth *Auth) passwordResetForm(w http.ResponseWriter, r *http.Request) {
 	if auth.PasswordResetCallback == nil {
-		onError(errors.New("missing PasswordResetCallback implementation"), w)
+		w.Write([]byte("missing PasswordResetCallback implementation"))
 		return
 	}
 
