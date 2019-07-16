@@ -15,9 +15,9 @@ go client.Connect(done, ready, "ws://localhost:8080")
 
 <-ready
 
+// ready to send messages to websocket channel
 go func() {
 	for i := 0; i < 50000; i++ {
-		// ready to send messages to websocket channel
 		if err := client.SendText([]byte(fmt.Sprint("message: ", i))); err != nil {
 			logrus.Fatal("failed to send message: ", err)
 		}

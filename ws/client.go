@@ -13,7 +13,8 @@ type Client struct {
 	DisabledReader bool
 }
 
-// Connect will create websocket Client and start listening for messages
+// Connect will create websocket Client, connect to ws url
+// url: ws://localhost:8080
 func (client *Client) Connect(done chan bool, ready chan bool, url string) {
 	if client.MessageHandler == nil {
 		logrus.Fatal("MessageHandler is missing")
