@@ -17,20 +17,21 @@ var upgrader = websocket.Upgrader{
 // Server for websocket
 type Server struct {
 	MessageHandler
-	Config   *Config
+	Host     string
+	Port     string
+	Endpoint string
 	Channel  *Channel
-	Upgrader websocket.Upgrader
 }
 
 // Run will create websocket Server and start listening for messages
 func (server *Server) Run(done chan bool) {
-	if server.Config == nil || server.MessageHandler == nil {
-		logrus.Fatal("either Config or MessageHandler is missing")
+	if server.MessageHandler == nil {
+		logrus.Fatal("MessageHandler is missing")
 	}
 
 	router := &api.MuxRouterAdapter{Router: mux.NewRouter()}
 
-	router.HandleFunc(server.Config.Endpoint, func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc(server.Endpoint, func(w http.ResponseWriter, r *http.Request) {
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			w.Write([]byte("failed to setup websocket upgrader"))
@@ -48,8 +49,8 @@ func (server *Server) Run(done chan bool) {
 	}, "GET")
 
 	go router.Listen(&api.Config{
-		Host: server.Config.Host,
-		Port: server.Config.Port,
+		Host: server.Host,
+		Port: server.Port,
 	})
 
 	<-done

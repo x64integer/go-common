@@ -1,27 +1,17 @@
-## ENV variables
-
-| ENV    | Default value |
-|:-------|:-------------:|
-| WS_URL |               |
-
 ## Usage
 
 ### Client
 
 * **Create ws.Client**
 ```
-config := ws.NewConfig()
-config.WSURL = "ws://localhost:8080"
-
 client := &ws.Client{
-	Config:         config,
 	MessageHandler: &mHandler{},
 }
 
 done := make(chan bool)
 ready := make(chan bool)
 
-go client.Connect(done, ready)
+go client.Connect(done, ready, "ws://localhost:8080")
 
 <-ready
 
@@ -48,10 +38,10 @@ go func() {
 
 * **Create ws.Server**
 ```
-config := ws.NewConfig()
-
 server := &ws.Server{
-	Config:         config,
+	Host:     "localhost",
+	Port:     "8080",
+	Endpoint: "/",
 	MessageHandler: &mHandler{},
 }
 

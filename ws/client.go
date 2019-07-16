@@ -8,19 +8,18 @@ import (
 
 // Client for websocket
 type Client struct {
-	Config *Config
 	MessageHandler
 	Channel        *Channel
 	DisabledReader bool
 }
 
 // Connect will create websocket Client and start listening for messages
-func (client *Client) Connect(done chan bool, ready chan bool) {
-	if client.Config == nil || client.MessageHandler == nil {
-		logrus.Fatal("either Config or MessageHandler is missing")
+func (client *Client) Connect(done chan bool, ready chan bool, url string) {
+	if client.MessageHandler == nil {
+		logrus.Fatal("MessageHandler is missing")
 	}
 
-	conn := client.connection()
+	conn := client.connection(url)
 
 	ch := &Channel{
 		Connection:     conn,
@@ -35,7 +34,7 @@ func (client *Client) Connect(done chan bool, ready chan bool) {
 
 	ready <- true
 
-	logrus.Info("connected to: ", client.Config.WSURL)
+	logrus.Info("connected to: ", url)
 
 	<-done
 
@@ -53,8 +52,8 @@ func (client *Client) SendBinary(msg []byte) error {
 }
 
 // connection is helper function to create gorilla websocket connection
-func (client *Client) connection() *websocket.Conn {
-	conn, _, err := websocket.DefaultDialer.Dial(client.Config.WSURL, nil)
+func (client *Client) connection(url string) *websocket.Conn {
+	conn, _, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
 		logrus.Fatal("websocket dialer failed: ", err)
 	}
