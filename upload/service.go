@@ -22,7 +22,8 @@ type Service struct {
 	api.Router
 	*api.Auth
 	*jwt.Token
-	Cache cache.Service
+	Cache     cache.Service
+	MaxMemory int64
 
 	Endpoints []*Endpoint
 }
@@ -107,7 +108,7 @@ func (service *Service) uploadFunc(
 			return
 		}
 
-		r.ParseMultipartForm(uploader.MaxMemory)
+		r.ParseMultipartForm(service.MaxMemory)
 
 		if r.MultipartForm == nil {
 			logrus.Error("no files provided")

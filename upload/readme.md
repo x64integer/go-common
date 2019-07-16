@@ -12,11 +12,11 @@ service := &upload.Service{
         Host: util.Env("UPLOAD_SERVICE_HOST", "localhost"),
         Port: util.Env("UPLOAD_SERVICE_PORT", "9999"),
     },
-
     Token: &jwt.Token{
         Secret: []byte(util.Env("API_JWT_SECRET_KEY", "some-random-backup-string-123")),
     },
-    Cache: st.Cache,
+    Cache:     st.Cache,
+    MaxMemory: 32 << 20, // MB
 }
 
 topicUploadEndpoint := &upload.Endpoint{
@@ -26,7 +26,6 @@ topicUploadEndpoint := &upload.Endpoint{
         Destination:       "./uploads/topic",
         MultipartForm:     "topicUpload",
         FileSize:          1 << 20,  // MB
-		MaxMemory:         32 << 20, // MB
         AllowedExtensions: []string{".jpg", ".png", ".bmp", ".gif"},
     },
     OnPreExecute: func(w http.ResponseWriter, r *http.Request) ([]byte, bool) {

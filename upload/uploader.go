@@ -18,7 +18,6 @@ const extBytesLen = 512
 type Uploader struct {
 	Destination                string
 	MultipartForm              string
-	MaxMemory                  int64
 	FileSize                   int
 	AllowNonMimeTypeExtensions bool
 	AllowedExtensions          []string
