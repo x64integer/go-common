@@ -1,7 +1,5 @@
 ### Upload service
 
-Example
-
 ```
 st := storage.DefaultContainer(storage.SQLClient | storage.CacheClient)
 
