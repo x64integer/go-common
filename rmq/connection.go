@@ -38,7 +38,7 @@ type Connection struct {
 }
 
 // Connect to RabbitMQ and initialize channel
-func (c *Connection) Connect(declareDefaultQueue bool) error {
+func (c *Connection) Connect(declareChannel bool) error {
 	if c.Config == nil {
 		return errors.New("nil Config struct for RMQ Connection -> make sure valid Config is accessible to Connection")
 	}
@@ -51,8 +51,8 @@ func (c *Connection) Connect(declareDefaultQueue bool) error {
 	}
 	c.Conn = conn
 
-	if declareDefaultQueue {
-		if err := c.DeclareDefaultQueue(); err != nil {
+	if declareChannel {
+		if err := c.declareChannel(); err != nil {
 			return err
 		}
 	}
@@ -60,9 +60,9 @@ func (c *Connection) Connect(declareDefaultQueue bool) error {
 	return nil
 }
 
-// DeclareDefaultQueue will initialize channel, declare queue, exchange, qos and bind que to echange
+// declareChannel will initialize channel, exchange, qos and bind queues
 // RabbitMQ declarations
-func (c *Connection) DeclareDefaultQueue() error {
+func (c *Connection) declareChannel() error {
 	if c.Conn == nil {
 		return errors.New("amqp connection not initialized")
 	}
@@ -74,15 +74,15 @@ func (c *Connection) DeclareDefaultQueue() error {
 
 	c.Channel = ch
 
-	if _, err := c.queueDeclare(c.Config.Queue, c.Config.Options.Queue); err != nil {
-		return err
-	}
-
 	if err := c.exchangeDeclare(c.Config.Exchange, c.Config.ExchangeKind, c.Config.Options.Exchange); err != nil {
 		return err
 	}
 
 	if err := c.qos(c.Config.Options.QoS); err != nil {
+		return err
+	}
+
+	if _, err := c.queueDeclare(c.Config.Queue, c.Config.Options.Queue); err != nil {
 		return err
 	}
 
@@ -121,6 +121,23 @@ func (c *Connection) Consume(done chan bool) error {
 			return nil
 		}
 	}
+}
+
+// Publish payload to RMQ
+func (c *Connection) Publish(payload []byte) error {
+	err := c.Channel.Publish(
+		c.Config.Exchange,
+		c.Config.RoutingKey,
+		c.Config.Options.Publish.Mandatory,
+		c.Config.Options.Publish.Immediate,
+		amqp.Publishing{
+			DeliveryMode: amqp.Persistent,
+			ContentType:  c.ContentType,
+			Body:         payload,
+			Headers:      c.Headers,
+		})
+
+	return err
 }
 
 // DeclareWithConfig will initialize additional queues and exchanges on existing rmq setup/channel
@@ -178,23 +195,6 @@ func (c *Connection) ConsumeWithConfig(done chan bool, config *Config, callback 
 			return nil
 		}
 	}
-}
-
-// Publish payload to RMQ
-func (c *Connection) Publish(payload []byte) error {
-	err := c.Channel.Publish(
-		c.Config.Exchange,
-		c.Config.RoutingKey,
-		c.Config.Options.Publish.Mandatory,
-		c.Config.Options.Publish.Immediate,
-		amqp.Publishing{
-			DeliveryMode: amqp.Persistent,
-			ContentType:  c.ContentType,
-			Body:         payload,
-			Headers:      c.Headers,
-		})
-
-	return err
 }
 
 // WithHeaders will set headers to be sent

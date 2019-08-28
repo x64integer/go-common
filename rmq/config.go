@@ -7,36 +7,31 @@ import (
 
 // Config for RMQ
 type Config struct {
-	Host         string
-	Port         string
-	Username     string
-	Password     string
+	Host     string
+	Port     string
+	Username string
+	Password string
+
 	Exchange     string
 	ExchangeKind string
-	Queue        string
-	RoutingKey   string
-	ConsumerTag  string
+
+	Queue       string
+	RoutingKey  string
+	ConsumerTag string
+
 	*Options
 }
 
 // Options struct
 type Options struct {
-	Queue     *QueueOpts
-	Exchange  *ExchangeOpts
-	QoS       *QoSOpts
-	QueueBind *QueueBindOpts
-	Consume   *ConsumeOpts
-	Publish   *PublishOpts
-}
+	Exchange *ExchangeOpts
+	QoS      *QoSOpts
 
-// QueueOpts struct
-type QueueOpts struct {
-	Durable          bool
-	DeleteWhenUnused bool
-	Exclusive        bool
-	Internal         bool
-	NoWait           bool
-	Args             amqp.Table
+	Queue     *QueueOpts
+	QueueBind *QueueBindOpts
+
+	Consume *ConsumeOpts
+	Publish *PublishOpts
 }
 
 // ExchangeOpts struct
@@ -53,6 +48,16 @@ type QoSOpts struct {
 	PrefetchCount int
 	PrefetchSize  int
 	Global        bool
+}
+
+// QueueOpts struct
+type QueueOpts struct {
+	Durable          bool
+	DeleteWhenUnused bool
+	Exclusive        bool
+	Internal         bool
+	NoWait           bool
+	Args             amqp.Table
 }
 
 // QueueBindOpts struct
@@ -79,23 +84,19 @@ type PublishOpts struct {
 // NewConfig will initialize RMQ default config values
 func NewConfig() *Config {
 	return &Config{
-		Host:         util.Env("RMQ_HOST", "localhost"),
-		Port:         util.Env("RMQ_PORT", "5672"),
-		Username:     util.Env("RMQ_USERNAME", "guest"),
-		Password:     util.Env("RMQ_PASSWORD", "guest"),
+		Host:     util.Env("RMQ_HOST", "localhost"),
+		Port:     util.Env("RMQ_PORT", "5672"),
+		Username: util.Env("RMQ_USERNAME", "guest"),
+		Password: util.Env("RMQ_PASSWORD", "guest"),
+
 		Exchange:     util.Env("RMQ_EXCHANGE", ""),
 		ExchangeKind: util.Env("RMQ_EXCHANGE_KIND", "direct"),
-		Queue:        util.Env("RMQ_QUEUE", ""),
-		RoutingKey:   util.Env("RMQ_ROUTING_KEY", ""),
-		ConsumerTag:  util.Env("RMQ_CONSUMER_TAG", ""),
+
+		Queue:       util.Env("RMQ_QUEUE", ""),
+		RoutingKey:  util.Env("RMQ_ROUTING_KEY", ""),
+		ConsumerTag: util.Env("RMQ_CONSUMER_TAG", ""),
+
 		Options: &Options{
-			Queue: &QueueOpts{
-				Durable:          true,
-				DeleteWhenUnused: false,
-				Exclusive:        false,
-				NoWait:           false,
-				Args:             nil,
-			},
 			Exchange: &ExchangeOpts{
 				Durable:    true,
 				AutoDelete: false,
@@ -108,10 +109,19 @@ func NewConfig() *Config {
 				PrefetchSize:  0,
 				Global:        false,
 			},
+
+			Queue: &QueueOpts{
+				Durable:          true,
+				DeleteWhenUnused: false,
+				Exclusive:        false,
+				NoWait:           false,
+				Args:             nil,
+			},
 			QueueBind: &QueueBindOpts{
 				NoWait: false,
 				Args:   nil,
 			},
+
 			Consume: &ConsumeOpts{
 				AutoAck:   true,
 				Exclusive: false,
