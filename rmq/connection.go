@@ -143,19 +143,24 @@ func (c *Connection) Publish(payload []byte) error {
 // DeclareWithConfig will initialize additional queues and exchanges on existing rmq setup/channel
 func (c *Connection) DeclareWithConfig(config []*Config) error {
 	if c.Channel == nil {
-		return errors.New("c.Channel is nil, make sure valid channel is assigned to connection")
-	}
-
-	for _, conf := range config {
-		if _, err := c.queueDeclare(conf.Queue, conf.Options.Queue); err != nil {
+		ch, err := c.Conn.Channel()
+		if err != nil {
 			return err
 		}
 
+		c.Channel = ch
+	}
+
+	for _, conf := range config {
 		if err := c.exchangeDeclare(conf.Exchange, conf.ExchangeKind, conf.Options.Exchange); err != nil {
 			return err
 		}
 
 		if err := c.qos(conf.Options.QoS); err != nil {
+			return err
+		}
+
+		if _, err := c.queueDeclare(conf.Queue, conf.Options.Queue); err != nil {
 			return err
 		}
 
