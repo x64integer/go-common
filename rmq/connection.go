@@ -140,6 +140,40 @@ func (c *Connection) Publish(payload []byte) error {
 	return err
 }
 
+// PublishWithKey will publish payload to RMQ using given routingKey instead of routingKey provided in *Config
+func (c *Connection) PublishWithKey(routingKey string, payload []byte) error {
+	err := c.Channel.Publish(
+		c.Config.Exchange,
+		routingKey,
+		c.Config.Options.Publish.Mandatory,
+		c.Config.Options.Publish.Immediate,
+		amqp.Publishing{
+			DeliveryMode: amqp.Persistent,
+			ContentType:  c.ContentType,
+			Body:         payload,
+			Headers:      c.Headers,
+		})
+
+	return err
+}
+
+// PublishWithExchange will publish payload to RMQ using given exchange and routingKey instead of exchange/routingKey provided in *Config
+func (c *Connection) PublishWithExchange(exchange, routingKey string, payload []byte) error {
+	err := c.Channel.Publish(
+		exchange,
+		routingKey,
+		c.Config.Options.Publish.Mandatory,
+		c.Config.Options.Publish.Immediate,
+		amqp.Publishing{
+			DeliveryMode: amqp.Persistent,
+			ContentType:  c.ContentType,
+			Body:         payload,
+			Headers:      c.Headers,
+		})
+
+	return err
+}
+
 // DeclareWithConfig will initialize additional queues and exchanges on existing rmq setup/channel
 func (c *Connection) DeclareWithConfig(config []*Config) error {
 	if c.Channel == nil {
