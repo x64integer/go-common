@@ -3,7 +3,7 @@
 * AMQP/RabbitMQ
 * Websockets
 
-### Common wrappers
+### Other wrappers
 * GCM and CBC encryption/decryption
 * Argon2, SCrypt, BCrypt hashing
 * API HTTP Auth (/register, /login, /logout, /password/reset)
