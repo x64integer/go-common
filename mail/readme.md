@@ -1,3 +1,5 @@
+> NOTE: Prototype, in progress
+
 ## ENV variables (required for SMTP only)
 
 | ENV                | Default value  |
