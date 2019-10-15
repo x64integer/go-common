@@ -1,5 +1,5 @@
 ### Usage
-> NOTE: Auth in progress still
+> NOTE: Prototype, in progress
 
 ```
 // setup storage cache client, needed for Auth
