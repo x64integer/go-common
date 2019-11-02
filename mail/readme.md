@@ -1,6 +1,6 @@
-> NOTE: Prototype, in progress
+## SMTP
 
-## ENV variables (required for SMTP only)
+* **ENV variables**
 
 | ENV                | Default value  |
 |:-------------------|:--------------:|
@@ -9,17 +9,10 @@
 | MAIL_SMTP_HOST     | smtp.gmail.com |
 | MAIL_SMTP_PORT     | 465            |
 
-* **Setup mail client**
+* **Usage**
 ```
 smtpClient := mail.DefaultSMTP()
 
-client := &mail.Client{
-    Sender: smtpClient,
-}
-```
-
-* **Construct mail content to be sent**
-```
 content := &mail.Content{
     To:         []string{"mail_1@gmail.com"},
     Cc:         []string{"mail_2@gmail.com"},
@@ -28,11 +21,8 @@ content := &mail.Content{
     Body:       []byte("some mail body"),
     Attachment: []byte("some attachments"),
 }
-```
 
-* **Send mail**
-```
-if err := client.Send(content); err != nil {
+if err := smtpClient.Send(content); err != nil {
     log.Println("failed to send email: ", err)
 }
 ```
