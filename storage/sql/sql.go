@@ -8,7 +8,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/semirm-dev/go-dev/util"
+	"github.com/semirm-dev/go-dev/env"
 )
 
 const (
@@ -42,16 +42,16 @@ type Config struct {
 // NewConfig will initialize default config for SQL connection
 func NewConfig() *Config {
 	config := &Config{
-		Driver:   util.Env("SQL_DRIVER", PostgresDriver),
-		Host:     util.Env("SQL_HOST", "localhost"),
-		Name:     util.Env("SQL_NAME", ""),
-		Port:     util.Env("SQL_PORT", "5432"),
-		User:     util.Env("SQL_USER", "postgres"),
-		Password: util.Env("SQL_PASSWORD", "postgres"),
-		SSLMode:  util.Env("SSLMODE", "disable"),
+		Driver:   env.Get("SQL_DRIVER", PostgresDriver),
+		Host:     env.Get("SQL_HOST", "localhost"),
+		Name:     env.Get("SQL_NAME", ""),
+		Port:     env.Get("SQL_PORT", "5432"),
+		User:     env.Get("SQL_USER", "postgres"),
+		Password: env.Get("SQL_PASSWORD", "postgres"),
+		SSLMode:  env.Get("SSLMODE", "disable"),
 	}
 
-	maxConn, err := strconv.Atoi(util.Env("SQL_MAX_DB_CONN", "20"))
+	maxConn, err := strconv.Atoi(env.Get("SQL_MAX_DB_CONN", "20"))
 	if err != nil {
 		maxConn = 20
 	}

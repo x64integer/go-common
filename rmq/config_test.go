@@ -5,21 +5,21 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/semirm-dev/go-dev/env"
 	"github.com/semirm-dev/go-dev/rmq"
-	"github.com/semirm-dev/go-dev/util"
 )
 
 func TestNewConfig(t *testing.T) {
 	expected := &rmq.Config{
-		Host:         util.Env("RMQ_HOST", "localhost"),
-		Port:         util.Env("RMQ_PORT", "5672"),
-		Username:     util.Env("RMQ_USERNAME", "guest"),
-		Password:     util.Env("RMQ_PASSWORD", "guest"),
-		Exchange:     util.Env("RMQ_EXCHANGE", ""),
-		ExchangeKind: util.Env("RMQ_EXCHANGE_KIND", "direct"),
-		Queue:        util.Env("RMQ_QUEUE", ""),
-		RoutingKey:   util.Env("RMQ_ROUTING_KEY", ""),
-		ConsumerTag:  util.Env("RMQ_CONSUMER_TAG", ""),
+		Host:         env.Get("RMQ_HOST", "localhost"),
+		Port:         env.Get("RMQ_PORT", "5672"),
+		Username:     env.Get("RMQ_USERNAME", "guest"),
+		Password:     env.Get("RMQ_PASSWORD", "guest"),
+		Exchange:     env.Get("RMQ_EXCHANGE", ""),
+		ExchangeKind: env.Get("RMQ_EXCHANGE_KIND", "direct"),
+		Queue:        env.Get("RMQ_QUEUE", ""),
+		RoutingKey:   env.Get("RMQ_ROUTING_KEY", ""),
+		ConsumerTag:  env.Get("RMQ_CONSUMER_TAG", ""),
 		Options: &rmq.Options{
 			Queue: &rmq.QueueOpts{
 				Durable:          true,

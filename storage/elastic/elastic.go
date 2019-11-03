@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/olivere/elastic/v7"
-	"github.com/semirm-dev/go-dev/util"
+	"github.com/semirm-dev/go-dev/env"
 )
 
 const (
@@ -46,8 +46,8 @@ type SearchEntity struct {
 // NewConfig will initialize default configuration for Elasticsearch
 func NewConfig() *Config {
 	return &Config{
-		Host: util.Env("ELASTIC_HOST", "127.0.0.1"),
-		Port: util.Env("ELASTIC_PORT", "9200"),
+		Host: env.Get("ELASTIC_HOST", "127.0.0.1"),
+		Port: env.Get("ELASTIC_PORT", "9200"),
 	}
 }
 

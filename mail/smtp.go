@@ -4,9 +4,9 @@ import (
 	"crypto/tls"
 	"net/smtp"
 
-	"github.com/sirupsen/logrus"
+	"github.com/semirm-dev/go-dev/env"
 
-	"github.com/semirm-dev/go-dev/util"
+	"github.com/sirupsen/logrus"
 )
 
 // SMTP for mail
@@ -22,10 +22,10 @@ type SMTP struct {
 // DefaultSMTP will initialize SMTP server with default values
 func DefaultSMTP() *SMTP {
 	smtpServer := &SMTP{
-		From:     util.Env("MAIL_FROM", ""),
-		Password: util.Env("MAIL_FROM_PASSWORD", ""),
-		Host:     util.Env("MAIL_SMTP_HOST", "smtp.gmail.com"),
-		Port:     util.Env("MAIL_SMTP_PORT", "465"),
+		From:     env.Get("MAIL_FROM", ""),
+		Password: env.Get("MAIL_FROM_PASSWORD", ""),
+		Host:     env.Get("MAIL_SMTP_HOST", "smtp.gmail.com"),
+		Port:     env.Get("MAIL_SMTP_PORT", "465"),
 	}
 
 	smtpServer.TLSConfig = &tls.Config{

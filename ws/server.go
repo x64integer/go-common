@@ -5,7 +5,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
-	"github.com/semirm-dev/go-dev/api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -29,7 +28,7 @@ func (server *Server) Run(done chan bool) {
 		logrus.Fatal("MessageHandler is missing")
 	}
 
-	router := &api.MuxRouterAdapter{Router: mux.NewRouter()}
+	router := mux.NewRouter()
 
 	router.HandleFunc(server.Endpoint, func(w http.ResponseWriter, r *http.Request) {
 		conn, err := upgrader.Upgrade(w, r, nil)
@@ -46,12 +45,9 @@ func (server *Server) Run(done chan bool) {
 		server.Channel = ch
 
 		go ch.read()
-	}, "GET")
-
-	go router.Listen(&api.Config{
-		Host: server.Host,
-		Port: server.Port,
 	})
+
+	go http.ListenAndServe(server.Host+":"+server.Port, router)
 
 	<-done
 

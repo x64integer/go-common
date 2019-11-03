@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"github.com/semirm-dev/go-dev/util"
+
+	"github.com/semirm-dev/go-dev/env"
 )
 
 // Config for MQTT connection
@@ -25,11 +27,11 @@ type Config struct {
 // NewConfig will initialize MQTT config struct
 func NewConfig() *Config {
 	return &Config{
-		Host:          util.Env("MQTT_HOST", "localhost"),
-		Port:          util.Env("MQTT_PORT", "1883"),
-		Username:      util.Env("MQTT_USERNAME", "guest"),
-		Password:      util.Env("MQTT_PASSWORD", "guest"),
-		ClientID:      util.Env("MQTT_CLIENT_ID", util.UUID()),
+		Host:          env.Get("MQTT_HOST", "localhost"),
+		Port:          env.Get("MQTT_PORT", "1883"),
+		Username:      env.Get("MQTT_USERNAME", "guest"),
+		Password:      env.Get("MQTT_PASSWORD", "guest"),
+		ClientID:      env.Get("MQTT_CLIENT_ID", util.UUID()),
 		PubQoS:        0,
 		SubQoS:        0,
 		CleanSession:  true,

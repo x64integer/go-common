@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis"
-	"github.com/semirm-dev/go-dev/util"
+	"github.com/semirm-dev/go-dev/env"
 )
 
 // pipeLength defines limit whether to use pipeline or not
@@ -39,15 +39,15 @@ type Item struct {
 
 // NewConfig will initialize default config struct for Redis
 func NewConfig() *Config {
-	db, err := strconv.Atoi(util.Env("REDIS_DB", "0"))
+	db, err := strconv.Atoi(env.Get("REDIS_DB", "0"))
 	if err != nil {
 		db = 0
 	}
 
 	return &Config{
-		Host:     util.Env("REDIS_HOST", ""),
-		Port:     util.Env("REDIS_PORT", "6379"),
-		Password: util.Env("REDIS_PASSWORD", ""),
+		Host:     env.Get("REDIS_HOST", ""),
+		Port:     env.Get("REDIS_PORT", "6379"),
+		Password: env.Get("REDIS_PASSWORD", ""),
 		DB:       db,
 	}
 }

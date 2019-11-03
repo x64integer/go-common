@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/gocql/gocql"
-	"github.com/semirm-dev/go-dev/util"
+	"github.com/semirm-dev/go-dev/env"
 )
 
 // Connection for cassandra
@@ -35,16 +35,16 @@ type Iterator interface {
 func NewConfig() *Config {
 	var hosts []string
 
-	hostsEnv := util.Env("CASSANDRA_HOSTS", "127.0.0.1")
+	hostsEnv := env.Get("CASSANDRA_HOSTS", "127.0.0.1")
 	for _, host := range strings.Split(hostsEnv, ",") {
 		hosts = append(hosts, host)
 	}
 
 	return &Config{
 		Hosts:        hosts,
-		Keyspace:     util.Env("CASSANDRA_KEYSPACE", "default_keyspace"),
-		Username:     util.Env("CASSANDRA_USERNAME", ""),
-		Password:     util.Env("CASSANDRA_PASSWORD", ""),
+		Keyspace:     env.Get("CASSANDRA_KEYSPACE", "default_keyspace"),
+		Username:     env.Get("CASSANDRA_USERNAME", ""),
+		Password:     env.Get("CASSANDRA_PASSWORD", ""),
 		Timeout:      5 * time.Second,
 		ProtoVersion: 4,
 	}
