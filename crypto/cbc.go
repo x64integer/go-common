@@ -8,7 +8,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/semirm-dev/go-dev/util"
+	"github.com/semirm-dev/go-dev/str"
 )
 
 // CBC crypter
@@ -39,7 +39,7 @@ func (cbcEnc *CBC) Encrypt(input []byte) (string, string, string, error) {
 	mode := cipher.NewCBCEncrypter(block, byteIV)
 	mode.CryptBlocks(encrypted, byteIn)
 
-	return string(encrypted), hex.EncodeToString(encrypted), util.Base64URLEncode(string(encrypted)), nil
+	return string(encrypted), hex.EncodeToString(encrypted), str.Base64URLEncode(string(encrypted)), nil
 }
 
 // Decrypt AES CBC encrypted input

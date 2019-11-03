@@ -8,7 +8,7 @@ import (
 
 	"github.com/semirm-dev/go-dev/env"
 	"github.com/semirm-dev/go-dev/mqtt"
-	"github.com/semirm-dev/go-dev/util"
+	"github.com/semirm-dev/go-dev/str"
 )
 
 func TestNewConfig(t *testing.T) {
@@ -17,7 +17,7 @@ func TestNewConfig(t *testing.T) {
 		Port:          env.Get("MQTT_PORT", "1883"),
 		Username:      env.Get("MQTT_USERNAME", "guest"),
 		Password:      env.Get("MQTT_PASSWORD", "guest"),
-		ClientID:      env.Get("MQTT_CLIENT_ID", util.UUID()),
+		ClientID:      env.Get("MQTT_CLIENT_ID", str.UUID()),
 		PubQoS:        0,
 		SubQoS:        0,
 		CleanSession:  true,

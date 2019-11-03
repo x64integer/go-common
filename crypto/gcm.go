@@ -9,7 +9,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/semirm-dev/go-dev/util"
+	"github.com/semirm-dev/go-dev/str"
 )
 
 // GCM crypter
@@ -39,7 +39,7 @@ func (gcmEnc *GCM) Encrypt(input []byte) (string, string, string, error) {
 
 	encrypted := gcm.Seal(nonce, nonce, input, nil)
 
-	return string(encrypted), hex.EncodeToString(encrypted), util.Base64URLEncode(string(encrypted)), nil
+	return string(encrypted), hex.EncodeToString(encrypted), str.Base64URLEncode(string(encrypted)), nil
 }
 
 // Decrypt AES GCM encrypted input

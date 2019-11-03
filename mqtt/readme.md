@@ -6,7 +6,7 @@
 | MQTT_PORT      | 1883          |
 | MQTT_USERNAME  | guest         |
 | MQTT_PASSWORD  | guest         |
-| MQTT_CLIENT_ID | util.UUID()   |
+| MQTT_CLIENT_ID | str.UUID()   |
 
 ## Usage
 

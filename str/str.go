@@ -1,4 +1,4 @@
-package util
+package str
 
 import (
 	"encoding/base64"
@@ -21,10 +21,10 @@ func UUID() string {
 	return uuid.NewV4().String()
 }
 
-// RandomStr - generate random string using masking with source
+// Random - generate random string using masking with source
 //
 // Credits to: https://medium.com/@kpbird/golang-generate-fixed-size-random-string-dd6dbd5e63c0
-func RandomStr(n int) string {
+func Random(n int) string {
 	src := rand.NewSource(time.Now().UnixNano())
 	b := make([]byte, n)
 	l := len(letterBytes)
@@ -55,9 +55,4 @@ func Base64URLDecode(input string) (string, error) {
 	res, err := base64.URLEncoding.DecodeString(input)
 
 	return string(res), err
-}
-
-// RandomInt generates random integer
-func RandomInt(min, max int) int {
-	return min + rand.Intn(max-min)
 }
