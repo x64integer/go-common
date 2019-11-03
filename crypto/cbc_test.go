@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/semirm-dev/go-common/crypto"
+	"github.com/semirm-dev/go-dev/crypto"
 )
 
 var (

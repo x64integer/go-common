@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/semirm-dev/go-common/mqtt"
-	"github.com/semirm-dev/go-common/util"
+	"github.com/semirm-dev/go-dev/mqtt"
+	"github.com/semirm-dev/go-dev/util"
 )
 
 func TestNewConfig(t *testing.T) {

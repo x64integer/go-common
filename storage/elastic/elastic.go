@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/olivere/elastic/v7"
-	"github.com/semirm-dev/go-common/util"
+	"github.com/semirm-dev/go-dev/util"
 )
 
 const (

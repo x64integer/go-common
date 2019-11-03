@@ -97,4 +97,4 @@ if err := publisher.Publish([]byte("message")); err != nil {
 <-done
 ```
 
-> Config: https://github.com/semirm-dev/go-common/blob/master/rmq/config.go
+> Config: https://github.com/semirm-dev/go-dev/blob/master/rmq/config.go

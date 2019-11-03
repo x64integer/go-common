@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/semirm-dev/go-common/jwt"
+	"github.com/semirm-dev/go-dev/jwt"
 	"github.com/stretchr/testify/assert"
 )
 

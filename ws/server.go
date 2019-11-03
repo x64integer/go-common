@@ -5,7 +5,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
-	"github.com/semirm-dev/go-common/api"
+	"github.com/semirm-dev/go-dev/api"
 	"github.com/sirupsen/logrus"
 )
 

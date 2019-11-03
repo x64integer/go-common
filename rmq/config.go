@@ -1,7 +1,7 @@
 package rmq
 
 import (
-	"github.com/semirm-dev/go-common/util"
+	"github.com/semirm-dev/go-dev/util"
 	"github.com/streadway/amqp"
 )
 

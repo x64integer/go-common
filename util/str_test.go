@@ -3,7 +3,7 @@ package util_test
 import (
 	"testing"
 
-	"github.com/semirm-dev/go-common/util"
+	"github.com/semirm-dev/go-dev/util"
 	"github.com/stretchr/testify/assert"
 )
 

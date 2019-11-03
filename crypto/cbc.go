@@ -8,7 +8,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/semirm-dev/go-common/util"
+	"github.com/semirm-dev/go-dev/util"
 )
 
 // CBC crypter

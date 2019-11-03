@@ -3,7 +3,7 @@ package crypto_test
 import (
 	"testing"
 
-	"github.com/semirm-dev/go-common/crypto"
+	"github.com/semirm-dev/go-dev/crypto"
 	"github.com/stretchr/testify/assert"
 )
 

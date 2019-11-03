@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/semirm-dev/go-common/storage/sql"
-	"github.com/semirm-dev/go-common/util"
+	"github.com/semirm-dev/go-dev/storage/sql"
+	"github.com/semirm-dev/go-dev/util"
 )
 
 func TestNewConfig(t *testing.T) {

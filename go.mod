@@ -1,4 +1,4 @@
-module github.com/semirm-dev/go-common
+module github.com/semirm-dev/go-dev
 
 go 1.12
 
