@@ -104,10 +104,12 @@ func (sqlConn *Connection) dsn() string {
 	switch driver {
 	case PostgresDriver:
 		connString = fmt.Sprintf(
-			"user=%s password=%s dbname=%s sslmode=%s",
+			"host=%s port=%s dbname=%s user=%s password=%s sslmode=%s",
+			sqlConn.Config.Host,
+			sqlConn.Config.Port,
+			sqlConn.Config.Name,
 			sqlConn.Config.User,
 			sqlConn.Config.Password,
-			sqlConn.Config.Name,
 			sqlConn.Config.SSLMode,
 		)
 	case MySQLDriver:
@@ -121,12 +123,12 @@ func (sqlConn *Connection) dsn() string {
 		)
 	case MSSQLDriver:
 		connString = fmt.Sprintf(
-			"server=%s;user id=%s;password=%s;port=%s;database=%s;",
+			"server=%s;port=%s;database=%s;user id=%s;password=%s;",
 			sqlConn.Config.Host,
-			sqlConn.Config.User,
-			sqlConn.Config.Password,
 			sqlConn.Config.Port,
 			sqlConn.Config.Name,
+			sqlConn.Config.User,
+			sqlConn.Config.Password,
 		)
 
 	default:
