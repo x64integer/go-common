@@ -44,8 +44,8 @@ func NewConfig() *Config {
 	config := &Config{
 		Driver:   env.Get("SQL_DRIVER", PostgresDriver),
 		Host:     env.Get("SQL_HOST", "localhost"),
-		Name:     env.Get("SQL_NAME", ""),
 		Port:     env.Get("SQL_PORT", "5432"),
+		Name:     env.Get("SQL_NAME", ""),
 		User:     env.Get("SQL_USER", "postgres"),
 		Password: env.Get("SQL_PASSWORD", "postgres"),
 		SSLMode:  env.Get("SSLMODE", "disable"),
