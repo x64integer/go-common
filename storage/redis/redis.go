@@ -105,14 +105,14 @@ func (conn *Connection) Store(items ...*Item) error {
 }
 
 // Get item(s) from Redis
-func (conn *Connection) Get(items ...*Item) ([]byte, error) {
+func (conn *Connection) Get(keys ...string) ([]byte, error) {
 	var result []byte
 
-	if len(items) > conn.PipeLength { // with pipeline
+	if len(keys) > conn.PipeLength { // with pipeline
 		pipe := conn.Client.Pipeline()
 
-		for _, item := range items {
-			pipe.Get(item.Key)
+		for _, key := range keys {
+			pipe.Get(key)
 		}
 
 		res, err := pipe.Exec()
@@ -134,13 +134,13 @@ func (conn *Connection) Get(items ...*Item) ([]byte, error) {
 	} else { // without pipeline
 		var errMsgs []string
 
-		for _, item := range items {
-			val, err := conn.Client.Get(item.Key).Result()
+		for _, key := range keys {
+			val, err := conn.Client.Get(key).Result()
 
 			switch {
 			// key does not exist
 			case err == redis.Nil:
-				errMsgs = append(errMsgs, fmt.Sprintf("key %v does not exist", item.Key))
+				errMsgs = append(errMsgs, fmt.Sprintf("key %v does not exist", key))
 			// some other error
 			case err != nil:
 				errMsgs = append(errMsgs, err.Error())
@@ -159,13 +159,7 @@ func (conn *Connection) Get(items ...*Item) ([]byte, error) {
 }
 
 // Delete item(s) from Redis
-func (conn *Connection) Delete(items ...*Item) error {
-	var keys []string
-
-	for _, item := range items {
-		keys = append(keys, item.Key)
-	}
-
+func (conn *Connection) Delete(keys ...string) error {
 	return conn.Client.Del(keys...).Err()
 }
 
