@@ -3,7 +3,7 @@
 * AMQP/RabbitMQ
 * Websockets
 
-### Other wrappers
+### Misc wrappers
 * GCM and CBC encryption/decryption
 * Argon2, SCrypt, BCrypt hashing
 * JWT
