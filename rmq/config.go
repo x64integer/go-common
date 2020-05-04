@@ -1,7 +1,7 @@
 package rmq
 
 import (
-	"github.com/semirm-dev/go-dev/env"
+	"github.com/semirm-dev/godev/env"
 	"github.com/streadway/amqp"
 )
 

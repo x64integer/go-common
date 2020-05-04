@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis"
-	"github.com/semirm-dev/go-dev/env"
+	"github.com/semirm-dev/godev/env"
 )
 
 // pipeLength defines limit whether to use pipeline or not

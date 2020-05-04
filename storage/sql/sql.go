@@ -8,7 +8,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/semirm-dev/go-dev/env"
+	"github.com/semirm-dev/godev/env"
 )
 
 const (

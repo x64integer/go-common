@@ -3,9 +3,9 @@ package mqtt
 import (
 	"time"
 
-	"github.com/semirm-dev/go-dev/str"
+	"github.com/semirm-dev/godev/str"
 
-	"github.com/semirm-dev/go-dev/env"
+	"github.com/semirm-dev/godev/env"
 )
 
 // Config for MQTT connection

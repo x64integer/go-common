@@ -3,7 +3,7 @@ package env_test
 import (
 	"testing"
 
-	"github.com/semirm-dev/go-dev/env"
+	"github.com/semirm-dev/godev/env"
 	"github.com/stretchr/testify/assert"
 )
 

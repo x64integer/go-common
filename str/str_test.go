@@ -3,7 +3,7 @@ package str_test
 import (
 	"testing"
 
-	"github.com/semirm-dev/go-dev/str"
+	"github.com/semirm-dev/godev/str"
 
 	"github.com/stretchr/testify/assert"
 )

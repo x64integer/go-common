@@ -4,7 +4,7 @@ import (
 	"crypto/tls"
 	"net/smtp"
 
-	"github.com/semirm-dev/go-dev/env"
+	"github.com/semirm-dev/godev/env"
 
 	"github.com/sirupsen/logrus"
 )
