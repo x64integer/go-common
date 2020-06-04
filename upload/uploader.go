@@ -1,12 +1,14 @@
 package upload
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"mime"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -76,52 +78,29 @@ func (uploader *Uploader) Upload(reader io.Reader, fileName string) (<-chan *Upl
 			return
 		}
 
-		size := len(fileBytes) / 1024
-
-		if len(fileBytes) > uploader.FileSize {
+		if err := uploader.fileSizeValid(fileBytes); err != nil {
 			failed <- &Failed{
 				File:    fileName,
-				Message: fmt.Sprintf("file size exceeds limit by %d bytes, len[%d], maxLen[%d]", len(fileBytes)-uploader.FileSize, len(fileBytes), uploader.FileSize),
+				Message: err.Error(),
 			}
 			return
 		}
 
-		if len(fileBytes) < extBytesLen {
-			failed <- &Failed{
-				File:    fileName,
-				Message: fmt.Sprintf("not enough bytes to read file extension, bytes[%d]", len(fileBytes)),
-			}
-			return
-		}
-
-		ext, err := fileExtension(fileBytes[:extBytesLen], fileName)
+		filePath, err := uploader.filePath(fileBytes, fileName)
 		if err != nil {
 			failed <- &Failed{
 				File:    fileName,
-				Message: "failed to get file extension",
+				Message: err.Error(),
 			}
 			return
 		}
-
-		if !uploader.allowedExtension(ext) {
-			failed <- &Failed{
-				File:    fileName,
-				Message: "file extension not allowed: " + ext,
-			}
-			return
-		}
-
-		fileName = trimExtension(fileName)
-
-		name := fileName + "_*" + ext
 
 		// performLongUploadTest(ext) // for testing only
 
-		uploadedFile, err := uploader.writeFile(fileBytes, uploader.Destination, name)
-		if err != nil {
+		if err := ioutil.WriteFile(filePath, fileBytes, 0644); err != nil {
 			failed <- &Failed{
 				File:    fileName,
-				Message: "write file failed: " + name,
+				Message: "write file failed: " + filePath,
 			}
 			return
 		}
@@ -129,8 +108,8 @@ func (uploader *Uploader) Upload(reader io.Reader, fileName string) (<-chan *Upl
 		finishTime := time.Now()
 
 		uploaded <- &Uploaded{
-			File: uploadedFile.Name(),
-			Size: size,
+			File: filePath,
+			Size: len(fileBytes),
 			Time: fmt.Sprint(finishTime.Sub(startTime)),
 		}
 	}()
@@ -138,20 +117,36 @@ func (uploader *Uploader) Upload(reader io.Reader, fileName string) (<-chan *Upl
 	return uploaded, failed
 }
 
-// writeFile will create file in path and write content to the file
-func (uploader *Uploader) writeFile(content []byte, path string, fileName string) (*os.File, error) {
-	tempFile, err := ioutil.TempFile(path, fileName)
-	if err != nil {
-		return nil, err
+func (uploader *Uploader) fileSizeValid(fileBytes []byte) error {
+	fLen := len(fileBytes)
+
+	if fLen > uploader.FileSize {
+		return errors.New(fmt.Sprintf("file size exceeds limit by %d bytes, len[%d], maxLen[%d]", fLen-uploader.FileSize, fLen, uploader.FileSize))
 	}
-	defer tempFile.Close()
 
-	tempFile.Write(content)
+	if fLen < extBytesLen {
+		return errors.New(fmt.Sprintf("not enough bytes to read file extension, bytes[%d]", fLen))
+	}
 
-	return tempFile, nil
+	return nil
 }
 
-// allowedExtension will check if given extension is allowed
+func (uploader *Uploader) filePath(fileBytes []byte, fileName string) (string, error) {
+	ext, err := fileExtension(fileBytes[:extBytesLen], fileName)
+	if err != nil {
+		return "", errors.New("failed to get file extension: " + err.Error())
+	}
+
+	if !uploader.allowedExtension(ext) {
+		return "", errors.New("file extension not allowed: " + ext)
+	}
+
+	// make sure we use valid extension from fileBytes, not user defined
+	fileName = trimExtension(fileName) + ext
+
+	return filepath.Join(uploader.Destination, fileName), err
+}
+
 func (uploader *Uploader) allowedExtension(extension string) bool {
 	if len(uploader.AllowedExtensions) == 0 && uploader.AllowNonMimeTypeExtensions {
 		return true
@@ -169,7 +164,7 @@ func (uploader *Uploader) allowedExtension(extension string) bool {
 // fileExtension returns file extension with dot prefix
 // .jpg, .png, .bmp, .exe, etc...
 func fileExtension(extBytes []byte, fileName string) (string, error) {
-	var extenstion string
+	var extension string
 
 	fileType := http.DetectContentType(extBytes)
 
@@ -180,17 +175,16 @@ func fileExtension(extBytes []byte, fileName string) (string, error) {
 
 	// mime type extension, get extension from extBytes
 	if len(fileEndings) > 0 {
-		extenstion = fileEndings[0]
+		extension = fileEndings[0]
 	} else { // non-mime type extension, get extension from fileName
 		file := strings.Split(fileName, ".")
 
-		extenstion = "." + file[len(file)-1]
+		extension = "." + file[len(file)-1]
 	}
 
-	return extenstion, nil
+	return extension, nil
 }
 
-// createPathIfNotExists is helper function to create directory + subdirectories if such path does not exist
 func createPathIfNotExists(path string) error {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		if err := os.MkdirAll(path, os.ModePerm); err != nil {
@@ -201,7 +195,6 @@ func createPathIfNotExists(path string) error {
 	return nil
 }
 
-// trimExtension from given file name
 func trimExtension(file string) string {
 	_file := strings.Split(file, ".")
 
