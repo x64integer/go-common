@@ -10,7 +10,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -19,11 +18,9 @@ const extBytesLen = 512
 // Uploader is responsible to upload files
 type Uploader struct {
 	Destination                string
-	MultipartForm              string
 	FileSize                   int
 	AllowNonMimeTypeExtensions bool
 	AllowedExtensions          []string
-	L                          sync.Mutex
 }
 
 // Uploaded file data
