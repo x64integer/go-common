@@ -1,9 +1,9 @@
-### Protocol wrappers
+### Protocols
 * MQTT
 * AMQP/RabbitMQ
 * Websockets
 
-### Misc wrappers
+### Misc
 * GCM and CBC encryption/decryption
 * Argon2, SCrypt, BCrypt hashing
 * JWT
