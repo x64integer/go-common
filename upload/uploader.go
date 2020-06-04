@@ -195,6 +195,10 @@ func createPathIfNotExists(path string) error {
 func trimExtension(file string) string {
 	_file := strings.Split(file, ".")
 
+	if len(_file) < 2 {
+		return file
+	}
+
 	_file = _file[:len(_file)-1]
 
 	return strings.Join(_file, ".")
