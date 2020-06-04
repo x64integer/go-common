@@ -8,11 +8,6 @@ uploader := &upload.Uploader{
     AllowedExtensions: []string{".jpg", ".png", ".bmp", ".gif"},
 }
 
-response := &upload.Response{
-    Uploaded: make([]*upload.Uploaded, 0),
-    Failed:   make([]*upload.Failed, 0),
-}
-
 var uploadProgress sync.WaitGroup
 
 uploadProgress.Add(1)
@@ -23,9 +18,9 @@ uploaded, failed := uploader.Upload(myReader, "myFileName.txt")
 go func() {
     select {
     case u := <-uploaded:
-        response.Uploaded = append(response.Uploaded, u)
+        // handle uploaded file
     case f := <-failed:
-        response.Failed = append(response.Failed, f)
+        // handle failed upload
     }
 
     uploadProgress.Done()
@@ -33,5 +28,4 @@ go func() {
 
 uploadProgress.Wait()
 
-// do something with *Response
 ```
