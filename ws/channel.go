@@ -36,6 +36,8 @@ type Channel struct {
 // Concurrent safe wrapper for Connection.ReadMessage()
 func (ch *Channel) read() {
 	defer func() {
+		logrus.Warn("websocket connection stopped reading messages")
+
 		if err := ch.close(); err != nil {
 			logrus.Error("failed to close websocket connection: ", err)
 			return
