@@ -28,8 +28,8 @@ config.RoutingKey = "test_queue"
 // setup connection
 consumer := &rmq.Connection{
 	Config: config,
-	HandleMsgs: func(msgs <-chan amqp.Delivery) {
-		for m := range msgs {
+	HandleMsg: func(msg <-chan amqp.Delivery) {
+		for m := range msg {
 			log.Print(string(m.Body))
 		}
 	},

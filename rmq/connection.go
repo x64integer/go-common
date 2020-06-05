@@ -32,7 +32,7 @@ type Connection struct {
 	Retrying      bool
 
 	// callbacks
-	HandleMsgs                 func(msgs <-chan amqp.Delivery)
+	HandleMsg                  func(msg <-chan amqp.Delivery)
 	HandleResetSignalConsumer  func(chan bool)
 	HandleResetSignalPublisher func(chan bool)
 }
@@ -95,7 +95,7 @@ func (c *Connection) declareChannel() error {
 
 // Consume data from RMQ
 func (c *Connection) Consume(done chan bool) error {
-	msgs, err := c.Channel.Consume(
+	msg, err := c.Channel.Consume(
 		c.Config.Queue,
 		c.Config.ConsumerTag,
 		c.Config.Options.Consume.AutoAck,
@@ -108,7 +108,7 @@ func (c *Connection) Consume(done chan bool) error {
 		return err
 	}
 
-	go c.HandleMsgs(msgs)
+	go c.HandleMsg(msg)
 
 	logrus.Info("waiting for messages...")
 
@@ -174,7 +174,7 @@ func (c *Connection) PublishWithExchange(exchange, routingKey string, payload []
 	return err
 }
 
-// DeclareWithConfig will initialize additional queues and exchanges on existing rmq setup/channel
+// DeclareWithConfig will initialize additional queues and exchanges
 func (c *Connection) DeclareWithConfig(config []*Config) error {
 	if c.Channel == nil {
 		ch, err := c.Conn.Channel()
@@ -207,8 +207,8 @@ func (c *Connection) DeclareWithConfig(config []*Config) error {
 }
 
 // ConsumeWithConfig will start consumer with passed config values
-func (c *Connection) ConsumeWithConfig(done chan bool, config *Config, callback func(msgs <-chan amqp.Delivery)) error {
-	msgs, err := c.Channel.Consume(
+func (c *Connection) ConsumeWithConfig(done chan bool, config *Config, callback func(msg <-chan amqp.Delivery)) error {
+	msg, err := c.Channel.Consume(
 		config.Queue,
 		config.ConsumerTag,
 		config.Options.Consume.AutoAck,
@@ -221,7 +221,7 @@ func (c *Connection) ConsumeWithConfig(done chan bool, config *Config, callback 
 		return err
 	}
 
-	go callback(msgs)
+	go callback(msg)
 
 	logrus.Info("waiting for messages...")
 
