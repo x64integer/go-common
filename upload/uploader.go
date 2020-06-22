@@ -37,7 +37,7 @@ type Failed struct {
 }
 
 // Upload file
-// Upload is run in separate goroutine for better performance and is thread-safe
+// Upload is run in separate goroutine for better performance
 // Response is passed to either *Uploaded or *Failed channels, depends if the upload was successful or not
 // Both *Uploaded and *Failed channels will be closed automatically on goroutine's return
 //
