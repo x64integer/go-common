@@ -2,7 +2,6 @@ package crypto
 
 import (
 	"errors"
-	"sync"
 )
 
 // ErrMissingCrypter error
@@ -14,9 +13,9 @@ var ErrMissingPlain = errors.New("missing Plain property")
 // Crypter for encryption and decryption
 type Crypter interface {
 	// Encrypt returns original encrypted value, hex, base64 and error
-	Encrypt([]byte) (string, string, string, error)
+	Encrypt(payload []byte) (string, string, string, error)
 	// Decrypt returns original message and error
-	Decrypt(string) (string, error)
+	Decrypt(encrypted string) (string, error)
 }
 
 // Cipher ...
@@ -26,15 +25,10 @@ type Cipher struct {
 	Decrypted   string
 	Hex         string
 	Base64      string
-	EncryptLock sync.Mutex
-	DecryptLock sync.Mutex
 }
 
 // Encrypt given payload
 func (cipher *Cipher) Encrypt(payload []byte) error {
-	cipher.EncryptLock.Lock()
-	defer cipher.EncryptLock.Unlock()
-
 	if cipher.Crypter == nil {
 		return ErrMissingCrypter
 	}
@@ -53,9 +47,6 @@ func (cipher *Cipher) Encrypt(payload []byte) error {
 
 // Decrypt encrypted payload
 func (cipher *Cipher) Decrypt(encrypted string) error {
-	cipher.DecryptLock.Lock()
-	defer cipher.DecryptLock.Unlock()
-
 	dec, err := cipher.Crypter.Decrypt(encrypted)
 	if err != nil {
 		return nil

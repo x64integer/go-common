@@ -18,7 +18,7 @@ type CBC struct {
 }
 
 // Encrypt payload using AES encryption CBC mode
-func (cbcEnc *CBC) Encrypt(input []byte) (string, string, string, error) {
+func (cbcEnc *CBC) Encrypt(payload []byte) (string, string, string, error) {
 	if strings.TrimSpace(cbcEnc.Secret) == "" {
 		return "", "", "", errors.New("secret key not provided")
 	}
@@ -30,7 +30,7 @@ func (cbcEnc *CBC) Encrypt(input []byte) (string, string, string, error) {
 		return "", "", "", err
 	}
 
-	byteIn := pkcsPad(input, aes.BlockSize)
+	byteIn := pkcsPad(payload, aes.BlockSize)
 
 	encrypted := make([]byte, len(byteIn))
 
@@ -43,7 +43,7 @@ func (cbcEnc *CBC) Encrypt(input []byte) (string, string, string, error) {
 }
 
 // Decrypt AES CBC encrypted input
-func (cbcEnc *CBC) Decrypt(input string) (string, error) {
+func (cbcEnc *CBC) Decrypt(encrypted string) (string, error) {
 	if strings.TrimSpace(cbcEnc.Secret) == "" {
 		return "", errors.New("secret key not provided")
 	}
@@ -55,7 +55,7 @@ func (cbcEnc *CBC) Decrypt(input string) (string, error) {
 		return "", err
 	}
 
-	byteIn := []byte(input)
+	byteIn := []byte(encrypted)
 	if len(byteIn) < aes.BlockSize {
 		return "", errors.New("encrypted text too short")
 	}

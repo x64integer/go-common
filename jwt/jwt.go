@@ -2,7 +2,6 @@ package jwt
 
 import (
 	"errors"
-	"sync"
 	"time"
 
 	jwtLib "github.com/dgrijalva/jwt-go"
@@ -15,7 +14,6 @@ var ErrMissingSecret = errors.New("missing secret key")
 type Token struct {
 	Secret  []byte
 	Content string
-	Lock    sync.Mutex
 }
 
 // Claims for token
@@ -27,9 +25,6 @@ type Claims struct {
 
 // Generate JWT token for given claims
 func (token *Token) Generate(claims *Claims) error {
-	token.Lock.Lock()
-	defer token.Lock.Unlock()
-
 	if token.Secret == nil || len(token.Secret) == 0 {
 		return ErrMissingSecret
 	}
