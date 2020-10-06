@@ -30,14 +30,14 @@ consumer := &rmq.Connection{
 	Config: config,
 	HandleMsg: func(msg <-chan amqp.Delivery) {
 		for m := range msg {
-			log.Print(string(m.Body))
+			logrus.Info(config.Queue + " - " + string(m.Body))
 		}
 	},
 	ResetSignal: make(chan int),
 }
 
 if err := consumer.Connect(true); err != nil {
-	log.Fatal(err)
+	logrus.Fatal(err)
 }
 
 // start consumer
@@ -50,7 +50,7 @@ go consumer.HandleResetSignalConsumer(done)
 
 go func() {
 	if err := consumer.Consume(done); err != nil {
-		log.Print("rmq consume error: ", err)
+		logrus.Error(err)
 	}
 }()
 
@@ -74,7 +74,7 @@ publisher := &rmq.Connection{
 }
 
 if err := publisher.Connect(true); err != nil {
-	log.Fatal(err)
+	logrus.Fatal(err)
 }
 
 // optionally ListenNotifyClose and HandleResetSignalPublisher
@@ -91,7 +91,7 @@ publisher.WithHeaders(map[string]interface{}{
 })
 
 if err := publisher.Publish([]byte("message")); err != nil {
-	log.Print("rmq publish error: ", err)
+	logrus.Error(err)
 }
 
 <-done

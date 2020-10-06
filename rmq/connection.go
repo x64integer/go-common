@@ -151,109 +151,6 @@ func (c *Connection) Publish(payload []byte) error {
 	return err
 }
 
-// PublishWithKey will publish payload to RMQ using given routingKey instead of routingKey provided in *Config
-func (c *Connection) PublishWithKey(routingKey string, payload []byte) error {
-	err := c.Channel.Publish(
-		c.Config.Exchange,
-		routingKey,
-		c.Config.Options.Publish.Mandatory,
-		c.Config.Options.Publish.Immediate,
-		amqp.Publishing{
-			DeliveryMode: amqp.Persistent,
-			ContentType:  c.ContentType,
-			Body:         payload,
-			Headers:      c.Headers,
-		})
-
-	return err
-}
-
-// PublishWithExchange will publish payload to RMQ using given exchange and routingKey instead of exchange/routingKey provided in *Config
-func (c *Connection) PublishWithExchange(exchange, routingKey string, payload []byte) error {
-	err := c.Channel.Publish(
-		exchange,
-		routingKey,
-		c.Config.Options.Publish.Mandatory,
-		c.Config.Options.Publish.Immediate,
-		amqp.Publishing{
-			DeliveryMode: amqp.Persistent,
-			ContentType:  c.ContentType,
-			Body:         payload,
-			Headers:      c.Headers,
-		})
-
-	return err
-}
-
-// DeclareWithConfig will initialize additional queues and exchanges
-func (c *Connection) DeclareWithConfig(config []*Config) error {
-	if c.Channel == nil {
-		ch, err := c.Conn.Channel()
-		if err != nil {
-			return err
-		}
-
-		c.Channel = ch
-	}
-
-	for _, conf := range config {
-		if err := c.exchangeDeclare(conf.Exchange, conf.ExchangeKind, conf.Options.Exchange); err != nil {
-			return err
-		}
-
-		if err := c.qos(conf.Options.QoS); err != nil {
-			return err
-		}
-
-		if _, err := c.queueDeclare(conf.Queue, conf.Options.Queue); err != nil {
-			return err
-		}
-
-		if err := c.queueBind(conf.Queue, conf.RoutingKey, conf.Exchange, conf.Options.QueueBind); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// ConsumeWithConfig will start consumer with passed config values
-func (c *Connection) ConsumeWithConfig(done chan bool, config *Config, callback func(msg <-chan amqp.Delivery)) error {
-	msg, err := c.Channel.Consume(
-		config.Queue,
-		config.ConsumerTag,
-		config.Options.Consume.AutoAck,
-		config.Options.Consume.Exclusive,
-		config.Options.Consume.NoLocal,
-		config.Options.Consume.NoWait,
-		config.Options.Consume.Args,
-	)
-	if err != nil {
-		return err
-	}
-
-	go callback(msg)
-
-	logrus.Info("waiting for messages...")
-
-	for {
-		select {
-		case <-done:
-			if err := c.Channel.Close(); err != nil {
-				logrus.Error("failed to close channel: ", err.Error())
-				return err
-			}
-
-			if err := c.Conn.Close(); err != nil {
-				logrus.Error("failed to close connection: ", err.Error())
-				return err
-			}
-
-			return nil
-		}
-	}
-}
-
 // WithHeaders will set headers to be sent
 func (c *Connection) WithHeaders(h amqp.Table) *Connection {
 	c.Headers = h
@@ -281,11 +178,11 @@ func (c *Connection) ListenNotifyClose(done chan bool) {
 					killService("failed to recreate rmq connection: ", err)
 				}
 
-				logrus.Info("sending signal 1 to rmq connection")
+				logrus.Infof("sending signal %v to rmq connection", Reconnected)
 
 				c.ResetSignal <- Reconnected
 
-				logrus.Info("signal 1 sent to rmq connection")
+				logrus.Infof("signal %v sent to rmq connection", Reconnected)
 
 				// important step!
 				// recreate connClose channel so we can listen for NotifyClose once again
