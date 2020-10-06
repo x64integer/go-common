@@ -145,7 +145,7 @@ func (conn *Connection) Get(keys ...string) ([]byte, error) {
 			case err != nil:
 				errMsgs = append(errMsgs, err.Error())
 			// no errors
-			case err == nil:
+			default:
 				result = []byte(val)
 			}
 		}

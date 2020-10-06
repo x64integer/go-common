@@ -11,6 +11,10 @@ import (
 	"github.com/streadway/amqp"
 )
 
+const (
+	Reconnected = iota
+)
+
 var (
 	// reconnectTime is default time to wait for rmq reconnect on Conn.NotifyClose() event - situation when rmq sends signal about shutdown
 	reconnectTime = 20 * time.Second
@@ -115,8 +119,15 @@ func (c *Connection) Consume(done chan bool) error {
 	for {
 		select {
 		case <-done:
-			c.Channel.Close()
-			c.Conn.Close()
+			if err := c.Channel.Close(); err != nil {
+				logrus.Error("failed to close channel: ", err.Error())
+				return err
+			}
+
+			if err := c.Conn.Close(); err != nil {
+				logrus.Error("failed to close connection: ", err.Error())
+				return err
+			}
 
 			return nil
 		}
@@ -228,8 +239,15 @@ func (c *Connection) ConsumeWithConfig(done chan bool, config *Config, callback 
 	for {
 		select {
 		case <-done:
-			c.Channel.Close()
-			c.Conn.Close()
+			if err := c.Channel.Close(); err != nil {
+				logrus.Error("failed to close channel: ", err.Error())
+				return err
+			}
+
+			if err := c.Conn.Close(); err != nil {
+				logrus.Error("failed to close connection: ", err.Error())
+				return err
+			}
 
 			return nil
 		}
@@ -265,7 +283,7 @@ func (c *Connection) ListenNotifyClose(done chan bool) {
 
 				logrus.Info("sending signal 1 to rmq connection")
 
-				c.ResetSignal <- 1
+				c.ResetSignal <- Reconnected
 
 				logrus.Info("signal 1 sent to rmq connection")
 

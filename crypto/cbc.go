@@ -67,7 +67,7 @@ func (cbcEnc *CBC) Decrypt(encrypted string) (string, error) {
 	mode := cipher.NewCBCDecrypter(block, byteIV)
 	mode.CryptBlocks(decrypted, byteIn)
 
-	decrypted, err = pkcsUnpad(decrypted, aes.BlockSize)
+	decrypted, err = pkcsUnPad(decrypted, aes.BlockSize)
 	if err != nil {
 		return "", err
 	}
@@ -76,17 +76,17 @@ func (cbcEnc *CBC) Decrypt(encrypted string) (string, error) {
 }
 
 // pkcsPad for non-full length blocks
-// pkcs5 or pkcs7 will be used based on blocksize
+// pkcs5 or pkcs7 will be used based on block size
 func pkcsPad(ciphertext []byte, blockSize int) []byte {
-	padding := (blockSize - len(ciphertext)%blockSize)
+	padding := blockSize - len(ciphertext)%blockSize
 	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
 
 	return append(ciphertext, padtext...)
 }
 
-// pkcsUnpad will remove PKCS5 padding
-// pkcs5 or pkcs7 will be used based on blocksize
-func pkcsUnpad(input []byte, blockSize int) ([]byte, error) {
+// pkcsUnPad will remove PKCS5 padding
+// pkcs5 or pkcs7 will be used based on block size
+func pkcsUnPad(input []byte, blockSize int) ([]byte, error) {
 	inputLen := len(input)
 	if inputLen == 0 {
 		return nil, errors.New("cryptgo/padding: invalid padding size")

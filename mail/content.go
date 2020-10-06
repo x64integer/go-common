@@ -3,6 +3,7 @@ package mail
 import (
 	"bytes"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"html/template"
 	"strings"
 )
@@ -45,8 +46,11 @@ func (content *Content) Construct() []byte {
 
 	buffer := new(bytes.Buffer)
 
-	template := template.Must(template.New("emailTemplate").Parse(header))
-	template.Execute(buffer, &content)
+	tpl := template.Must(template.New("emailTemplate").Parse(header))
+	if err := tpl.Execute(buffer, &content); err != nil {
+		logrus.Error("failed to execute template: ", err.Error())
+		return nil
+	}
 
 	return buffer.Bytes()
 }

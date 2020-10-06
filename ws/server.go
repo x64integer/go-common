@@ -33,7 +33,11 @@ func (server *Server) Run(done chan bool) {
 	router.HandleFunc(server.Endpoint, func(w http.ResponseWriter, r *http.Request) {
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
-			w.Write([]byte("failed to setup websocket upgrader"))
+			_, err := w.Write([]byte("failed to setup websocket upgrader"))
+			if err != nil {
+				logrus.Error("failed to send response from upgrader: ", err.Error())
+			}
+
 			return
 		}
 
@@ -47,7 +51,11 @@ func (server *Server) Run(done chan bool) {
 		go ch.read()
 	})
 
-	go http.ListenAndServe(server.Host+":"+server.Port, router)
+	go func() {
+		if err := http.ListenAndServe(server.Host+":"+server.Port, router); err != nil {
+			logrus.Fatal("failed to start http server: ", err.Error())
+		}
+	}()
 
 	<-done
 

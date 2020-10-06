@@ -31,6 +31,9 @@ func (gcmEnc *GCM) Encrypt(payload []byte) (string, string, string, error) {
 	}
 
 	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", "", "", err
+	}
 
 	nonce := make([]byte, gcm.NonceSize())
 	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
