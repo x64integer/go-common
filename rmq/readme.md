@@ -90,9 +90,23 @@ publisher.WithHeaders(map[string]interface{}{
 	"header-2": "value-2",
 })
 
-if err := publisher.Publish([]byte("message")); err != nil {
-	logrus.Error(err)
+wg := sync.WaitGroup{}
+
+for i := 0; i < 30000; i++ {
+    go func() {
+        wg.Add(1)
+
+        if err := publisher.Publish([]byte(str.UUID())); err != nil {
+            logrus.Error(err)
+        }
+
+        wg.Done()
+    }()
 }
+
+wg.Wait()
+
+close(done)
 
 <-done
 ```
