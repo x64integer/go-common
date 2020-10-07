@@ -22,7 +22,8 @@ var (
 
 // Connection for RMQ
 type Connection struct {
-	Config *Config
+	Credentials *Credentials
+	Config      *Config
 
 	// amqp
 	Conn        *amqp.Connection
@@ -42,21 +43,21 @@ type Connection struct {
 }
 
 // Connect to RabbitMQ and initialize channel
-func (c *Connection) Connect(declareChannel bool) error {
-	if c.Config == nil {
-		return errors.New("nil Config struct for RMQ Connection -> make sure valid Config is accessible to Connection")
+func (c *Connection) Connect(applyConfig bool) error {
+	if c.Credentials == nil {
+		return errors.New("invalid/nil Credentials")
 	}
 
 	c.applyDefaults()
 
-	conn, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%s/", c.Config.Username, c.Config.Password, c.Config.Host, c.Config.Port))
+	conn, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%s/", c.Credentials.Username, c.Credentials.Password, c.Credentials.Host, c.Credentials.Port))
 	if err != nil {
 		return err
 	}
 	c.Conn = conn
 
-	if declareChannel {
-		if err := c.declareChannel(); err != nil {
+	if applyConfig {
+		if err := c.ApplyConfig(c.Config); err != nil {
 			return err
 		}
 	}
@@ -64,11 +65,15 @@ func (c *Connection) Connect(declareChannel bool) error {
 	return nil
 }
 
-// declareChannel will initialize channel, exchange, qos and bind queues
+// ApplyConfig will initialize channel, exchange, qos and bind queues
 // RabbitMQ declarations
-func (c *Connection) declareChannel() error {
+func (c *Connection) ApplyConfig(config *Config) error {
 	if c.Conn == nil {
 		return errors.New("amqp connection not initialized")
+	}
+
+	if config == nil {
+		return errors.New("invalid/nil Config")
 	}
 
 	ch, err := c.Conn.Channel()
@@ -78,19 +83,19 @@ func (c *Connection) declareChannel() error {
 
 	c.Channel = ch
 
-	if err := c.exchangeDeclare(c.Config.Exchange, c.Config.ExchangeKind, c.Config.Options.Exchange); err != nil {
+	if err := c.exchangeDeclare(config.Exchange, config.ExchangeKind, config.Options.Exchange); err != nil {
 		return err
 	}
 
-	if err := c.qos(c.Config.Options.QoS); err != nil {
+	if err := c.qos(config.Options.QoS); err != nil {
 		return err
 	}
 
-	if _, err := c.queueDeclare(c.Config.Queue, c.Config.Options.Queue); err != nil {
+	if _, err := c.queueDeclare(config.Queue, config.Options.Queue); err != nil {
 		return err
 	}
 
-	if err := c.queueBind(c.Config.Queue, c.Config.RoutingKey, c.Config.Exchange, c.Config.Options.QueueBind); err != nil {
+	if err := c.queueBind(config.Queue, config.RoutingKey, config.Exchange, config.Options.QueueBind); err != nil {
 		return err
 	}
 
@@ -136,11 +141,31 @@ func (c *Connection) Consume(done chan bool) error {
 
 // Publish payload to RMQ
 func (c *Connection) Publish(payload []byte) error {
+	if c.Config == nil {
+		return errors.New("invalid/nil Config")
+	}
+
 	err := c.Channel.Publish(
 		c.Config.Exchange,
 		c.Config.RoutingKey,
 		c.Config.Options.Publish.Mandatory,
 		c.Config.Options.Publish.Immediate,
+		amqp.Publishing{
+			DeliveryMode: amqp.Persistent,
+			ContentType:  c.ContentType,
+			Body:         payload,
+			Headers:      c.Headers,
+		})
+
+	return err
+}
+
+func (c *Connection) PublishWithConfig(config *Config, payload []byte) error {
+	err := c.Channel.Publish(
+		config.Exchange,
+		config.RoutingKey,
+		config.Options.Publish.Mandatory,
+		config.Options.Publish.Immediate,
 		amqp.Publishing{
 			DeliveryMode: amqp.Persistent,
 			ContentType:  c.ContentType,
@@ -309,7 +334,7 @@ func (c *Connection) handleResetSignalPublisher(done chan bool) {
 
 // recreateConn for rmq
 func (c *Connection) recreateConn() error {
-	logrus.Info("trying to recreate rmq connection for host: ", c.Config.Host)
+	logrus.Info("trying to recreate rmq connection for host: ", c.Credentials.Host)
 
 	return c.Connect(true)
 }

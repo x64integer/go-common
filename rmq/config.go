@@ -5,13 +5,15 @@ import (
 	"github.com/streadway/amqp"
 )
 
-// Config for RMQ
-type Config struct {
+type Credentials struct {
 	Host     string
 	Port     string
 	Username string
 	Password string
+}
 
+// Config for RMQ
+type Config struct {
 	Exchange     string
 	ExchangeKind string
 
@@ -81,14 +83,18 @@ type PublishOpts struct {
 	Immediate bool
 }
 
-// NewConfig will initialize RMQ default config values
-func NewConfig() *Config {
-	return &Config{
+func NewCredentials() *Credentials {
+	return &Credentials{
 		Host:     env.Get("RMQ_HOST", "localhost"),
 		Port:     env.Get("RMQ_PORT", "5672"),
 		Username: env.Get("RMQ_USERNAME", "guest"),
 		Password: env.Get("RMQ_PASSWORD", "guest"),
+	}
+}
 
+// NewConfig will initialize RMQ default config values
+func NewConfig() *Config {
+	return &Config{
 		Exchange:     env.Get("RMQ_EXCHANGE", ""),
 		ExchangeKind: env.Get("RMQ_EXCHANGE_KIND", "direct"),
 

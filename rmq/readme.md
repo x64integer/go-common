@@ -19,6 +19,8 @@
 ### Consumer
 
 ```
+credentials := rmq.NewCredentials()
+
 // config
 config := rmq.NewConfig()
 config.Exchange = "test_exchange"
@@ -27,17 +29,18 @@ config.RoutingKey = "test_queue"
 
 // setup connection
 consumer := &rmq.Connection{
-	Config: config,
-	HandleMsg: func(msg <-chan amqp.Delivery) {
-		for m := range msg {
-			logrus.Info(config.Queue + " - " + string(m.Body))
-		}
-	},
-	ResetSignal: make(chan int),
+    Credentials: credentials,
+    Config: config,
+    HandleMsg: func(msg <-chan amqp.Delivery) {
+        for m := range msg {
+            logrus.Info(config.Queue + " - " + string(m.Body))
+        }
+    },
+    ResetSignal: make(chan int),
 }
 
 if err := consumer.Connect(true); err != nil {
-	logrus.Fatal(err)
+    logrus.Fatal(err)
 }
 
 // start consumer
@@ -49,9 +52,9 @@ go consumer.ListenNotifyClose(done)
 go consumer.HandleResetSignalConsumer(done)
 
 go func() {
-	if err := consumer.Consume(done); err != nil {
-		logrus.Error(err)
-	}
+    if err := consumer.Consume(done); err != nil {
+        logrus.Error(err)
+    }
 }()
 
 <-done
@@ -61,6 +64,8 @@ go func() {
 ### Publisher
 
 ```
+credentials := rmq.NewCredentials()
+
 // config
 config := rmq.NewConfig()
 config.Exchange = "test_exchange"
@@ -69,12 +74,13 @@ config.RoutingKey = "test_queue"
 
 // setup connection
 publisher := &rmq.Connection{
-	Config:      config,
-	ResetSignal: make(chan int),
+    Credentials: credentials,
+    Config:      config,
+    ResetSignal: make(chan int),
 }
 
 if err := publisher.Connect(true); err != nil {
-	logrus.Fatal(err)
+    logrus.Fatal(err)
 }
 
 // optionally ListenNotifyClose and HandleResetSignalPublisher
@@ -84,23 +90,35 @@ go publisher.ListenNotifyClose(done)
 
 go publisher.HandleResetSignalPublisher(done)
 
-// optionally set headers and publish message
-publisher.WithHeaders(map[string]interface{}{
-	"header-1": "value-1",
-	"header-2": "value-2",
-})
-
 wg := sync.WaitGroup{}
+
+configB := rmq.NewConfig()
+configB.Exchange = "test_exchange_b"
+configB.Queue = "test_queue_b"
+configB.RoutingKey = "test_queue_b"
+
+if err := publisher.ApplyConfig(configB); err != nil {
+    logrus.Error(err)
+    return
+}
 
 for i := 0; i < 30000; i++ {
     go func() {
         wg.Add(1)
+        defer wg.Done()
 
         if err := publisher.Publish([]byte(str.UUID())); err != nil {
             logrus.Error(err)
         }
+    }()
 
-        wg.Done()
+    go func() {
+        wg.Add(1)
+        defer wg.Done()
+
+        if err := publisher.PublishWithConfig(configB, []byte(str.UUID())); err != nil {
+            logrus.Error(err)
+        }
     }()
 }
 
