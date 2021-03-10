@@ -39,6 +39,9 @@ consumer := &rmq.Connection{
     ResetSignal: make(chan int),
 }
 
+// pass true if there is only one publisher config
+// else manually call publisher.ApplyConfig(*Config) for each configuration and
+// call publisher.PublishWithConfig(*Config) if publisher.Config was not set!
 if err := consumer.Connect(true); err != nil {
     logrus.Fatal(err)
 }
