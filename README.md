@@ -9,7 +9,6 @@
 * JWT
 * Mail
 * Strings helpers
-* File uploads
 
 ### Storage
 * Postgres
